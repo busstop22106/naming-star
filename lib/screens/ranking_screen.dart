@@ -15,15 +15,24 @@ class _RankingScreenState extends State<RankingScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tab;
   int _year = latestRankingYear;
+  int _tabIndex = 0;
 
   @override
   void initState() {
     super.initState();
     _tab = TabController(length: 2, vsync: this);
+    _tab.addListener(_onTabChanged);
+  }
+
+  void _onTabChanged() {
+    if (!_tab.indexIsChanging && _tab.index != _tabIndex) {
+      setState(() => _tabIndex = _tab.index);
+    }
   }
 
   @override
   void dispose() {
+    _tab.removeListener(_onTabChanged);
     _tab.dispose();
     super.dispose();
   }
@@ -80,19 +89,15 @@ class _RankingScreenState extends State<RankingScreen>
                 _RankList(
                     entries: rankingsByYear[_year]!.boy,
                     isBoy: true,
-                    year: _year),
+                    year: _year,
+                    showAd: _tabIndex == 0),
                 _RankList(
                     entries: rankingsByYear[_year]!.girl,
                     isBoy: false,
-                    year: _year),
+                    year: _year,
+                    showAd: _tabIndex == 1),
               ],
             ),
-          ),
-          // 하단 배너 광고 (남아/여아 탭 공통)
-          const SafeArea(
-            top: false,
-            child: Center(
-                child: BannerAdWidget(placement: AdPlacement.ranking)),
           ),
         ],
       ),
@@ -104,8 +109,14 @@ class _RankList extends StatelessWidget {
   final List<RankEntry> entries;
   final bool isBoy;
   final int year;
+
+  /// 선택된 탭의 리스트에만 배너를 둔다 (화면에 배너는 항상 1개).
+  final bool showAd;
   const _RankList(
-      {required this.entries, required this.isBoy, required this.year});
+      {required this.entries,
+      required this.isBoy,
+      required this.year,
+      this.showAd = false});
 
   @override
   Widget build(BuildContext context) {
@@ -223,6 +234,13 @@ class _RankList extends StatelessWidget {
             ],
           ),
         ),
+        // 하단 배너 광고: 다른 탭처럼 리스트 최하단에서만 보인다.
+        if (showAd) ...[
+          const SizedBox(height: 16),
+          const Center(
+              child: BannerAdWidget(placement: AdPlacement.ranking)),
+          const SizedBox(height: 12),
+        ],
       ],
     );
   }

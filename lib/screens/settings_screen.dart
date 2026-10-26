@@ -4,6 +4,7 @@ import '../theme.dart';
 import '../widgets/common.dart';
 import 'faq_screen.dart';
 import 'favorites_screen.dart';
+import 'terms_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -44,12 +45,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
           // 앱 설정
           _sectionTitle('앱 설정'),
-          _menuTile(
-            icon: Icons.notifications_outlined,
-            title: '알림 설정',
-            subtitle: '추천·이벤트 알림 (준비 중)',
-            onTap: () => _comingSoon('알림 설정'),
-          ),
           _menuTile(
             icon: Icons.language_outlined,
             title: '언어',
@@ -93,7 +88,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
           _menuTile(
             icon: Icons.description_outlined,
             title: '이용약관',
-            onTap: () => _comingSoon('이용약관'),
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (_) => const TermsScreen()),
+            ),
           ),
           _menuTile(
             icon: Icons.privacy_tip_outlined,
@@ -214,9 +213,4 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  void _comingSoon(String feature) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('$feature은(는) 준비 중이에요.')),
-    );
-  }
 }
