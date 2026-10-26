@@ -117,10 +117,17 @@ class MemberDialogState extends State<MemberDialog> {
                 children: [
                   for (final r in memberRoleOptions)
                     ChoiceChip(
-                      label: Text(r, style: const TextStyle(fontSize: 13)),
+                      label: Text(r,
+                          style: TextStyle(
+                              fontSize: 13,
+                              color: baseRole == r
+                                  ? AppTheme.primaryDark
+                                  : AppTheme.ink,
+                              fontWeight: FontWeight.w700)),
                       selected: baseRole == r,
                       onSelected: (_) => setState(() => baseRole = r),
                       selectedColor: AppTheme.primarySoft,
+                      checkmarkColor: AppTheme.primaryDark,
                       visualDensity: VisualDensity.compact,
                     ),
                 ],
