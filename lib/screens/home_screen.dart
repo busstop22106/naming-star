@@ -97,30 +97,9 @@ class _HomeScreenState extends State<HomeScreen> {
           children: [
             const SizedBox(height: 8),
             // 헤더
-            Row(
-              children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(16),
-                  child: Image.asset(
-                    'assets/icon/app-icon-1024.png',
-                    width: 52,
-                    height: 52,
-                    fit: BoxFit.cover,
-                  ),
-                ),
-                const SizedBox(width: 14),
-                const Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('작명별',
-                        style: TextStyle(
-                            fontSize: 24, fontWeight: FontWeight.w800)),
-                    Text('사주와 성명학으로 짓는 아기 이름',
-                        style: TextStyle(
-                            fontSize: 13, color: AppTheme.sub)),
-                  ],
-                ),
-              ],
+            const StarHero(
+              title: '작명별',
+              subtitle: '사주와 성명학으로 짓는 아기 이름',
             ),
             const SizedBox(height: 20),
             // 성씨 선택

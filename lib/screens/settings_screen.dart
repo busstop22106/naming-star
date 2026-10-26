@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/app_links.dart';
 import '../theme.dart';
+import '../widgets/common.dart';
 import 'faq_screen.dart';
 import 'favorites_screen.dart';
 
@@ -20,8 +21,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
         padding: EdgeInsets.fromLTRB(
             20, 8, 20, 24 + MediaQuery.of(context).padding.bottom),
         children: [
+          const StarHero(
+            title: '작명별',
+            subtitle: '사주와 성명학으로 짓는 아기 이름',
+            imageSize: 64,
+          ),
+          const SizedBox(height: 20),
           // 내 정보
-          _sectionTitle('내 이름'),
+          _sectionTitle('저장한 이름'),
           _menuTile(
             icon: Icons.bookmark_border,
             title: '보관함',
@@ -182,7 +189,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
       child: ListTile(
-        leading: Icon(icon, color: AppTheme.primary),
+        leading: Container(
+          width: 36,
+          height: 36,
+          decoration: const BoxDecoration(
+            color: AppTheme.primarySoft,
+            shape: BoxShape.circle,
+          ),
+          child: Icon(icon, size: 20, color: AppTheme.primary),
+        ),
         title: Text(title,
             style: const TextStyle(
                 fontSize: 15, fontWeight: FontWeight.w600)),

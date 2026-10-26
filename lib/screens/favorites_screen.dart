@@ -61,23 +61,9 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _items.isEmpty
-              ? const Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.bookmark_border,
-                          size: 56, color: AppTheme.line),
-                      SizedBox(height: 12),
-                      Text('아직 저장한 이름이 없어요.',
-                          style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w600)),
-                      SizedBox(height: 6),
-                      Text('마음에 드는 이름에서 북마크를 눌러 저장하세요.',
-                          style: TextStyle(
-                              fontSize: 13, color: AppTheme.sub)),
-                    ],
-                  ),
+              ? const EmptyState(
+                  title: '아직 저장한 이름이 없어요.',
+                  subtitle: '마음에 드는 이름에서 북마크를 눌러 저장하세요.\n별이 반짝이는 이름, 하나씩 모아보세요.',
                 )
               : ListView(
                   padding: const EdgeInsets.all(20),

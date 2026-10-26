@@ -163,7 +163,7 @@ class _DetailScreenState extends State<DetailScreen> {
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
                     color: const Color(0xFFFFF3E0),
-                    borderRadius: BorderRadius.circular(14),
+                    borderRadius: BorderRadius.circular(18),
                     border: Border.all(
                         color: AppTheme.warn.withValues(alpha: 0.4)),
                   ),

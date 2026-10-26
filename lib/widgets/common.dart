@@ -150,7 +150,7 @@ class DimensionBar extends StatelessWidget {
   }
 }
 
-/// 섹션 카드
+/// 섹션 카드 — 아이콘은 둥근 칩 안에 넣어 귀엽게
 class SectionCard extends StatelessWidget {
   final String title;
   final String? subtitle;
@@ -169,19 +169,29 @@ class SectionCard extends StatelessWidget {
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 8),
       child: Padding(
-        padding: const EdgeInsets.all(18),
+        padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
                 if (icon != null) ...[
-                  Icon(icon, size: 20, color: AppTheme.primary),
-                  const SizedBox(width: 8),
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: const BoxDecoration(
+                      color: AppTheme.primarySoft,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(icon, size: 20, color: AppTheme.primary),
+                  ),
+                  const SizedBox(width: 10),
                 ],
-                Text(title,
-                    style: const TextStyle(
-                        fontSize: 16, fontWeight: FontWeight.w700)),
+                Expanded(
+                  child: Text(title,
+                      style: const TextStyle(
+                          fontSize: 16, fontWeight: FontWeight.w800)),
+                ),
               ],
             ),
             if (subtitle != null) ...[
@@ -192,6 +202,108 @@ class SectionCard extends StatelessWidget {
             ],
             const SizedBox(height: 12),
             child,
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// 별 친구 히어로 — 홈 상단 등에서 별 이미지와 함께 환영 문구를 보여준다
+class StarHero extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  final double imageSize;
+  const StarHero({
+    super.key,
+    required this.title,
+    required this.subtitle,
+    this.imageSize = 96,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFFFFF3D6), Color(0xFFEDE8FB)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: AppTheme.softShadow,
+      ),
+      child: Row(
+        children: [
+          Image.asset(
+            'assets/icon/splash-star.png',
+            width: imageSize,
+            height: imageSize,
+            errorBuilder: (context, error, stackTrace) =>
+                const Icon(Icons.star, size: 64, color: AppTheme.gold),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title,
+                    style: const TextStyle(
+                        fontSize: 24, fontWeight: FontWeight.w800)),
+                const SizedBox(height: 4),
+                Text(subtitle,
+                    style: const TextStyle(
+                        fontSize: 13, color: AppTheme.sub, height: 1.5)),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// 빈 상태 — 별 친구와 함께 따뜻하게 안내한다
+class EmptyState extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  final Widget? action;
+  const EmptyState({
+    super.key,
+    required this.title,
+    required this.subtitle,
+    this.action,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Image.asset(
+              'assets/icon/splash-star.png',
+              width: 120,
+              height: 120,
+              errorBuilder: (context, error, stackTrace) =>
+                  const Icon(Icons.star, size: 72, color: AppTheme.gold),
+            ),
+            const SizedBox(height: 16),
+            Text(title,
+                style: const TextStyle(
+                    fontSize: 16, fontWeight: FontWeight.w800)),
+            const SizedBox(height: 6),
+            Text(subtitle,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                    fontSize: 13, color: AppTheme.sub, height: 1.5)),
+            if (action != null) ...[
+              const SizedBox(height: 20),
+              action!,
+            ],
           ],
         ),
       ),
@@ -287,7 +399,7 @@ class GenderButton extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 14),
         decoration: BoxDecoration(
           color: selected ? color.withValues(alpha: 0.14) : Colors.white,
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(18),
           border: Border.all(
             color: selected ? color : AppTheme.line,
             width: selected ? 1.6 : 1,
