@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'analyze_screen.dart' show orderedHanja;
+import '../engine/hanja_order.dart';
 import '../engine/life_story.dart';
 import '../engine/saju.dart';
 import '../engine/scoring.dart';

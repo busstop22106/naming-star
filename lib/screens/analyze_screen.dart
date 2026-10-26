@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import '../data/hanja.dart';
-import '../data/hanja_full.dart';
 import '../engine/compat.dart';
+import '../engine/hanja_order.dart';
 import '../engine/pure_korean.dart';
 import '../engine/saju.dart';
 import '../engine/scoring.dart';
@@ -10,26 +9,10 @@ import '../models.dart';
 import '../services/ad_service.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
+import '../widgets/member_dialog.dart';
 import '../widgets/surname_picker.dart';
 import 'compat_screen.dart';
 import 'detail_screen.dart';
-
-/// 음절의 전체 한자를 curated 우선으로 정렬
-List<HanjaPick> orderedHanja(String syllable) {
-  final full = hanjaFullBySyllable[syllable] ?? [];
-  final curatedOrder =
-      hanjaBySyllable[syllable]?.map((e) => e.char).toList() ?? [];
-  final curatedSet = curatedOrder.toSet();
-  final curated =
-      full.where((e) => curatedSet.contains(e.char)).toList();
-  final rest =
-      full.where((e) => !curatedSet.contains(e.char)).toList();
-  curated.sort((a, b) => curatedOrder
-      .indexOf(a.char)
-      .compareTo(curatedOrder.indexOf(b.char)));
-  rest.sort((a, b) => a.strokes.compareTo(b.strokes));
-  return [...curated, ...rest];
-}
 
 /// 직접 이름 분석 — 이미 정한 이름을 입력해 평가
 class AnalyzeScreen extends StatefulWidget {
@@ -371,7 +354,7 @@ class _AnalyzeScreenState extends State<AnalyzeScreen> {
       timeUnknown = orig.timeUnknown;
     } else {
       final used = _members.map((m) => m.role.split(' ').first).toSet();
-      baseRole = _roleOptions.firstWhere((r) => !used.contains(r),
+      baseRole = memberRoleOptions.firstWhere((r) => !used.contains(r),
           orElse: () => '동생');
       final isElder = ['아빠', '엄마', '할아버지', '할머니'].contains(baseRole);
       final isGrand = ['할아버지', '할머니'].contains(baseRole);
@@ -383,9 +366,9 @@ class _AnalyzeScreenState extends State<AnalyzeScreen> {
       time = null;
       timeUnknown = true;
     }
-    final result = await showDialog<_MemberEditResult>(
+    final result = await showDialog<MemberEditResult>(
       context: context,
-      builder: (_) => _MemberDialog(
+      builder: (_) => MemberDialog(
         isEdit: editIndex != null,
         canDelete: editIndex != null && _members.length > 1,
         initialRole: baseRole,
@@ -903,9 +886,6 @@ class _AnalyzeScreenState extends State<AnalyzeScreen> {
   }
 }
 
-const _roleOptions = [
-  '아빠', '엄마', '형', '오빠', '누나', '언니', '동생', '할아버지', '할머니'
-];
 const _maxMembers = 6;
 
 /// 가족 궁합 구성원 입력 상태
@@ -917,188 +897,3 @@ class _MemberInput {
   _MemberInput(this.role, this.birth);
 }
 
-/// 구성원 다이얼로그 결과 (저장 또는 삭제)
-class _MemberEditResult {
-  final String? role;
-  final DateTime? birth;
-  final TimeOfDay? time;
-  final bool timeUnknown;
-  final bool deleted;
-  const _MemberEditResult({
-    required this.role,
-    required this.birth,
-    required this.time,
-    required this.timeUnknown,
-  }) : deleted = false;
-  const _MemberEditResult.deleted()
-      : role = null,
-        birth = null,
-        time = null,
-        timeUnknown = true,
-        deleted = true;
-}
-
-/// 구성원 추가/편집 다이얼로그
-class _MemberDialog extends StatefulWidget {
-  final bool isEdit;
-  final bool canDelete;
-  final String initialRole;
-  final DateTime initialBirth;
-  final TimeOfDay? initialTime;
-  final bool initialTimeUnknown;
-  const _MemberDialog({
-    required this.isEdit,
-    required this.canDelete,
-    required this.initialRole,
-    required this.initialBirth,
-    required this.initialTime,
-    required this.initialTimeUnknown,
-  });
-  @override
-  State<_MemberDialog> createState() => _MemberDialogState();
-}
-
-class _MemberDialogState extends State<_MemberDialog> {
-  late String baseRole = widget.initialRole;
-  late DateTime birth = widget.initialBirth;
-  late TimeOfDay? time = widget.initialTime;
-  late bool timeUnknown = widget.initialTimeUnknown;
-
-  Future<void> _pickDate() async {
-    final d = await showDatePicker(
-      context: context,
-      initialDate: birth,
-      firstDate: DateTime(1900, 1, 1),
-      lastDate: DateTime(2035),
-      locale: const Locale('ko'),
-    );
-    if (d != null) setState(() => birth = d);
-  }
-
-  Future<void> _pickTime() async {
-    final t = await showTimePicker(
-      context: context,
-      initialTime: time ?? const TimeOfDay(hour: 12, minute: 0),
-    );
-    if (t != null) {
-      setState(() {
-        time = t;
-        timeUnknown = false;
-      });
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Dialog(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(24),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Text(widget.isEdit ? '구성원 편집' : '구성원 추가',
-                      style: const TextStyle(
-                          fontSize: 17, fontWeight: FontWeight.w800)),
-                  const Spacer(),
-                  IconButton(
-                    onPressed: () => Navigator.pop(context),
-                    icon: const Icon(Icons.close),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              const Text('역할',
-                  style:
-                      TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 6,
-                runSpacing: 6,
-                children: [
-                  for (final r in _roleOptions)
-                    ChoiceChip(
-                      label: Text(r, style: const TextStyle(fontSize: 13)),
-                      selected: baseRole == r,
-                      onSelected: (_) => setState(() => baseRole = r),
-                      selectedColor: AppTheme.primarySoft,
-                      visualDensity: VisualDensity.compact,
-                    ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              ListTile(
-                contentPadding: EdgeInsets.zero,
-                leading: const Icon(Icons.cake_outlined,
-                    color: AppTheme.primary),
-                title: Text(
-                    '${birth.year}년 ${birth.month}월 ${birth.day}일',
-                    style: const TextStyle(fontWeight: FontWeight.w600)),
-                trailing: const Icon(Icons.chevron_right),
-                onTap: _pickDate,
-              ),
-              const Divider(height: 1),
-              ListTile(
-                contentPadding: EdgeInsets.zero,
-                leading:
-                    const Icon(Icons.schedule, color: AppTheme.primary),
-                title: Text(
-                    '태어난 시간 · ${timeUnknown ? '모름' : (time == null ? '선택 안 함' : '${time!.hour}시 ${time!.minute}분')}',
-                    style: const TextStyle(fontWeight: FontWeight.w600)),
-                trailing: const Icon(Icons.chevron_right),
-                onTap: _pickTime,
-              ),
-              CheckboxListTile(
-                contentPadding: EdgeInsets.zero,
-                controlAffinity: ListTileControlAffinity.leading,
-                title: const Text('태어난 시간을 몰라요',
-                    style: TextStyle(fontSize: 13)),
-                value: timeUnknown,
-                onChanged: (v) =>
-                    setState(() => timeUnknown = v ?? false),
-              ),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  if (widget.canDelete)
-                    TextButton.icon(
-                      onPressed: () => Navigator.pop(
-                          context, const _MemberEditResult.deleted()),
-                      icon: const Icon(Icons.delete_outline, size: 18),
-                      label: const Text('삭제'),
-                      style: TextButton.styleFrom(
-                          foregroundColor: Colors.red),
-                    ),
-                  const Spacer(),
-                  TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text('취소'),
-                  ),
-                  const SizedBox(width: 8),
-                  ElevatedButton(
-                    onPressed: () => Navigator.pop(
-                      context,
-                      _MemberEditResult(
-                        role: baseRole,
-                        birth: birth,
-                        time: time,
-                        timeUnknown: timeUnknown,
-                      ),
-                    ),
-                    child: Text(widget.isEdit ? '저장' : '추가'),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
