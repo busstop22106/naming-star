@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'analyze_screen.dart' show orderedHanja;
+import '../engine/life_story.dart';
 import '../engine/saju.dart';
 import '../engine/scoring.dart';
 import '../favorites.dart';
@@ -323,6 +324,55 @@ class _DetailScreenState extends State<DetailScreen> {
                         ),
                       ))
                   .toList(),
+            ),
+          ),
+
+          // 이 이름의 일대기 (나이대별 흐름)
+          SectionCard(
+            title: '이 이름의 일대기',
+            icon: Icons.timeline,
+            subtitle: '나이대별 흐름 · 재미로 보는 참고용 해석이에요',
+            child: Column(
+              children: [
+                for (final stage in buildLifeStory(a)) ...[
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: AppTheme.primarySoft,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                            '${stage.title} · ${stage.ageRange}',
+                            style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                color: AppTheme.primary)),
+                      ),
+                      const Spacer(),
+                      Text(
+                          '${stage.score.toStringAsFixed(0)}점 · ${stage.grade}',
+                          style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700)),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(stage.headline,
+                        style: const TextStyle(
+                            fontSize: 14, fontWeight: FontWeight.w700)),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(stage.body,
+                      style: const TextStyle(
+                          fontSize: 13, color: AppTheme.sub)),
+                  const SizedBox(height: 14),
+                ],
+              ],
             ),
           ),
 
