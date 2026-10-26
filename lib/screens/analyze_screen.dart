@@ -778,7 +778,12 @@ class _AnalyzeScreenState extends State<AnalyzeScreen> {
                                   ? '${e.value.char} ${e.value.meaning}'
                                   : '${e.value.char} ${e.value.strokes}획';
                               return ChoiceChip(
-                                label: Text(label),
+                                label: Text(label,
+                                    style: TextStyle(
+                                        color: sel
+                                            ? AppTheme.primaryDark
+                                            : AppTheme.ink,
+                                        fontWeight: FontWeight.w700)),
                                 selected: sel,
                                 onSelected: (_) => setState(
                                     () => _hanjaIdx[i] = e.key),

@@ -94,10 +94,12 @@ class MemberDialogState extends State<MemberDialog> {
             children: [
               Row(
                 children: [
-                  Text(widget.isEdit ? '구성원 편집' : '구성원 추가',
-                      style: const TextStyle(
-                          fontSize: 17, fontWeight: FontWeight.w800)),
-                  const Spacer(),
+                  Expanded(
+                    child: Text(widget.isEdit ? '구성원 편집' : '구성원 추가',
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                            fontSize: 17, fontWeight: FontWeight.w800)),
+                  ),
                   IconButton(
                     onPressed: () => Navigator.pop(context),
                     icon: const Icon(Icons.close),
@@ -166,23 +168,34 @@ class MemberDialogState extends State<MemberDialog> {
                       style: TextButton.styleFrom(
                           foregroundColor: Colors.red),
                     ),
-                  const Spacer(),
-                  TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text('취소'),
-                  ),
-                  const SizedBox(width: 8),
-                  ElevatedButton(
-                    onPressed: () => Navigator.pop(
-                      context,
-                      MemberEditResult(
-                        role: baseRole,
-                        birth: birth,
-                        time: time,
-                        timeUnknown: timeUnknown,
-                      ),
+                  if (widget.canDelete) const Spacer(),
+                  // 작은 화면 + 큰 글자에서도 버튼이 줄바꿈되게 Wrap 사용
+                  Expanded(
+                    child: Wrap(
+                      alignment: WrapAlignment.end,
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: const Text('취소'),
+                        ),
+                        ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                              minimumSize: const Size(0, 48)),
+                          onPressed: () => Navigator.pop(
+                            context,
+                            MemberEditResult(
+                              role: baseRole,
+                              birth: birth,
+                              time: time,
+                              timeUnknown: timeUnknown,
+                            ),
+                          ),
+                          child: Text(widget.isEdit ? '저장' : '추가'),
+                        ),
+                      ],
                     ),
-                    child: Text(widget.isEdit ? '저장' : '추가'),
                   ),
                 ],
               ),
