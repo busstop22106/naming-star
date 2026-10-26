@@ -263,19 +263,19 @@ class _FamilyMapCardState extends State<_FamilyMapCard>
                           // 최고 궁합 선 중간의 뛰는 하트
                           Positioned(
                             left: (points[bestIdx].dx + center.dx) / 2 -
-                                17,
+                                10,
                             top: (points[bestIdx].dy + center.dy) / 2 -
-                                17,
+                                10,
                             child: Transform.scale(
-                              scale: 1 + 0.34 * beat,
+                              scale: 1 + 0.25 * beat,
                               child: const Icon(
                                 Icons.favorite,
-                                size: 34,
+                                size: 20,
                                 color: Color(0xFFFF5C7A),
                                 shadows: [
                                   Shadow(
                                     color: Color(0x55FF5C7A),
-                                    blurRadius: 12,
+                                    blurRadius: 6,
                                   ),
                                 ],
                               ),
