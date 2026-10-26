@@ -73,7 +73,8 @@ const List<(int, int, String)> _solarTerms = [
 ];
 
 String _monthBranch(int month, int day) {
-  String branch = '축';
+  // 1월 1일~소한(1/6) 전은 전년도 자월(동지월)이다
+  String branch = '자';
   for (final (m, d, b) in _solarTerms) {
     if (month > m || (month == m && day >= d)) {
       branch = b;
@@ -143,8 +144,9 @@ SajuResult computeSaju(BabyInfo baby) {
   final mBranchIdx = _branches.indexOf(mBranch);
   final baseStem = _firstMonthStem(yearStem);
   final baseIdx = _stems.indexOf(baseStem);
-  // 인월(인덱스 2)이 정월이므로 오프셋 계산
-  final mStem = _stems[((baseIdx + (mBranchIdx - 2)) % 10 + 10) % 10];
+  // 인월(인덱스 2)이 정월이므로 오프셋 계산 — 월지는 12순환이라
+  // 음수 차이를 그대로 10으로 나누면 자·축월이 틀리니 12로 정규화한다
+  final mStem = _stems[(baseIdx + (mBranchIdx - 2 + 12) % 12) % 10];
 
   // ── 일주 (기준일 2000-01-01 = 무오) ──
   var dayDate = DateTime(baby.birth.year, baby.birth.month, baby.birth.day);

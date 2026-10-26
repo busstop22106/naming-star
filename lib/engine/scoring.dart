@@ -170,6 +170,11 @@ NameAnalysis analyzeName({
       } else {
         resourceDetails.add('$label: ${elementNames[p.element]}');
       }
+      // 용신을 극하는 오행은 이름에 피하는 것이 원칙이라 경고해요
+      if (controlsTo(p.element, yongsin)) {
+        warnings.add(
+            '이름의 ${elementNames[p.element]} 기운이 용신 ${elementNames[yongsin]}을 극해요. 다른 한자를 고려해보세요.');
+      }
     }
     resourceScore = got == 0 ? 30 : _clamp(got.toDouble());
     resourceDetails.insert(
@@ -191,15 +196,18 @@ NameAnalysis analyzeName({
   if (rb != null) {
     rankBoy = rb;
     usa -= 20;
-    usaDetails.add('2024년 남자 아기 이름 $rb위 — 또래에 같은 이름이 많을 수 있어요.');
+    usaDetails.add(
+        '$latestRankingYear년 남자 아기 이름 $rb위 — 또래에 같은 이름이 많을 수 있어요.');
   }
   if (rg != null) {
     rankGirl = rg;
     usa -= 20;
-    usaDetails.add('2024년 여자 아기 이름 $rg위 — 또래에 같은 이름이 많을 수 있어요.');
+    usaDetails.add(
+        '$latestRankingYear년 여자 아기 이름 $rg위 — 또래에 같은 이름이 많을 수 있어요.');
   }
   if (rb == null && rg == null) {
-    usaDetails.add('2024년 출생신고 TOP20에 없는 이름이라 흔하지 않아요.');
+    usaDetails.add(
+        '$latestRankingYear년 출생신고 TOP20에 없는 이름이라 흔하지 않아요.');
   }
   for (final p in picks) {
     if (p.disputed) {
