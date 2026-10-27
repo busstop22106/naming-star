@@ -19,6 +19,7 @@ class AppTheme {
   static const ink = Color(0xFF2B2440);
   static const sub = Color(0xFF8A839E);
   static const hint = Color(0xFFB8B0CC); // 입력 힌트용 밝은 회색
+  static const chipBorder = Color(0xFFD9D0E8); // 미선택 칩 테두리용 연보라 회색
   static const line = Color(0xFFF0E7D8);
   static const boy = Color(0xFF5B8DEF);
   static const girl = Color(0xFFF472A0);

@@ -127,7 +127,14 @@ class MemberDialogState extends State<MemberDialog> {
                       selected: baseRole == r,
                       onSelected: (_) => setState(() => baseRole = r),
                       selectedColor: AppTheme.primarySoft,
-                      checkmarkColor: AppTheme.primaryDark,
+                      // 체크 표시를 끄면 라벨이 늘어나 정렬이 바뀌는 현상이 사라진다.
+                      showCheckmark: false,
+                      side: BorderSide(
+                        color: baseRole == r
+                            ? AppTheme.primary
+                            : AppTheme.chipBorder,
+                        width: baseRole == r ? 1.5 : 1,
+                      ),
                       visualDensity: VisualDensity.compact,
                     ),
                 ],
