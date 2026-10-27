@@ -257,89 +257,92 @@ class _NameCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final a = analysis;
-    return Card(
-      margin: const EdgeInsets.symmetric(vertical: 6),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(20),
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            children: [
-              SizedBox(
-                width: 28,
-                child: Text('$rank',
-                    style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w800,
-                        color: rank <= 3
-                            ? AppTheme.gold
-                            : AppTheme.sub)),
-              ),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Text(a.fullName,
-                            style: const TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.w800)),
-                        const SizedBox(width: 8),
-                        if (a.isPureKorean)
-                          Flexible(
-                            child: Text(
-                                pureKoreanMeaning(a.givenName) ?? '',
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                    fontSize: 13, color: AppTheme.sub)),
-                          )
-                        else
-                          Flexible(
-                            child: Text(a.hanjaName,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                    fontSize: 14, color: AppTheme.sub)),
-                          ),
-                        if (a.rankBoy != null || a.rankGirl != null) ...[
-                          const SizedBox(width: 6),
-                          const GradeChip('흔한 이름', AppTheme.warn),
-                        ],
-                      ],
-                    ),
-                    const SizedBox(height: 6),
-                    Wrap(
-                      spacing: 10,
-                      runSpacing: 4,
-                      children: a.dimensions.map((d) {
-                        return Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Container(
-                              width: 8,
-                              height: 8,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: AppTheme.scoreColor(d.score),
-                              ),
-                            ),
-                            const SizedBox(width: 4),
-                            Text(d.title,
-                                style: const TextStyle(
-                                    fontSize: 11,
-                                    color: AppTheme.sub)),
-                          ],
-                        );
-                      }).toList(),
-                    ),
-                  ],
+    // 스크롤 버벅임 방지: 카드별 래스터 캐시를 만들어 스크롤 중 재그리기를 막는다.
+    return RepaintBoundary(
+      child: Card(
+        margin: const EdgeInsets.symmetric(vertical: 6),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(20),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                SizedBox(
+                  width: 28,
+                  child: Text('$rank',
+                      style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                          color: rank <= 3
+                              ? AppTheme.gold
+                              : AppTheme.sub)),
                 ),
-              ),
-              ScoreRing(score: a.total, size: 64, strokeWidth: 7),
-              const Icon(Icons.chevron_right,
-                  color: AppTheme.sub),
-            ],
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Text(a.fullName,
+                              style: const TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w800)),
+                          const SizedBox(width: 8),
+                          if (a.isPureKorean)
+                            Flexible(
+                              child: Text(
+                                  pureKoreanMeaning(a.givenName) ?? '',
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                      fontSize: 13, color: AppTheme.sub)),
+                            )
+                          else
+                            Flexible(
+                              child: Text(a.hanjaName,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                      fontSize: 14, color: AppTheme.sub)),
+                            ),
+                          if (a.rankBoy != null || a.rankGirl != null) ...[
+                            const SizedBox(width: 6),
+                            const GradeChip('흔한 이름', AppTheme.warn),
+                          ],
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      Wrap(
+                        spacing: 10,
+                        runSpacing: 4,
+                        children: a.dimensions.map((d) {
+                          return Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Container(
+                                width: 8,
+                                height: 8,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: AppTheme.scoreColor(d.score),
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              Text(d.title,
+                                  style: const TextStyle(
+                                      fontSize: 11,
+                                      color: AppTheme.sub)),
+                            ],
+                          );
+                        }).toList(),
+                      ),
+                    ],
+                  ),
+                ),
+                ScoreRing(score: a.total, size: 64, strokeWidth: 7),
+                const Icon(Icons.chevron_right,
+                    color: AppTheme.sub),
+              ],
+            ),
           ),
         ),
       ),

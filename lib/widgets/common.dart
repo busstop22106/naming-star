@@ -166,43 +166,46 @@ class SectionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.symmetric(vertical: 8),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                if (icon != null) ...[
-                  Container(
-                    width: 36,
-                    height: 36,
-                    decoration: const BoxDecoration(
-                      color: AppTheme.primarySoft,
-                      shape: BoxShape.circle,
+    // 스크롤 버벅임 방지: 섹션별 래스터 캐시를 만들어 스크롤 중 재그리기를 막는다.
+    return RepaintBoundary(
+      child: Card(
+        margin: const EdgeInsets.symmetric(vertical: 8),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  if (icon != null) ...[
+                    Container(
+                      width: 36,
+                      height: 36,
+                      decoration: const BoxDecoration(
+                        color: AppTheme.primarySoft,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(icon, size: 20, color: AppTheme.primary),
                     ),
-                    child: Icon(icon, size: 20, color: AppTheme.primary),
+                    const SizedBox(width: 10),
+                  ],
+                  Expanded(
+                    child: Text(title,
+                        style: const TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.w800)),
                   ),
-                  const SizedBox(width: 10),
                 ],
-                Expanded(
-                  child: Text(title,
-                      style: const TextStyle(
-                          fontSize: 16, fontWeight: FontWeight.w800)),
-                ),
+              ),
+              if (subtitle != null) ...[
+                const SizedBox(height: 4),
+                Text(subtitle!,
+                    style:
+                        const TextStyle(fontSize: 12, color: AppTheme.sub)),
               ],
-            ),
-            if (subtitle != null) ...[
-              const SizedBox(height: 4),
-              Text(subtitle!,
-                  style:
-                      const TextStyle(fontSize: 12, color: AppTheme.sub)),
+              const SizedBox(height: 12),
+              child,
             ],
-            const SizedBox(height: 12),
-            child,
-          ],
+          ),
         ),
       ),
     );
