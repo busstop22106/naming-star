@@ -1,10 +1,6 @@
 name: 미리보기 APK 빌드
-
-# GitHub에서 수동으로 실행하면 디버그 APK를 만들어줘요.
-# 실행 후 Actions 탭의 해당 실행 페이지 맨 아래 Artifacts에서 받아 폰에 설치하면 돼요.
 on:
   workflow_dispatch:
-
 jobs:
   build-apk:
     runs-on: ubuntu-latest
@@ -17,6 +13,10 @@ jobs:
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
+      - name: Restore debug keystore
+        run: |
+          mkdir -p ~/.android
+          echo "${{ secrets.DEBUG_KEYSTORE_BASE64 }}" | base64 -d > ~/.android/debug.keystore
       - run: flutter pub get
       - run: flutter build apk --debug
       - uses: actions/upload-artifact@v4
