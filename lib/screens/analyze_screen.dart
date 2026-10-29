@@ -881,9 +881,10 @@ class _AnalyzeScreenState extends State<AnalyzeScreen> {
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 12),
-          // 하단 배너 광고
-          const Center(
-              child: BannerAdWidget(placement: AdPlacement.analyze)),
+          // 하단 배너 광고 (AdService.bannerEnabled 플래그로 제어)
+          if (AdService.bannerEnabledFor(AdPlacement.analyze))
+            const Center(
+                child: BannerAdWidget(placement: AdPlacement.analyze)),
           const SizedBox(height: 12),
         ],
       ),

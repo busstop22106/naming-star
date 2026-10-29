@@ -235,7 +235,9 @@ class _RankList extends StatelessWidget {
           ),
         ),
         // 하단 배너 광고: 다른 탭처럼 리스트 최하단에서만 보인다.
-        if (showAd) ...[
+        // AdService.bannerEnabled 플래그로 제어 (출시 초기에는 랭킹만 노출).
+        if (showAd &&
+            AdService.bannerEnabledFor(AdPlacement.ranking)) ...[
           const SizedBox(height: 16),
           const Center(
               child: BannerAdWidget(placement: AdPlacement.ranking)),

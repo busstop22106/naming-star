@@ -12,6 +12,19 @@ import 'package:google_mobile_ads/google_mobile_ads.dart';
 enum AdPlacement { home, analyze, ranking }
 
 class AdService {
+  /// 배너 노출 위치 플래그.
+  /// 출시 초기 모객을 위해 랭킹 탭에만 배너를 둔다.
+  /// 나중에 다시 노출할 때는 배너 위젯을 다시 붙일 필요 없이
+  /// 아래 값만 true로 바꾸면 된다 (광고 단위 ID는 그대로 유지).
+  static const Map<AdPlacement, bool> bannerEnabled = {
+    AdPlacement.home: false,
+    AdPlacement.analyze: false,
+    AdPlacement.ranking: true,
+  };
+
+  static bool bannerEnabledFor(AdPlacement placement) =>
+      bannerEnabled[placement] ?? false;
+
   static String get bannerAdUnitId => bannerAdUnitIdFor(AdPlacement.home);
 
   static String bannerAdUnitIdFor(AdPlacement placement) {

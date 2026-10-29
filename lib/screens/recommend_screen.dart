@@ -168,8 +168,9 @@ class _RecommendScreenState extends State<RecommendScreen> {
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 12),
-          // 하단 배너 광고
-          const Center(child: BannerAdWidget()),
+          // 하단 배너 광고 (AdService.bannerEnabled 플래그로 제어)
+          if (AdService.bannerEnabledFor(AdPlacement.home))
+            const Center(child: BannerAdWidget()),
         ],
       ),
     );
