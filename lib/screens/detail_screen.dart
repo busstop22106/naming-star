@@ -24,6 +24,17 @@ class _DetailScreenState extends State<DetailScreen> {
   late NameAnalysis _analysis;
   bool _saved = false;
 
+  /// 저장 순간 별이 톡 튀는 피드백용 — 결과 공개·저장 2곳에만 모션을 둔다.
+  bool _pop = false;
+
+  void _triggerPop() {
+    if (!mounted) return;
+    setState(() => _pop = true);
+    Future.delayed(const Duration(milliseconds: 180), () {
+      if (mounted) setState(() => _pop = false);
+    });
+  }
+
   @override
   void initState() {
     super.initState();
@@ -69,6 +80,7 @@ class _DetailScreenState extends State<DetailScreen> {
     } else {
       await saveFavorite(item);
       setState(() => _saved = true);
+      _triggerPop();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('보관함에 저장했어요.')),
@@ -87,9 +99,13 @@ class _DetailScreenState extends State<DetailScreen> {
         title: const Text('이름 상세 분석'),
         actions: [
           IconButton(
-            icon: Icon(
-              _saved ? Icons.bookmark : Icons.bookmark_border,
-              color: _saved ? AppTheme.gold : AppTheme.ink,
+            icon: AnimatedScale(
+              scale: _pop ? 1.35 : 1.0,
+              duration: const Duration(milliseconds: 180),
+              child: Icon(
+                _saved ? Icons.bookmark : Icons.bookmark_border,
+                color: _saved ? AppTheme.gold : AppTheme.ink,
+              ),
             ),
             onPressed: _toggleSave,
           ),

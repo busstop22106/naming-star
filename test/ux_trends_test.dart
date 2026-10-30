@@ -1,0 +1,118 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import 'package:jakmyeongbyeol/engine/hanja_order.dart';
+import 'package:jakmyeongbyeol/engine/reason_line.dart';
+import 'package:jakmyeongbyeol/engine/saju.dart';
+import 'package:jakmyeongbyeol/engine/scoring.dart';
+import 'package:jakmyeongbyeol/models.dart';
+import 'package:jakmyeongbyeol/screens/favorites_screen.dart';
+import 'package:jakmyeongbyeol/screens/home_screen.dart';
+import 'package:jakmyeongbyeol/screens/recommend_screen.dart';
+
+void main() {
+  group('추천 근거 한 줄', () {
+    test('막연한 문장 없이 계산 근거만 쓴다', () {
+      final baby = BabyInfo(
+        surname: '한',
+        surnameHanja: '韓',
+        surnameStrokes: 17,
+        gender: Gender.boy,
+        birth: DateTime(2024, 7, 11),
+        birthHour: 15,
+        birthMinute: 30,
+      );
+      final analysis = analyzeName(
+        surname: '한',
+        surnameStrokes: 17,
+        picks: [
+          orderedHanja('지').firstWhere((p) => p.char == '志'),
+          orderedHanja('민').firstWhere((p) => p.char == '旻'),
+        ],
+        saju: computeSaju(baby),
+        gender: Gender.boy,
+      );
+      final reason = recommendReason(analysis);
+      expect(reason, contains('수리'));
+      expect(reason, isNot(contains('AI')));
+      // 용신 보완은 사주 보완 점수가 뒷받침할 때만 나온다.
+      if (analysis.saju.yongsin != null &&
+          analysis.resource.score >= 70) {
+        expect(reason, contains('용신'));
+      } else {
+        expect(reason, isNot(contains('용신')));
+      }
+    });
+  });
+
+  group('60초 첫 가치 — 예시로 먼저 보기', () {
+    testWidgets('입력 없이 예시 아기 추천 결과까지 간다', (tester) async {
+      tester.view.physicalSize = const Size(390, 1400);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+      await tester.pumpWidget(
+          const MaterialApp(home: HomeScreen()));
+      await tester.pumpAndSettle();
+      final exampleButton =
+          find.text('예시로 먼저 보기 · 입력 없이 결과 체험');
+      await tester.ensureVisible(exampleButton);
+      await tester.pumpAndSettle();
+      await tester.tap(exampleButton);
+      // 별 애니메이션(2초)이 끝나면 추천 화면으로 넘어간다.
+      await tester.pumpAndSettle();
+      expect(find.text('한○○ · 남아 이름 추천'), findsOneWidget);
+      // 근거 한 줄이 카드에 보인다.
+      expect(find.textContaining('수리'), findsWidgets);
+    });
+  });
+
+  group('보관함 빈 화면 CTA', () {
+    testWidgets('이름 지으러 가기 버튼이 있다', (tester) async {
+      SharedPreferences.setMockInitialValues({});
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+      await tester.pumpWidget(
+          const MaterialApp(home: FavoritesScreen()));
+      await tester.pumpAndSettle();
+      expect(find.text('아직 저장한 이름이 없어요.'), findsOneWidget);
+      final cta = find.text('이름 지으러 가기');
+      expect(cta, findsOneWidget);
+      await tester.tap(cta);
+      await tester.pumpAndSettle();
+      expect(find.text('이름 지으러 가기'), findsNothing);
+    });
+  });
+
+  group('추천 카드 북마크 저장', () {
+    testWidgets('카드 북마크를 누르면 저장되고 별이 채워진다',
+        (tester) async {
+      SharedPreferences.setMockInitialValues({});
+      final baby = BabyInfo(
+        surname: '한',
+        surnameHanja: '韓',
+        surnameStrokes: 17,
+        gender: Gender.boy,
+        birth: DateTime(2024, 7, 11),
+        birthHour: 15,
+        birthMinute: 30,
+      );
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+      await tester.pumpWidget(MaterialApp(
+          home: RecommendScreen(
+              baby: baby, saju: computeSaju(baby))));
+      await tester.pumpAndSettle();
+      final bookmark =
+          find.byIcon(Icons.bookmark_border).first;
+      await tester.ensureVisible(bookmark);
+      await tester.pumpAndSettle();
+      await tester.tap(bookmark);
+      await tester.pumpAndSettle();
+      expect(find.text('보관함에 저장했어요.'), findsOneWidget);
+      expect(find.byIcon(Icons.bookmark), findsWidgets);
+    });
+  });
+}

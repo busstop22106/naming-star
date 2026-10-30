@@ -61,9 +61,14 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _items.isEmpty
-              ? const EmptyState(
+              ? EmptyState(
                   title: '아직 저장한 이름이 없어요.',
                   subtitle: '마음에 드는 이름에서 북마크를 눌러 저장하세요.\n별이 반짝이는 이름, 하나씩 모아보세요.',
+                  // 빈 화면은 두 번째 온보딩 — 다음 행동 버튼을 반드시 둔다.
+                  action: ElevatedButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text('이름 지으러 가기'),
+                  ),
                 )
               : ListView(
                   padding: const EdgeInsets.all(20),

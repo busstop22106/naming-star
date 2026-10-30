@@ -109,6 +109,28 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  void _goExample() {
+    final baby = BabyInfo(
+      surname: '한',
+      surnameHanja: '韓',
+      surnameStrokes: 17,
+      gender: Gender.boy,
+      birth: DateTime(2024, 7, 11),
+      birthHour: 15,
+      birthMinute: 30,
+    );
+    final saju = computeSaju(baby);
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => RevealScreen(
+          nextBuilder: (_) =>
+              RecommendScreen(baby: baby, saju: saju),
+        ),
+      ),
+    );
+  }
+
   void _goRecommend() {
     final baby = BabyInfo(
       surname: _surnamePick.name,
@@ -393,6 +415,13 @@ class _HomeScreenState extends State<HomeScreen> {
             ElevatedButton(
               onPressed: _goRecommend,
               child: const Text('아기에게 좋은 이름 지어보기'),
+            ),
+            const SizedBox(height: 4),
+            // 60초 첫 가치 — 폼을 채우지 않아도 예시 아기로 결과를 바로 체험한다.
+            // 폼 자체는 건드리지 않으니, 돌아오면 내 입력이 그대로 남아 있다.
+            TextButton(
+              onPressed: _goExample,
+              child: const Text('예시로 먼저 보기 · 입력 없이 결과 체험'),
             ),
             const SizedBox(height: 16),
             const Text(

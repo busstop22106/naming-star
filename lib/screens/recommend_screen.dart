@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../data/pure_korean_names.dart';
 import '../engine/generator.dart';
+import '../engine/reason_line.dart';
 import '../engine/saju.dart';
 import '../favorites.dart';
 import '../models.dart';
@@ -263,10 +264,21 @@ class _NameCard extends StatefulWidget {
 class _NameCardState extends State<_NameCard> {
   bool _saved = false;
 
+  /// 저장 순간 별이 톡 튀는 피드백용 — 결과 공개·저장 2곳에만 모션을 둔다.
+  bool _pop = false;
+
   @override
   void initState() {
     super.initState();
     _checkSaved();
+  }
+
+  void _triggerPop() {
+    if (!mounted) return;
+    setState(() => _pop = true);
+    Future.delayed(const Duration(milliseconds: 180), () {
+      if (mounted) setState(() => _pop = false);
+    });
   }
 
   Future<void> _checkSaved() async {
@@ -293,6 +305,7 @@ class _NameCardState extends State<_NameCard> {
       await saveFavorite(item);
       if (!mounted) return;
       setState(() => _saved = true);
+      _triggerPop();
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('보관함에 저장했어요.')),
       );
@@ -370,6 +383,16 @@ class _NameCardState extends State<_NameCard> {
                               fontSize: 12, color: AppTheme.sub),
                         ),
                       ],
+                      // 추천 근거 한 줄 — 점수가 뒷받침하는 이유만 문장으로 쓴다.
+                      const SizedBox(height: 4),
+                      Text(
+                        recommendReason(a),
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                            fontSize: 12,
+                            color: AppTheme.primary,
+                            fontWeight: FontWeight.w700),
+                      ),
                       const SizedBox(height: 6),
                       Wrap(
                         spacing: 10,
@@ -400,9 +423,13 @@ class _NameCardState extends State<_NameCard> {
                 ),
                 ScoreRing(score: a.total, size: 64, strokeWidth: 7),
                 IconButton(
-                  icon: Icon(
-                    _saved ? Icons.bookmark : Icons.bookmark_border,
-                    color: _saved ? AppTheme.gold : AppTheme.sub,
+                  icon: AnimatedScale(
+                    scale: _pop ? 1.35 : 1.0,
+                    duration: const Duration(milliseconds: 180),
+                    child: Icon(
+                      _saved ? Icons.bookmark : Icons.bookmark_border,
+                      color: _saved ? AppTheme.gold : AppTheme.sub,
+                    ),
                   ),
                   onPressed: _toggleSave,
                   tooltip: '보관함 저장',
