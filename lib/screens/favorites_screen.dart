@@ -119,25 +119,25 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                                   await replaceFavorites(_items);
                                   if (!mounted) return;
                                   setState(() {});
-                                  messenger.showSnackBar(
-                                    SnackBar(
-                                      content: const Text(
-                                          '보관함에서 삭제했어요.'),
-                                      action: SnackBarAction(
-                                        label: '실행 취소',
-                                        onPressed: () async {
-                                          final items =
-                                              List<FavoriteItem>.of(
-                                                  _items);
-                                          items.insert(
-                                              index.clamp(
-                                                  0, items.length),
-                                              removed);
-                                          await replaceFavorites(items);
-                                          setState(
-                                              () => _items = items);
-                                        },
-                                      ),
+                                  // 연타해도 이전 토스트가 뒤에 줄줄이 뜨지 않게
+                                  // 대기 중인 토스트를 비우고 새 토스트만 띄운다.
+                                  showSingleSnackBar(
+                                    messenger,
+                                    '보관함에서 삭제했어요.',
+                                    action: SnackBarAction(
+                                      label: '실행 취소',
+                                      onPressed: () async {
+                                        final items =
+                                            List<FavoriteItem>.of(
+                                                _items);
+                                        items.insert(
+                                            index.clamp(
+                                                0, items.length),
+                                            removed);
+                                        await replaceFavorites(items);
+                                        setState(
+                                            () => _items = items);
+                                      },
                                     ),
                                   );
                                 },

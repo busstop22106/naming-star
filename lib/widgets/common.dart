@@ -10,6 +10,20 @@ String formatTimeOfDay(TimeOfDay t) {
   return '$period $hour12시 ${t.minute}분';
 }
 
+/// 토스트(스낵바) 쌓임 방지 — 새 토스트를 띄우기 전에 대기 중인 토스트를
+/// 모두 비우고 즉시 새 토스트를 띄운다. 보관함 저장/삭제처럼 버튼을 연타하면
+/// 오래된 토스트가 한참 뒤까지 줄줄이 뜨는 문제를 막는다.
+/// 호출 전에 ScaffoldMessenger를 잡아두면 비동기 간격 뒤에도 안전하다.
+void showSingleSnackBar(
+  ScaffoldMessengerState messenger,
+  String message, {
+  SnackBarAction? action,
+}) {
+  messenger.clearSnackBars();
+  messenger.showSnackBar(
+      SnackBar(content: Text(message), action: action));
+}
+
 /// 종합 점수 링
 class ScoreRing extends StatelessWidget {
   final double score;

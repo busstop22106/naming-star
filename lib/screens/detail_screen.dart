@@ -63,6 +63,8 @@ class _DetailScreenState extends State<DetailScreen> {
   }
 
   Future<void> _toggleSave() async {
+    // 토스트 쌓임 방지용 — 비동기 저장 전에 잡아둔다.
+    final messenger = ScaffoldMessenger.of(context);
     final item = FavoriteItem(
       baby: widget.baby,
       picks: _picks,
@@ -73,18 +75,14 @@ class _DetailScreenState extends State<DetailScreen> {
       await removeFavorite(item);
       setState(() => _saved = false);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('보관함에서 삭제했어요.')),
-        );
+        showSingleSnackBar(messenger, '보관함에서 삭제했어요.');
       }
     } else {
       await saveFavorite(item);
       setState(() => _saved = true);
       _triggerPop();
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('보관함에 저장했어요.')),
-        );
+        showSingleSnackBar(messenger, '보관함에 저장했어요.');
       }
     }
   }

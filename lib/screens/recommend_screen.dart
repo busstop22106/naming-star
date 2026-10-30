@@ -3,7 +3,6 @@ import '../data/pure_korean_names.dart';
 import '../engine/generator.dart';
 import '../engine/reason_line.dart';
 import '../engine/saju.dart';
-import '../favorites.dart';
 import '../models.dart';
 import '../services/ad_service.dart';
 import '../theme.dart';
@@ -245,7 +244,8 @@ class _InfoChip extends StatelessWidget {
   }
 }
 
-class _NameCard extends StatefulWidget {
+/// 추천 이름 카드 — 저장은 상세 화면에서만 한다 (카드 북마크는 2026-10-30 제거).
+class _NameCard extends StatelessWidget {
   final int rank;
   final NameAnalysis analysis;
   final BabyInfo baby;
@@ -258,81 +258,26 @@ class _NameCard extends StatefulWidget {
   });
 
   @override
-  State<_NameCard> createState() => _NameCardState();
-}
-
-class _NameCardState extends State<_NameCard> {
-  bool _saved = false;
-
-  /// 저장 순간 별이 톡 튀는 피드백용 — 결과 공개·저장 2곳에만 모션을 둔다.
-  bool _pop = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _checkSaved();
-  }
-
-  void _triggerPop() {
-    if (!mounted) return;
-    setState(() => _pop = true);
-    Future.delayed(const Duration(milliseconds: 180), () {
-      if (mounted) setState(() => _pop = false);
-    });
-  }
-
-  Future<void> _checkSaved() async {
-    final s = await isFavorite(
-        widget.analysis.fullName, widget.analysis.hanjaName);
-    if (mounted) setState(() => _saved = s);
-  }
-
-  Future<void> _toggleSave() async {
-    final item = FavoriteItem(
-      baby: widget.baby,
-      picks: widget.analysis.picks,
-      total: widget.analysis.total,
-      savedAt: DateTime.now(),
-    );
-    if (_saved) {
-      await removeFavorite(item);
-      if (!mounted) return;
-      setState(() => _saved = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('보관함에서 삭제했어요.')),
-      );
-    } else {
-      await saveFavorite(item);
-      if (!mounted) return;
-      setState(() => _saved = true);
-      _triggerPop();
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('보관함에 저장했어요.')),
-      );
-    }
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final a = widget.analysis;
+    final a = analysis;
     // 스크롤 버벅임 방지: 카드별 래스터 캐시를 만들어 스크롤 중 재그리기를 막는다.
     return RepaintBoundary(
       child: Card(
         margin: const EdgeInsets.symmetric(vertical: 6),
         child: InkWell(
           borderRadius: BorderRadius.circular(20),
-          onTap: widget.onTap,
+          onTap: onTap,
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Row(
               children: [
                 SizedBox(
                   width: 28,
-                  child: Text('${widget.rank}',
+                  child: Text('$rank',
                       style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w800,
-                          color: widget.rank <= 3
+                          color: rank <= 3
                               ? AppTheme.gold
                               : AppTheme.sub)),
                 ),
@@ -422,19 +367,6 @@ class _NameCardState extends State<_NameCard> {
                   ),
                 ),
                 ScoreRing(score: a.total, size: 64, strokeWidth: 7),
-                IconButton(
-                  icon: AnimatedScale(
-                    scale: _pop ? 1.35 : 1.0,
-                    duration: const Duration(milliseconds: 180),
-                    child: Icon(
-                      _saved ? Icons.bookmark : Icons.bookmark_border,
-                      color: _saved ? AppTheme.gold : AppTheme.sub,
-                    ),
-                  ),
-                  onPressed: _toggleSave,
-                  tooltip: '보관함 저장',
-                  visualDensity: VisualDensity.compact,
-                ),
                 const Icon(Icons.chevron_right,
                     color: AppTheme.sub),
               ],

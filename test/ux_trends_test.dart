@@ -85,8 +85,8 @@ void main() {
     });
   });
 
-  group('추천 카드 북마크 저장', () {
-    testWidgets('카드 북마크를 누르면 저장되고 별이 채워진다',
+  group('추천 카드 북마크 제거', () {
+    testWidgets('추천 카드에는 북마크 버튼이 없다 — 저장은 상세 화면에서만',
         (tester) async {
       SharedPreferences.setMockInitialValues({});
       final baby = BabyInfo(
@@ -105,14 +105,10 @@ void main() {
           home: RecommendScreen(
               baby: baby, saju: computeSaju(baby))));
       await tester.pumpAndSettle();
-      final bookmark =
-          find.byIcon(Icons.bookmark_border).first;
-      await tester.ensureVisible(bookmark);
-      await tester.pumpAndSettle();
-      await tester.tap(bookmark);
-      await tester.pumpAndSettle();
-      expect(find.text('보관함에 저장했어요.'), findsOneWidget);
-      expect(find.byIcon(Icons.bookmark), findsWidgets);
+      expect(find.byIcon(Icons.bookmark_border), findsNothing);
+      expect(find.byIcon(Icons.bookmark), findsNothing);
+      // [>] 진입 버튼은 그대로 있다.
+      expect(find.byIcon(Icons.chevron_right), findsWidgets);
     });
   });
 }

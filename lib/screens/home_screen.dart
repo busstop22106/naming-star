@@ -5,7 +5,6 @@ import '../services/ad_service.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
 import '../widgets/surname_picker.dart';
-import 'favorites_screen.dart';
 import 'recommend_screen.dart';
 import 'reveal_screen.dart';
 
@@ -170,22 +169,6 @@ class _HomeScreenState extends State<HomeScreen> {
         child: ListView(
           padding: const EdgeInsets.all(20),
           children: [
-            // 보관함 바로가기 — 설정 탭 안에만 숨어 있지 않게 상단 우측에 둔다.
-            Row(
-              children: [
-                const Spacer(),
-                IconButton(
-                  tooltip: '보관함',
-                  icon: const Icon(Icons.bookmark_outline,
-                      color: AppTheme.primary),
-                  onPressed: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (_) => const FavoritesScreen()),
-                  ),
-                ),
-              ],
-            ),
             const SizedBox(height: 8),
             // 헤더
             const StarHero(
