@@ -69,57 +69,6 @@ class _SurnameSheetState extends State<_SurnameSheet> {
               style:
                   TextStyle(fontSize: 17, fontWeight: FontWeight.w800)),
           const SizedBox(height: 12),
-          // 많이 쓰는 성씨 퀵 선택 — 스크롤 없이 바로 고른다.
-          // 다른 한자를 원하면 아래 목록에서 해당 성씨를 펼치면 된다.
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('많이 쓰는 성씨',
-                    style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: AppTheme.sub)),
-                const SizedBox(height: 6),
-                Wrap(
-                  spacing: 6,
-                  runSpacing: 6,
-                  children: _quickSurnames.map((name) {
-                    final first = surnamesByName[name]!.first;
-                    final sel = widget.current?.name == name &&
-                        widget.current?.hanja == first.hanja;
-                    return ChoiceChip(
-                      label: Text(name,
-                          style: TextStyle(
-                              fontSize: 14,
-                              color: sel
-                                  ? AppTheme.primaryDark
-                                  : AppTheme.ink,
-                              fontWeight: FontWeight.w700)),
-                      selected: sel,
-                      onSelected: (_) => Navigator.pop(
-                          context,
-                          SurnamePick(
-                              name: first.name,
-                              hanja: first.hanja,
-                              strokes: first.strokes)),
-                      selectedColor: AppTheme.primarySoft,
-                      showCheckmark: false,
-                      side: BorderSide(
-                        color: sel
-                            ? AppTheme.primary
-                            : AppTheme.chipBorder,
-                        width: sel ? 1.5 : 1,
-                      ),
-                      visualDensity: VisualDensity.compact,
-                    );
-                  }).toList(),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 10),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: TextField(
@@ -132,6 +81,66 @@ class _SurnameSheetState extends State<_SurnameSheet> {
               onChanged: (v) => setState(() => _query = v),
             ),
           ),
+          // 많이 쓰는 성씨 퀵 선택 — 세로 3줄 대신 가로 한 줄로 옆으로 밀어 본다.
+          // 검색 중에는 숨겨서 성씨 목록이 넓어지게 한다.
+          // 다른 한자를 원하면 아래 목록에서 해당 성씨를 펼치면 된다.
+          if (_query.isEmpty) ...[
+            const SizedBox(height: 10),
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 20),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text('많이 쓰는 성씨',
+                    style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: AppTheme.sub)),
+              ),
+            ),
+            const SizedBox(height: 6),
+            SizedBox(
+              height: 40,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20),
+                itemCount: _quickSurnames.length,
+                separatorBuilder: (_, __) =>
+                    const SizedBox(width: 6),
+                itemBuilder: (_, i) {
+                  final name = _quickSurnames[i];
+                  final first = surnamesByName[name]!.first;
+                  final sel = widget.current?.name == name &&
+                      widget.current?.hanja == first.hanja;
+                  return ChoiceChip(
+                    label: Text(name,
+                        style: TextStyle(
+                            fontSize: 14,
+                            color: sel
+                                ? AppTheme.primaryDark
+                                : AppTheme.ink,
+                            fontWeight: FontWeight.w700)),
+                    selected: sel,
+                    onSelected: (_) => Navigator.pop(
+                        context,
+                        SurnamePick(
+                            name: first.name,
+                            hanja: first.hanja,
+                            strokes: first.strokes)),
+                    selectedColor: AppTheme.primarySoft,
+                    showCheckmark: false,
+                    side: BorderSide(
+                      color: sel
+                          ? AppTheme.primary
+                          : AppTheme.chipBorder,
+                      width: sel ? 1.5 : 1,
+                    ),
+                    visualDensity: VisualDensity.compact,
+                  );
+                },
+              ),
+            ),
+          ],
           const SizedBox(height: 8),
           Expanded(
             child: names.isEmpty
@@ -148,18 +157,23 @@ class _SurnameSheetState extends State<_SurnameSheet> {
                   ),
           ),
           const Divider(height: 1),
-          ListTile(
-            leading: const Icon(Icons.edit_outlined,
-                color: AppTheme.primary),
-            title: const Text('목록에 없는 성씨 직접 입력',
-                style: TextStyle(
-                    fontWeight: FontWeight.w600, fontSize: 14)),
-            onTap: () async {
-              final manual = await _showManualDialog(context);
-              if (manual != null && context.mounted) {
-                Navigator.pop(context, manual);
-              }
-            },
+          // 시트 배경(DecoratedBox)과 ListTile 사이에 Material이 없으면
+          // 잉크 효과가 가려진다는 디버그 경고가 뜬다 — 같은 배경색 Material로 감싼다.
+          Material(
+            color: AppTheme.bg,
+            child: ListTile(
+              leading: const Icon(Icons.edit_outlined,
+                  color: AppTheme.primary),
+              title: const Text('목록에 없는 성씨 직접 입력',
+                  style: TextStyle(
+                      fontWeight: FontWeight.w600, fontSize: 14)),
+              onTap: () async {
+                final manual = await _showManualDialog(context);
+                if (manual != null && context.mounted) {
+                  Navigator.pop(context, manual);
+                }
+              },
+            ),
           ),
           SizedBox(
               height: MediaQuery.of(context).padding.bottom + 8),

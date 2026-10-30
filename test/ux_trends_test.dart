@@ -9,6 +9,7 @@ import 'package:jakmyeongbyeol/engine/scoring.dart';
 import 'package:jakmyeongbyeol/models.dart';
 import 'package:jakmyeongbyeol/screens/favorites_screen.dart';
 import 'package:jakmyeongbyeol/screens/recommend_screen.dart';
+import 'package:jakmyeongbyeol/widgets/surname_picker.dart';
 
 void main() {
   group('추천 근거 한 줄', () {
@@ -42,6 +43,28 @@ void main() {
       } else {
         expect(reason, isNot(contains('용신')));
       }
+    });
+  });
+
+  group('성씨 퀵칩 가로 한 줄', () {
+    testWidgets('검색 전에는 보이고 검색하면 숨는다', (tester) async {
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+      await tester.pumpWidget(MaterialApp(
+          home: Scaffold(
+              body: Builder(
+                  builder: (ctx) => TextButton(
+                      onPressed: () => showSurnamePicker(ctx, null),
+                      child: const Text('성씨 선택 열기'))))));
+      await tester.tap(find.text('성씨 선택 열기'));
+      await tester.pumpAndSettle();
+      expect(find.text('많이 쓰는 성씨'), findsOneWidget);
+      await tester.enterText(find.byType(TextField), '한');
+      await tester.pumpAndSettle();
+      expect(find.text('많이 쓰는 성씨'), findsNothing);
+      // 검색 결과가 1개라 아코디언이 자동 펼쳐진다.
+      expect(find.text('2개 한자'), findsOneWidget);
     });
   });
 
