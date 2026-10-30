@@ -188,8 +188,16 @@ class _SurnameSheetState extends State<_SurnameSheet> {
     // (전체 목록일 때는 200개가 넘으므로 자동 펼침을 하지 않는다.)
     final isOpen = _expanded == name || autoOpen;
 
-    return Card(
+    // 성능: 시트에서 빠르게 스크롤하면 행마다 그림자(Card elevation)를
+    // 새로 그려야 해서 저사양 기기에서 버벅인다. 조밀한 목록 행은
+    // 그림자 없는 테두리 박스로 바꿔 래스터 비용을 줄인다.
+    return Container(
       margin: const EdgeInsets.symmetric(vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppTheme.line),
+      ),
       child: Column(
         children: [
           InkWell(

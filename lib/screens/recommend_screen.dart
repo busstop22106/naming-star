@@ -59,16 +59,23 @@ class _RecommendScreenState extends State<RecommendScreen> {
     final saju = widget.saju;
     final sorted = _sorted;
 
+    // 성능: 60개 카드를 한 번에 다 만드는 ListView(children:)는 진입·정렬 변경
+    // 때마다 60개를 전부 빌드해서 저사양 기기에서 버벅인다.
+    // CustomScrollView + SliverList.builder로 화면에 보이는 것만 만든다.
+    final showBanner = AdService.bannerEnabledFor(AdPlacement.home);
     return Scaffold(
       appBar: AppBar(
         title: Text('${widget.baby.surname}○○ · ${widget.baby.gender.label} 이름 추천'),
       ),
-      body: ListView(
-        padding: EdgeInsets.fromLTRB(
-            20, 8, 20, 20 + MediaQuery.of(context).padding.bottom),
-        children: [
-          // 사주 요약
-          Card(
+      body: CustomScrollView(
+        slivers: [
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+            sliver: SliverToBoxAdapter(
+              child: Column(
+                children: [
+                  // 사주 요약
+                  Card(
             color: AppTheme.primary,
             child: Padding(
               padding: const EdgeInsets.all(18),
@@ -113,65 +120,94 @@ class _RecommendScreenState extends State<RecommendScreen> {
               ),
             ),
           ),
-          const SizedBox(height: 12),
-          // 정렬
-          Row(
-            children: [
-              Text('총 ${sorted.length}개 후보',
-                  style: const TextStyle(
-                      fontSize: 13,
-                      color: AppTheme.sub,
-                      fontWeight: FontWeight.w600)),
-              const Spacer(),
-              DropdownButton<String>(
-                value: _sort,
-                underline: const SizedBox(),
-                style: const TextStyle(
-                    fontSize: 13,
-                    color: AppTheme.ink,
-                    fontWeight: FontWeight.w600),
-                items: const [
-                  DropdownMenuItem(
-                      value: 'total', child: Text('종합점수순')),
-                  DropdownMenuItem(value: 'suri', child: Text('수리순')),
-                  DropdownMenuItem(
-                      value: 'resource', child: Text('사주 보완순')),
-                  DropdownMenuItem(value: 'sound', child: Text('발음순')),
                 ],
-                onChanged: (v) => setState(() => _sort = v!),
               ),
-            ],
+            ),
           ),
-          const SizedBox(height: 4),
-          // 후보 리스트 (현재 전체 무료 공개)
-          ...sorted.asMap().entries.map((e) {
-            final i = e.key;
-            final a = e.value;
-            return _NameCard(
-              rank: i + 1,
-              analysis: a,
-              baby: widget.baby,
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => DetailScreen(
-                        baby: widget.baby, analysis: a),
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+            sliver: SliverToBoxAdapter(
+              child: Column(
+                children: [
+                  // 정렬
+                  Row(
+                    children: [
+                      Text('총 ${sorted.length}개 후보',
+                          style: const TextStyle(
+                              fontSize: 13,
+                              color: AppTheme.sub,
+                              fontWeight: FontWeight.w600)),
+                      const Spacer(),
+                      DropdownButton<String>(
+                        value: _sort,
+                        underline: const SizedBox(),
+                        style: const TextStyle(
+                            fontSize: 13,
+                            color: AppTheme.ink,
+                            fontWeight: FontWeight.w600),
+                        items: const [
+                          DropdownMenuItem(
+                              value: 'total', child: Text('종합점수순')),
+                          DropdownMenuItem(
+                              value: 'suri', child: Text('수리순')),
+                          DropdownMenuItem(
+                              value: 'resource',
+                              child: Text('사주 보완순')),
+                          DropdownMenuItem(
+                              value: 'sound', child: Text('발음순')),
+                        ],
+                        onChanged: (v) => setState(() => _sort = v!),
+                      ),
+                    ],
                   ),
+                  const SizedBox(height: 4),
+                ],
+              ),
+            ),
+          ),
+          // 후보 리스트 (현재 전체 무료 공개) — 보이는 것만 만든다.
+          SliverPadding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            sliver: SliverList.builder(
+              itemCount: sorted.length,
+              itemBuilder: (_, i) {
+                final a = sorted[i];
+                return _NameCard(
+                  rank: i + 1,
+                  analysis: a,
+                  baby: widget.baby,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => DetailScreen(
+                            baby: widget.baby, analysis: a),
+                      ),
+                    );
+                  },
                 );
               },
-            );
-          }),
-          const SizedBox(height: 8),
-          const Text(
-            '점수는 전통 성명학의 간이 계산 결과예요. 마음에 드는 이름을 눌러 상세 풀이를 확인하세요.',
-            style: TextStyle(fontSize: 11, color: AppTheme.sub),
-            textAlign: TextAlign.center,
+            ),
           ),
-          const SizedBox(height: 12),
-          // 하단 배너 광고 (AdService.bannerEnabled 플래그로 제어)
-          if (AdService.bannerEnabledFor(AdPlacement.home))
-            const Center(child: BannerAdWidget()),
+          SliverPadding(
+            padding: EdgeInsets.fromLTRB(
+                20, 8, 20, 20 + MediaQuery.of(context).padding.bottom),
+            sliver: SliverToBoxAdapter(
+              child: Column(
+                children: [
+                  const Text(
+                    '점수는 전통 성명학의 간이 계산 결과예요. 마음에 드는 이름을 눌러 상세 풀이를 확인하세요.',
+                    style: TextStyle(fontSize: 11, color: AppTheme.sub),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 12),
+                  // 하단 배너 광고 (AdService.bannerEnabled 플래그로 제어)
+                  if (showBanner)
+                    const Center(child: BannerAdWidget()),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
     );

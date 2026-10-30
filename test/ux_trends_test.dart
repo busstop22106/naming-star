@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:jakmyeongbyeol/engine/generator.dart';
 import 'package:jakmyeongbyeol/engine/hanja_order.dart';
 import 'package:jakmyeongbyeol/engine/reason_line.dart';
 import 'package:jakmyeongbyeol/engine/saju.dart';
@@ -110,6 +111,37 @@ void main() {
       expect(find.byIcon(Icons.bookmark), findsNothing);
       // [>] 진입 버튼은 그대로 있다.
       expect(find.byIcon(Icons.chevron_right), findsWidgets);
+    });
+  });
+
+  group('추천 리스트 lazy 빌드', () {
+    testWidgets('화면 밖 최하위 카드는 스크롤 전까지 만들지 않는다',
+        (tester) async {
+      SharedPreferences.setMockInitialValues({});
+      final baby = BabyInfo(
+        surname: '한',
+        surnameHanja: '韓',
+        surnameStrokes: 17,
+        gender: Gender.boy,
+        birth: DateTime(2024, 7, 11),
+        birthHour: 15,
+        birthMinute: 30,
+      );
+      final saju = computeSaju(baby);
+      final names = generateNames(baby, saju)
+        ..sort((a, b) => b.total.compareTo(a.total));
+      // 최하위 카드의 순위 숫자 — 이름 글자는 한자 차이로 중복될 수 있어 순위로 찾는다.
+      final lastRank = '${names.length}';
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+      await tester.pumpWidget(
+          MaterialApp(home: RecommendScreen(baby: baby, saju: saju)));
+      await tester.pumpAndSettle();
+      expect(find.text(lastRank), findsNothing);
+      await tester.scrollUntilVisible(find.text(lastRank), 500);
+      await tester.pumpAndSettle();
+      expect(find.text(lastRank), findsOneWidget);
     });
   });
 }

@@ -34,7 +34,7 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  /// 보이는 리스트를 끝까지 스크롤한다. ListView는 화면 밖 자식을
+  /// 보이는 리스트를 끝까지 스크롤한다. SliverList는 화면 밖 자식을
   /// lazy하게 빌드하므로, 끝의 배너는 스크롤한 뒤에야 트리에 나타난다.
   Future<void> scrollToEnd(WidgetTester tester) async {
     for (var i = 0; i < 8; i++) {
@@ -53,7 +53,7 @@ void main() {
     // 고정 하단이 아니라 스크롤 리스트의 자손이다.
     expect(
       find.ancestor(
-          of: find.byType(BannerAdWidget), matching: find.byType(ListView)),
+          of: find.byType(BannerAdWidget), matching: find.byType(CustomScrollView)),
       findsOneWidget,
     );
   });
@@ -78,7 +78,7 @@ void main() {
     expect(find.byType(BannerAdWidget), findsOneWidget);
     expect(
       find.ancestor(
-          of: find.byType(BannerAdWidget), matching: find.byType(ListView)),
+          of: find.byType(BannerAdWidget), matching: find.byType(CustomScrollView)),
       findsOneWidget,
     );
   });

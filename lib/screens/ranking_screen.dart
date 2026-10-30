@@ -138,12 +138,17 @@ class _RankList extends StatelessWidget {
   Widget build(BuildContext context) {
     final maxCount =
         entries.map((e) => e.count).reduce((a, b) => a > b ? a : b);
-    return ListView(
-      padding: EdgeInsets.fromLTRB(
-          20, 20, 20, 20 + MediaQuery.of(context).padding.bottom),
-      children: [
-        // 트렌드 카드 (성별별로 데이터에서 자동 생성)
-        Card(
+    // 성능: 20개 행을 한 번에 다 만드는 ListView(children:) 대신
+    // 보이는 행만 만드는 SliverList.builder로 바꾼다 (추천 화면과 같은 이유).
+    return CustomScrollView(
+      slivers: [
+        SliverPadding(
+          padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+          sliver: SliverToBoxAdapter(
+            child: Column(
+              children: [
+                // 트렌드 카드 (성별별로 데이터에서 자동 생성)
+                Card(
           color: isBoy ? AppTheme.boy : AppTheme.girl,
           child: Padding(
             padding: const EdgeInsets.all(16),
@@ -170,9 +175,17 @@ class _RankList extends StatelessWidget {
             ),
           ),
         ),
-        const SizedBox(height: 12),
-        ...entries.map((e) {
-          return InkWell(
+              ],
+            ),
+          ),
+        ),
+        SliverPadding(
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+          sliver: SliverList.builder(
+            itemCount: entries.length,
+            itemBuilder: (_, i) {
+              final e = entries[i];
+              return InkWell(
             borderRadius: BorderRadius.circular(12),
             onTap: onAnalyzeName == null
                 ? null
@@ -237,49 +250,62 @@ class _RankList extends StatelessWidget {
               ),
             ),
           );
-        }),
-        const SizedBox(height: 16),
-        Container(
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            color: AppTheme.primarySoft,
-            borderRadius: BorderRadius.circular(14),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Row(
-                children: [
-                  Icon(Icons.info_outline, size: 16, color: AppTheme.primary),
-                  SizedBox(width: 6),
-                  Text('랭킹 읽는 법',
-                      style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w700,
-                          color: AppTheme.primary)),
-                ],
-              ),
-              const SizedBox(height: 6),
-              Text(
-                '· 출처: ${rankingSourceFor(year)}\n'
-                '· 건수는 집계 시점에 따라 발표 수치와 조금 다를 수 있어요.\n'
-                '· TOP 20에 든 이름은 또래에 같은 이름이 많을 수 있어요. '
-                '작명별 추천에서는 이런 이름에 사용성 점수 조정이 들어갑니다.',
-                style: const TextStyle(
-                    fontSize: 12, color: AppTheme.sub, height: 1.6),
-              ),
-            ],
+            },
           ),
         ),
-        // 하단 배너 광고: 다른 탭처럼 리스트 최하단에서만 보인다.
-        // AdService.bannerEnabled 플래그로 제어 (출시 초기에는 랭킹만 노출).
-        if (showAd &&
-            AdService.bannerEnabledFor(AdPlacement.ranking)) ...[
-          const SizedBox(height: 16),
-          const Center(
-              child: BannerAdWidget(placement: AdPlacement.ranking)),
-          const SizedBox(height: 12),
-        ],
+        SliverPadding(
+          padding: EdgeInsets.fromLTRB(
+              20, 16, 20, 20 + MediaQuery.of(context).padding.bottom),
+          sliver: SliverToBoxAdapter(
+            child: Column(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primarySoft,
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Row(
+                        children: [
+                          Icon(Icons.info_outline,
+                              size: 16, color: AppTheme.primary),
+                          SizedBox(width: 6),
+                          Text('랭킹 읽는 법',
+                              style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppTheme.primary)),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        '· 출처: ${rankingSourceFor(year)}\n'
+                        '· 건수는 집계 시점에 따라 발표 수치와 조금 다를 수 있어요.\n'
+                        '· TOP 20에 든 이름은 또래에 같은 이름이 많을 수 있어요. '
+                        '작명별 추천에서는 이런 이름에 사용성 점수 조정이 들어갑니다.',
+                        style: const TextStyle(
+                            fontSize: 12, color: AppTheme.sub, height: 1.6),
+                      ),
+                    ],
+                  ),
+                ),
+                // 하단 배너 광고: 다른 탭처럼 리스트 최하단에서만 보인다.
+                // AdService.bannerEnabled 플래그로 제어 (출시 초기에는 랭킹만 노출).
+                if (showAd &&
+                    AdService.bannerEnabledFor(AdPlacement.ranking)) ...[
+                  const SizedBox(height: 16),
+                  const Center(
+                      child:
+                          BannerAdWidget(placement: AdPlacement.ranking)),
+                  const SizedBox(height: 12),
+                ],
+              ],
+            ),
+          ),
+        ),
       ],
     );
   }

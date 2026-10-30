@@ -70,9 +70,13 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                     child: const Text('이름 지으러 가기'),
                   ),
                 )
-              : ListView(
+              // 성능: 저장 개수가 늘면 한 번에 다 만드는 ListView(children:)가
+              // 무거워진다 — 보이는 행만 만드는 builder로 바꾼다.
+              : ListView.builder(
                   padding: const EdgeInsets.all(20),
-                  children: _items.map((item) {
+                  itemCount: _items.length,
+                  itemBuilder: (_, i) {
+                    final item = _items[i];
                     return Card(
                       margin:
                           const EdgeInsets.symmetric(vertical: 6),
@@ -114,7 +118,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                                   // 즉시 삭제하되 실행 취소로 원래 순서 그대로 되돌릴 수 있다.
                                   final messenger =
                                       ScaffoldMessenger.of(context);
-                                  final index = _items.indexOf(item);
+                                  final index = i;
                                   final removed = _items.removeAt(index);
                                   await replaceFavorites(_items);
                                   if (!mounted) return;
@@ -147,7 +151,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                         ),
                       ),
                     );
-                  }).toList(),
+                  },
                 ),
     );
   }
