@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 import '../data/rankings.dart';
+import '../models.dart';
 import '../services/ad_service.dart';
 import '../theme.dart';
 
 /// 아기 이름 랭킹
+/// [onAnalyzeName]이 있으면 이름을 눌렀을 때 내 아기 성씨·사주로 분석하는
+/// 이름 분석 탭으로 연결한다 (없으면 기존처럼 눌러도 반응 없음).
 class RankingScreen extends StatefulWidget {
-  const RankingScreen({super.key});
+  final void Function(String name, Gender gender)? onAnalyzeName;
+  const RankingScreen({super.key, this.onAnalyzeName});
 
   @override
   State<RankingScreen> createState() => _RankingScreenState();
@@ -90,12 +94,20 @@ class _RankingScreenState extends State<RankingScreen>
                     entries: rankingsByYear[_year]!.boy,
                     isBoy: true,
                     year: _year,
-                    showAd: _tabIndex == 0),
+                    showAd: _tabIndex == 0,
+                    onAnalyzeName: widget.onAnalyzeName == null
+                        ? null
+                        : (name) => widget.onAnalyzeName!(
+                            name, Gender.boy)),
                 _RankList(
                     entries: rankingsByYear[_year]!.girl,
                     isBoy: false,
                     year: _year,
-                    showAd: _tabIndex == 1),
+                    showAd: _tabIndex == 1,
+                    onAnalyzeName: widget.onAnalyzeName == null
+                        ? null
+                        : (name) => widget.onAnalyzeName!(
+                            name, Gender.girl)),
               ],
             ),
           ),
@@ -112,11 +124,15 @@ class _RankList extends StatelessWidget {
 
   /// 선택된 탭의 리스트에만 배너를 둔다 (화면에 배너는 항상 1개).
   final bool showAd;
+
+  /// 이름을 눌렀을 때 분석 탭으로 넘기는 콜백 (없으면 행이 반응하지 않음).
+  final void Function(String name)? onAnalyzeName;
   const _RankList(
       {required this.entries,
       required this.isBoy,
       required this.year,
-      this.showAd = false});
+      this.showAd = false,
+      this.onAnalyzeName});
 
   @override
   Widget build(BuildContext context) {
@@ -156,48 +172,69 @@ class _RankList extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         ...entries.map((e) {
-          return Padding(
-            padding: const EdgeInsets.symmetric(vertical: 7),
-            child: Row(
-              children: [
-                SizedBox(
-                  width: 30,
-                  child: Text('${e.rank}',
-                      style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w800,
-                          color: e.rank <= 3 ? AppTheme.gold : AppTheme.sub)),
-                ),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Text(e.name,
-                              style: const TextStyle(
-                                  fontSize: 17, fontWeight: FontWeight.w700)),
-                          const SizedBox(width: 8),
-                          Text('${e.count}명',
-                              style: const TextStyle(
-                                  fontSize: 12, color: AppTheme.sub)),
-                        ],
-                      ),
-                      const SizedBox(height: 5),
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(4),
-                        child: LinearProgressIndicator(
-                          value: e.count / maxCount,
-                          minHeight: 6,
-                          backgroundColor: AppTheme.line,
-                          valueColor: AlwaysStoppedAnimation(
-                              isBoy ? AppTheme.boy : AppTheme.girl),
-                        ),
-                      ),
-                    ],
+          return InkWell(
+            borderRadius: BorderRadius.circular(12),
+            onTap: onAnalyzeName == null
+                ? null
+                : () => onAnalyzeName!(e.name),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 7),
+              child: Row(
+                children: [
+                  SizedBox(
+                    width: 30,
+                    child: Text('${e.rank}',
+                        style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w800,
+                            color:
+                                e.rank <= 3 ? AppTheme.gold : AppTheme.sub)),
                   ),
-                ),
-              ],
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Text(e.name,
+                                style: const TextStyle(
+                                    fontSize: 17,
+                                    fontWeight: FontWeight.w700)),
+                            const SizedBox(width: 8),
+                            Text('${e.count}명',
+                                style: const TextStyle(
+                                    fontSize: 12, color: AppTheme.sub)),
+                          ],
+                        ),
+                        const SizedBox(height: 5),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(4),
+                          child: LinearProgressIndicator(
+                            value: e.count / maxCount,
+                            minHeight: 6,
+                            backgroundColor: AppTheme.line,
+                            valueColor: AlwaysStoppedAnimation(
+                                isBoy ? AppTheme.boy : AppTheme.girl),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (onAnalyzeName != null)
+                    const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text('내 사주로 분석',
+                            style: TextStyle(
+                                fontSize: 11,
+                                color: AppTheme.primary,
+                                fontWeight: FontWeight.w700)),
+                        Icon(Icons.chevron_right,
+                            size: 16, color: AppTheme.primary),
+                      ],
+                    ),
+                ],
+              ),
             ),
           );
         }),

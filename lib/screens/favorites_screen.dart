@@ -106,8 +106,35 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                                     Icons.delete_outline,
                                     color: AppTheme.sub),
                                 onPressed: () async {
-                                  await removeFavorite(item);
-                                  _load();
+                                  // 즉시 삭제하되 실행 취소로 원래 순서 그대로 되돌릴 수 있다.
+                                  final messenger =
+                                      ScaffoldMessenger.of(context);
+                                  final index = _items.indexOf(item);
+                                  final removed = _items.removeAt(index);
+                                  await replaceFavorites(_items);
+                                  if (!mounted) return;
+                                  setState(() {});
+                                  messenger.showSnackBar(
+                                    SnackBar(
+                                      content: const Text(
+                                          '보관함에서 삭제했어요.'),
+                                      action: SnackBarAction(
+                                        label: '실행 취소',
+                                        onPressed: () async {
+                                          final items =
+                                              List<FavoriteItem>.of(
+                                                  _items);
+                                          items.insert(
+                                              index.clamp(
+                                                  0, items.length),
+                                              removed);
+                                          await replaceFavorites(items);
+                                          setState(
+                                              () => _items = items);
+                                        },
+                                      ),
+                                    ),
+                                  );
                                 },
                               ),
                             ],

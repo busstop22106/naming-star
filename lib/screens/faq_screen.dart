@@ -71,8 +71,10 @@ class FaqScreen extends StatelessWidget {
               collapsedIconColor: AppTheme.sub,
               children: [
                 Padding(
+                  // 상단 여백이 0이면 펼치는 애니메이션 중에
+                  // 첫 줄이 잘려 보이는 것처럼 느껴진다.
                   padding:
-                      const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                      const EdgeInsets.fromLTRB(16, 8, 16, 16),
                   child: Text(
                     item.a,
                     style: const TextStyle(

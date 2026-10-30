@@ -2,6 +2,14 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../theme.dart';
 
+/// 출생 시간 표기 — 24시간 숫자만 쓰면 오전/오후를 헷갈린다.
+/// 사주에서는 오전 3시 30분(인시)과 오후 3시 30분(신시)이 완전히 다르다.
+String formatTimeOfDay(TimeOfDay t) {
+  final period = t.hour < 12 ? '오전' : '오후';
+  final hour12 = t.hour % 12 == 0 ? 12 : t.hour % 12;
+  return '$period $hour12시 ${t.minute}분';
+}
+
 /// 종합 점수 링
 class ScoreRing extends StatelessWidget {
   final double score;

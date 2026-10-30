@@ -5,30 +5,79 @@ import '../services/ad_service.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
 import '../widgets/surname_picker.dart';
+import 'favorites_screen.dart';
 import 'recommend_screen.dart';
 import 'reveal_screen.dart';
 
 /// 홈 — 아기 정보 입력
+/// [baby]·[onBabyChanged]가 있으면 아기 기본 정보를 이름 분석 탭과 공유한다.
+/// (없으면 기존처럼 이 화면 안에서만 관리 — 기존 테스트 호환용)
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  final SharedBaby? baby;
+  final ValueChanged<SharedBaby>? onBabyChanged;
+  const HomeScreen({super.key, this.baby, this.onBabyChanged});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  SurnamePick _surnamePick =
-      const SurnamePick(name: '김', hanja: '金', strokes: 8);
-  Gender _gender = Gender.boy;
-  DateTime _birth = DateTime(2026, 10, 19);
+  late SurnamePick _surnamePick;
+  late Gender _gender;
+  late DateTime _birth;
   TimeOfDay? _birthTime;
-  bool _timeUnknown = false;
+  late bool _timeUnknown;
   bool _isPureKorean = false;
+  SharedBaby? _lastSynced;
+
+  @override
+  void initState() {
+    super.initState();
+    _applyShared(widget.baby ?? SharedBaby.initial());
+  }
+
+  @override
+  void didUpdateWidget(covariant HomeScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // 다른 탭에서 바꾼 값이 오면 로컬 상태에 반영한다.
+    final shared = widget.baby;
+    if (shared != null && shared != _lastSynced) {
+      setState(() => _applyShared(shared));
+    }
+  }
+
+  void _applyShared(SharedBaby shared) {
+    _surnamePick = shared.surname;
+    _gender = shared.gender;
+    _birth = shared.birth;
+    _birthTime = shared.timeUnknown || shared.birthHour == null
+        ? null
+        : TimeOfDay(
+            hour: shared.birthHour!, minute: shared.birthMinute ?? 0);
+    _timeUnknown = shared.timeUnknown;
+    _lastSynced = shared;
+  }
+
+  /// 로컬에서 바뀐 공유 필드를 부모(MainNav)에 알린다.
+  void _syncShared() {
+    final shared = SharedBaby(
+      surname: _surnamePick,
+      gender: _gender,
+      birth: _birth,
+      birthHour: _timeUnknown ? null : _birthTime?.hour,
+      birthMinute: _timeUnknown ? null : _birthTime?.minute,
+      timeUnknown: _timeUnknown,
+    );
+    if (shared == _lastSynced) return;
+    _lastSynced = shared;
+    widget.onBabyChanged?.call(shared);
+  }
 
   Future<void> _chooseSurname() async {
     final pick = await showSurnamePicker(context, _surnamePick);
     if (pick != null) {
       setState(() => _surnamePick = pick);
+      _syncShared();
     }
   }
 
@@ -40,7 +89,10 @@ class _HomeScreenState extends State<HomeScreen> {
       lastDate: DateTime(2035),
       locale: const Locale('ko'),
     );
-    if (d != null) setState(() => _birth = d);
+    if (d != null) {
+      setState(() => _birth = d);
+      _syncShared();
+    }
   }
 
   Future<void> _pickTime() async {
@@ -53,6 +105,7 @@ class _HomeScreenState extends State<HomeScreen> {
         _birthTime = t;
         _timeUnknown = false;
       });
+      _syncShared();
     }
   }
 
@@ -88,13 +141,29 @@ class _HomeScreenState extends State<HomeScreen> {
         ? '모름'
         : (_birthTime == null
             ? '선택 안 함'
-            : '${_birthTime!.hour}시 ${_birthTime!.minute}분');
+            : formatTimeOfDay(_birthTime!));
 
     return Scaffold(
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.all(20),
           children: [
+            // 보관함 바로가기 — 설정 탭 안에만 숨어 있지 않게 상단 우측에 둔다.
+            Row(
+              children: [
+                const Spacer(),
+                IconButton(
+                  tooltip: '보관함',
+                  icon: const Icon(Icons.bookmark_outline,
+                      color: AppTheme.primary),
+                  onPressed: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (_) => const FavoritesScreen()),
+                  ),
+                ),
+              ],
+            ),
             const SizedBox(height: 8),
             // 헤더
             const StarHero(
@@ -204,8 +273,10 @@ class _HomeScreenState extends State<HomeScreen> {
                             icon: Icons.boy,
                             color: AppTheme.boy,
                             selected: _gender == Gender.boy,
-                            onTap: () =>
-                                setState(() => _gender = Gender.boy),
+                            onTap: () {
+                              setState(() => _gender = Gender.boy);
+                              _syncShared();
+                            },
                           ),
                         ),
                         const SizedBox(width: 10),
@@ -215,8 +286,10 @@ class _HomeScreenState extends State<HomeScreen> {
                             icon: Icons.girl,
                             color: AppTheme.girl,
                             selected: _gender == Gender.girl,
-                            onTap: () =>
-                                setState(() => _gender = Gender.girl),
+                            onTap: () {
+                              setState(() => _gender = Gender.girl);
+                              _syncShared();
+                            },
                           ),
                         ),
                       ],
@@ -264,8 +337,10 @@ class _HomeScreenState extends State<HomeScreen> {
                       title: const Text('태어난 시간을 몰라요',
                           style: TextStyle(fontSize: 13)),
                       value: _timeUnknown,
-                      onChanged: (v) =>
-                          setState(() => _timeUnknown = v ?? false),
+                      onChanged: (v) {
+                        setState(() => _timeUnknown = v ?? false);
+                        _syncShared();
+                      },
                     ),
                     const Text(
                         '사주 분석에 활용해요. 시간을 모르면 시주를 제외하고 분석합니다.',

@@ -77,3 +77,10 @@ Future<bool> isFavorite(String fullName, String hanjaName) async {
   return items.any(
       (e) => e.fullName == fullName && e.hanjaName == hanjaName);
 }
+
+/// 보관함 전체를 교체한다 — 삭제 실행 취소 때 원래 순서 그대로 되돌리기 위함.
+Future<void> replaceFavorites(List<FavoriteItem> items) async {
+  final prefs = await SharedPreferences.getInstance();
+  await prefs.setString(
+      _key, jsonEncode(items.map((e) => e.toJson()).toList()));
+}

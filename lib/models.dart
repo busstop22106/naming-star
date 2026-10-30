@@ -6,6 +6,92 @@ extension GenderX on Gender {
   String get label => this == Gender.boy ? '남아' : '여아';
 }
 
+/// 성씨 선택 결과 (이름 짓기·이름 분석 탭이 공유)
+class SurnamePick {
+  final String name; // '김'
+  final String hanja; // '金' (직접입력이면 '')
+  final int strokes; // 8
+  final bool manual; // 직접 입력 여부
+  const SurnamePick({
+    required this.name,
+    required this.hanja,
+    required this.strokes,
+    this.manual = false,
+  });
+
+  String get label =>
+      hanja.isEmpty ? '$name ($strokes획)' : '$name($hanja) $strokes획';
+
+  @override
+  bool operator ==(Object other) =>
+      other is SurnamePick &&
+      other.name == name &&
+      other.hanja == hanja &&
+      other.strokes == strokes &&
+      other.manual == manual;
+
+  @override
+  int get hashCode => Object.hash(name, hanja, strokes, manual);
+}
+
+/// 탭 간 공유하는 아기 기본 정보 (성씨·성별·생년월일시).
+/// 이름 짓기 탭에서 입력한 값이 이름 분석·가족 궁합 탭으로 그대로 이어진다.
+/// 순수 Dart — Flutter import 없음.
+class SharedBaby {
+  final SurnamePick surname;
+  final Gender gender;
+  final DateTime birth;
+  final int? birthHour; // null이면 모름/미선택
+  final int? birthMinute;
+  final bool timeUnknown;
+
+  const SharedBaby({
+    required this.surname,
+    required this.gender,
+    required this.birth,
+    this.birthHour,
+    this.birthMinute,
+    this.timeUnknown = false,
+  });
+
+  factory SharedBaby.initial() => SharedBaby(
+        surname: const SurnamePick(name: '김', hanja: '金', strokes: 8),
+        gender: Gender.boy,
+        birth: DateTime(2026, 10, 19),
+      );
+
+  SharedBaby copyWith({
+    SurnamePick? surname,
+    Gender? gender,
+    DateTime? birth,
+    int? birthHour,
+    int? birthMinute,
+    bool? timeUnknown,
+  }) =>
+      SharedBaby(
+        surname: surname ?? this.surname,
+        gender: gender ?? this.gender,
+        birth: birth ?? this.birth,
+        birthHour: birthHour ?? this.birthHour,
+        birthMinute: birthMinute ?? this.birthMinute,
+        timeUnknown: timeUnknown ?? this.timeUnknown,
+      );
+
+  @override
+  bool operator ==(Object other) =>
+      other is SharedBaby &&
+      other.surname == surname &&
+      other.gender == gender &&
+      other.birth == birth &&
+      other.birthHour == birthHour &&
+      other.birthMinute == birthMinute &&
+      other.timeUnknown == timeUnknown;
+
+  @override
+  int get hashCode => Object.hash(
+      surname, gender, birth, birthHour, birthMinute, timeUnknown);
+}
+
 /// 아기 기본 정보
 class BabyInfo {
   final String surname;

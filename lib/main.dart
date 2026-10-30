@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'models.dart';
 import 'screens/analyze_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/ranking_screen.dart';
@@ -44,17 +45,40 @@ class MainNav extends StatefulWidget {
 class _MainNavState extends State<MainNav> {
   int _index = 0;
 
-  static const _screens = [
-    HomeScreen(),
-    AnalyzeScreen(),
-    RankingScreen(),
-    SettingsScreen(),
-  ];
+  /// 탭 간 공유하는 아기 기본 정보 — 한 탭에서 바꾸면 다른 탭에도 그대로 이어진다.
+  SharedBaby _baby = SharedBaby.initial();
+
+  /// 랭킹 탭에서 분석으로 넘길 이름 요청 (소비되면 null로 되돌린다).
+  String? _analyzeName;
+  Gender? _analyzeGender;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: IndexedStack(index: _index, children: _screens),
+      body: IndexedStack(index: _index, children: [
+        HomeScreen(
+          baby: _baby,
+          onBabyChanged: (b) => setState(() => _baby = b),
+        ),
+        AnalyzeScreen(
+          baby: _baby,
+          onBabyChanged: (b) => setState(() => _baby = b),
+          analyzeNameRequest: _analyzeName,
+          analyzeGenderRequest: _analyzeGender,
+          onAnalyzeNameConsumed: () => setState(() {
+            _analyzeName = null;
+            _analyzeGender = null;
+          }),
+        ),
+        RankingScreen(
+          onAnalyzeName: (name, gender) => setState(() {
+            _index = 1;
+            _analyzeName = name;
+            _analyzeGender = gender;
+          }),
+        ),
+        const SettingsScreen(),
+      ]),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _index,
         onDestinationSelected: (i) => setState(() => _index = i),

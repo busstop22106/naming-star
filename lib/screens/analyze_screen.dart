@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../engine/best_hanja.dart';
 import '../engine/compat.dart';
 import '../engine/hanja_order.dart';
 import '../engine/pure_korean.dart';
@@ -15,8 +16,22 @@ import 'compat_screen.dart';
 import 'detail_screen.dart';
 
 /// 직접 이름 분석 — 이미 정한 이름을 입력해 평가
+/// [baby]·[onBabyChanged]가 있으면 아기 기본 정보를 이름 짓기 탭과 공유한다.
+/// [analyzeNameRequest]는 랭킹 탭에서 넘어온 이름(성별 포함)으로, 오면 입력 폼에 채운다.
 class AnalyzeScreen extends StatefulWidget {
-  const AnalyzeScreen({super.key});
+  final SharedBaby? baby;
+  final ValueChanged<SharedBaby>? onBabyChanged;
+  final String? analyzeNameRequest;
+  final Gender? analyzeGenderRequest;
+  final VoidCallback? onAnalyzeNameConsumed;
+  const AnalyzeScreen({
+    super.key,
+    this.baby,
+    this.onBabyChanged,
+    this.analyzeNameRequest,
+    this.analyzeGenderRequest,
+    this.onAnalyzeNameConsumed,
+  });
 
   @override
   State<AnalyzeScreen> createState() => _AnalyzeScreenState();
@@ -24,13 +39,14 @@ class AnalyzeScreen extends StatefulWidget {
 
 class _AnalyzeScreenState extends State<AnalyzeScreen> {
   final _givenCtrl = TextEditingController();
-  SurnamePick _surnamePick =
-      const SurnamePick(name: '김', hanja: '金', strokes: 8);
-  Gender _gender = Gender.boy;
-  DateTime _birth = DateTime(2026, 10, 19);
+  late SurnamePick _surnamePick;
+  late Gender _gender;
+  late DateTime _birth;
   TimeOfDay? _birthTime;
-  bool _timeUnknown = false;
+  late bool _timeUnknown;
   bool _isPureKorean = false;
+  SharedBaby? _lastSynced;
+  String? _appliedNameRequest;
   // 음절별 선택된 한자 인덱스
   final Map<int, int> _hanjaIdx = {};
   // 가족 궁합 모드
@@ -39,6 +55,72 @@ class _AnalyzeScreenState extends State<AnalyzeScreen> {
     _MemberInput('아빠', DateTime(1990, 5, 5)),
     _MemberInput('엄마', DateTime(1992, 7, 7)),
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _applyShared(widget.baby ?? SharedBaby.initial());
+  }
+
+  @override
+  void didUpdateWidget(covariant AnalyzeScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // 다른 탭에서 바꾼 아기 정보가 오면 로컬 상태에 반영한다.
+    final shared = widget.baby;
+    if (shared != null && shared != _lastSynced) {
+      setState(() => _applyShared(shared));
+    }
+    // 랭킹에서 가져온 이름이 오면 입력 폼에 채우고 요청을 소비한다.
+    final request = widget.analyzeNameRequest;
+    if (request == null) _appliedNameRequest = null;
+    if (request != null && request != _appliedNameRequest) {
+      _appliedNameRequest = request;
+      setState(() {
+        _givenCtrl.text = request;
+        if (widget.analyzeGenderRequest != null) {
+          _gender = widget.analyzeGenderRequest!;
+        }
+        _hanjaIdx.clear();
+      });
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        widget.onAnalyzeNameConsumed?.call();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+                content: Text(
+                    '랭킹에서 ‘$request’을(를) 가져왔어요. 한자를 골라 분석해보세요.')),
+          );
+        }
+      });
+    }
+  }
+
+  void _applyShared(SharedBaby shared) {
+    _surnamePick = shared.surname;
+    _gender = shared.gender;
+    _birth = shared.birth;
+    _birthTime = shared.timeUnknown || shared.birthHour == null
+        ? null
+        : TimeOfDay(
+            hour: shared.birthHour!, minute: shared.birthMinute ?? 0);
+    _timeUnknown = shared.timeUnknown;
+    _lastSynced = shared;
+  }
+
+  /// 로컬에서 바뀐 공유 필드를 부모(MainNav)에 알린다.
+  void _syncShared() {
+    final shared = SharedBaby(
+      surname: _surnamePick,
+      gender: _gender,
+      birth: _birth,
+      birthHour: _timeUnknown ? null : _birthTime?.hour,
+      birthMinute: _timeUnknown ? null : _birthTime?.minute,
+      timeUnknown: _timeUnknown,
+    );
+    if (shared == _lastSynced) return;
+    _lastSynced = shared;
+    widget.onBabyChanged?.call(shared);
+  }
 
   @override
   void dispose() {
@@ -50,6 +132,7 @@ class _AnalyzeScreenState extends State<AnalyzeScreen> {
     final pick = await showSurnamePicker(context, _surnamePick);
     if (pick != null) {
       setState(() => _surnamePick = pick);
+      _syncShared();
     }
   }
 
@@ -150,6 +233,7 @@ class _AnalyzeScreenState extends State<AnalyzeScreen> {
           : TimeOfDay(
               hour: baby.birthHour!, minute: baby.birthMinute ?? 0);
     });
+    _syncShared();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('보관함에서 ${item.fullName}을(를) 불러왔어요.')),
     );
@@ -235,7 +319,10 @@ class _AnalyzeScreenState extends State<AnalyzeScreen> {
       lastDate: DateTime(2035),
       locale: const Locale('ko'),
     );
-    if (d != null) setState(() => _birth = d);
+    if (d != null) {
+      setState(() => _birth = d);
+      _syncShared();
+    }
   }
 
   Future<void> _pickTime() async {
@@ -248,7 +335,48 @@ class _AnalyzeScreenState extends State<AnalyzeScreen> {
         _birthTime = t;
         _timeUnknown = false;
       });
+      _syncShared();
     }
+  }
+
+  /// 사주에 가장 잘 맞는 한자 조합을 자동으로 고른다.
+  void _autoPickHanja() {
+    final syls = _syllables;
+    if (syls.length != 2) return;
+    final baby = BabyInfo(
+      surname: _surnamePick.name,
+      surnameHanja: _surnamePick.hanja,
+      surnameStrokes: _surnamePick.strokes,
+      gender: _gender,
+      birth: _birth,
+      birthHour: _timeUnknown ? null : _birthTime?.hour,
+      birthMinute: _timeUnknown ? null : _birthTime?.minute,
+    );
+    final best = bestHanjaCombo(
+      surname: _surnamePick.name,
+      surnameStrokes: _surnamePick.strokes,
+      syllables: syls,
+      saju: computeSaju(baby),
+      gender: _gender,
+    );
+    if (best == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('이 음절의 한자 데이터가 없어요.')),
+      );
+      return;
+    }
+    setState(() {
+      for (var i = 0; i < 2; i++) {
+        final opts = orderedHanja(syls[i]);
+        final idx = opts.indexWhere((o) => o.char == best.picks[i].char);
+        if (idx >= 0) _hanjaIdx[i] = idx;
+      }
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+          content: Text(
+              '사주에 가장 잘 맞는 한자로 골랐어요. (${best.picks.map((p) => p.char).join()} · 예상 ${best.total.toStringAsFixed(0)}점)')),
+    );
   }
 
   // ── 가족 궁합 ──
@@ -358,11 +486,12 @@ class _AnalyzeScreenState extends State<AnalyzeScreen> {
           orElse: () => '동생');
       final isElder = ['아빠', '엄마', '할아버지', '할머니'].contains(baseRole);
       final isGrand = ['할아버지', '할머니'].contains(baseRole);
+      final defaultYear = memberDefaultYear(baseRole);
       birth = isGrand
-          ? DateTime(1955, 1, 1)
+          ? DateTime(defaultYear, 1, 1)
           : isElder
-              ? DateTime(1990, 5, 5)
-              : DateTime(2021, 3, 5);
+              ? DateTime(defaultYear, 5, 5)
+              : DateTime(defaultYear, 3, 5);
       time = null;
       timeUnknown = true;
     }
@@ -476,7 +605,7 @@ class _AnalyzeScreenState extends State<AnalyzeScreen> {
                                     fontSize: 15,
                                     fontWeight: FontWeight.w700)),
                             Text(
-                              '${_members[i].birth.year}년 ${_members[i].birth.month}월 ${_members[i].birth.day}일 · ${_members[i].timeUnknown ? '시간 모름' : (_members[i].time == null ? '시간 미선택' : '${_members[i].time!.hour}시 ${_members[i].time!.minute}분')}',
+                              '${_members[i].birth.year}년 ${_members[i].birth.month}월 ${_members[i].birth.day}일 · ${_members[i].timeUnknown ? '시간 모름' : (_members[i].time == null ? '시간 미선택' : formatTimeOfDay(_members[i].time!))}',
                               style: const TextStyle(
                                   fontSize: 12, color: AppTheme.sub),
                             ),
@@ -715,8 +844,10 @@ class _AnalyzeScreenState extends State<AnalyzeScreen> {
                           icon: Icons.boy,
                           color: AppTheme.boy,
                           selected: _gender == Gender.boy,
-                          onTap: () =>
-                              setState(() => _gender = Gender.boy),
+                          onTap: () {
+                            setState(() => _gender = Gender.boy);
+                            _syncShared();
+                          },
                         ),
                       ),
                       const SizedBox(width: 10),
@@ -726,8 +857,10 @@ class _AnalyzeScreenState extends State<AnalyzeScreen> {
                           icon: Icons.girl,
                           color: AppTheme.girl,
                           selected: _gender == Gender.girl,
-                          onTap: () =>
-                              setState(() => _gender = Gender.girl),
+                          onTap: () {
+                            setState(() => _gender = Gender.girl);
+                            _syncShared();
+                          },
                         ),
                       ),
                     ],
@@ -798,6 +931,20 @@ class _AnalyzeScreenState extends State<AnalyzeScreen> {
                       ),
                       if (i == 0) const SizedBox(height: 12),
                     ],
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: _autoPickHanja,
+                        icon: const Icon(Icons.auto_awesome, size: 18),
+                        label: const Text('사주에 맞는 한자 자동 선택'),
+                      ),
+                    ),
+                    const Text(
+                      '한자를 일일이 고르기 어려우면, 사주 기준으로 점수가 가장 높은 조합을 골라줘요.',
+                      style:
+                          TextStyle(fontSize: 11, color: AppTheme.sub),
+                    ),
                   ],
                 ),
               ),
@@ -835,7 +982,7 @@ class _AnalyzeScreenState extends State<AnalyzeScreen> {
                             ? '모름'
                             : (_birthTime == null
                                 ? '선택 안 함'
-                                : '${_birthTime!.hour}시 ${_birthTime!.minute}분')}',
+                                : formatTimeOfDay(_birthTime!))}',
                         style: const TextStyle(
                             fontWeight: FontWeight.w600)),
                     trailing: const Icon(Icons.chevron_right),
@@ -849,8 +996,10 @@ class _AnalyzeScreenState extends State<AnalyzeScreen> {
                         '태어난 시간을 몰라요',
                         style: TextStyle(fontSize: 13)),
                     value: _timeUnknown,
-                    onChanged: (v) =>
-                        setState(() => _timeUnknown = v ?? false),
+                    onChanged: (v) {
+                      setState(() => _timeUnknown = v ?? false);
+                      _syncShared();
+                    },
                   ),
                   const Text(
                       '사주 분석에 활용해요. 시간을 모르면 시주를 제외하고 분석합니다.',

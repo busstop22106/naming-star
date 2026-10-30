@@ -1,6 +1,19 @@
 import 'package:flutter/material.dart';
 
 import '../theme.dart';
+import 'common.dart';
+
+/// 역할별 기본 출생 연도 — 구성원을 추가할 때의 시작값.
+/// (다이얼로그 안에서 역할을 바꾸면, 아직 기본값 그대로인 경우에만 새 역할의
+/// 기본 연도로 따라간다. 사용자가 직접 고른 연도는 건드리지 않는다.)
+int memberDefaultYear(String role) {
+  if (role == '할아버지' || role == '할머니') return 1955;
+  if (role == '아빠' || role == '엄마') return 1990;
+  return 2021;
+}
+
+bool _isLeapYear(int year) =>
+    (year % 4 == 0 && year % 100 != 0) || year % 400 == 0;
 
 /// 가족 구성원 역할 선택지
 const memberRoleOptions = [
@@ -125,7 +138,23 @@ class MemberDialogState extends State<MemberDialog> {
                                   : AppTheme.ink,
                               fontWeight: FontWeight.w700)),
                       selected: baseRole == r,
-                      onSelected: (_) => setState(() => baseRole = r),
+                      onSelected: (_) => setState(() {
+                        // 아직 이전 역할의 기본 연도 그대로면 새 역할의
+                        // 기본 연도로 따라간다 (예: 형 2021 → 할아버지 1955).
+                        // 사용자가 연도를 직접 바꾼 뒤에는 따라가지 않는다.
+                        if (birth.year ==
+                            memberDefaultYear(baseRole)) {
+                          var day = birth.day;
+                          if (birth.month == 2 &&
+                              day == 29 &&
+                              !_isLeapYear(memberDefaultYear(r))) {
+                            day = 28;
+                          }
+                          birth = DateTime(memberDefaultYear(r),
+                              birth.month, day);
+                        }
+                        baseRole = r;
+                      }),
                       selectedColor: AppTheme.primarySoft,
                       // 체크 표시를 끄면 라벨이 늘어나 정렬이 바뀌는 현상이 사라진다.
                       showCheckmark: false,
@@ -156,7 +185,7 @@ class MemberDialogState extends State<MemberDialog> {
                 leading:
                     const Icon(Icons.schedule, color: AppTheme.primary),
                 title: Text(
-                    '태어난 시간 · ${timeUnknown ? '모름' : (time == null ? '선택 안 함' : '${time!.hour}시 ${time!.minute}분')}',
+                    '태어난 시간 · ${timeUnknown ? '모름' : (time == null ? '선택 안 함' : formatTimeOfDay(time!))}',
                     style: const TextStyle(fontWeight: FontWeight.w600)),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: _pickTime,

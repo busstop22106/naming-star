@@ -201,6 +201,64 @@ class _DetailScreenState extends State<DetailScreen> {
               subtitle: '같은 발음의 다른 한자를 고르면 점수가 다시 계산돼요',
               child: Column(
                 children: [
+                  // 실시간 점수 — 한자를 바꿀 때마다 맨 위로 스크롤하지
+                  // 않아도 지금 조합의 점수를 바로 확인할 수 있다.
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 14, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: AppTheme.primarySoft,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            '지금 조합: ${a.fullName}(${a.hanjaName})',
+                            style: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700),
+                          ),
+                        ),
+                        Text(
+                          '${a.total.toStringAsFixed(0)}점 · ${AppTheme.scoreWord(a.total)}',
+                          style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w800,
+                              color: AppTheme.scoreColor(a.total)),
+                        ),
+                      ],
+                    ),
+                  ),
+                  // 원래 추천 한자와 달라졌을 때만 되돌리기 버튼을 보인다.
+                  if (_picks.map((p) => p.char).join() !=
+                      widget.analysis.picks
+                          .map((p) => p.char)
+                          .join()) ...[
+                    const SizedBox(height: 8),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton.icon(
+                        onPressed: () {
+                          setState(() {
+                            _picks =
+                                List.of(widget.analysis.picks);
+                          });
+                          _rescore();
+                        },
+                        icon: const Icon(Icons.restart_alt, size: 18),
+                        label: const Text('추천 한자로 되돌리기'),
+                        style: TextButton.styleFrom(
+                          padding:
+                              const EdgeInsets.symmetric(horizontal: 8),
+                          textStyle: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700),
+                        ),
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 10),
                   _HanjaPicker(
                     index: 0,
                     picks: _picks,

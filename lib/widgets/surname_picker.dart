@@ -1,23 +1,12 @@
 import 'package:flutter/material.dart';
 import '../data/surnames.dart';
+import '../models.dart';
 import '../theme.dart';
 
-/// 성씨 선택 결과
-class SurnamePick {
-  final String name; // '김'
-  final String hanja; // '金' (직접입력이면 '')
-  final int strokes; // 8
-  final bool manual; // 직접 입력 여부
-  const SurnamePick({
-    required this.name,
-    required this.hanja,
-    required this.strokes,
-    this.manual = false,
-  });
-
-  String get label =>
-      hanja.isEmpty ? '$name ($strokes획)' : '$name($hanja) $strokes획';
-}
+/// 많이 쓰는 성씨 — DB 첫 항목이 통용 한자(김金·이李·박朴…)라 바로 선택한다.
+const _quickSurnames = [
+  '김', '이', '박', '최', '정', '강', '조', '윤', '장', '임', '한', '오', '서', '신',
+];
 
 /// 성씨 선택 바텀시트 열기
 Future<SurnamePick?> showSurnamePicker(
@@ -26,7 +15,12 @@ Future<SurnamePick?> showSurnamePicker(
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
-    builder: (_) => _SurnameSheet(current: current),
+    builder: (ctx) => Padding(
+      // 키보드가 올라오면 시트 하단을 키보드 위로 밀어 리스트가 가려지지 않게 한다.
+      padding:
+          EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
+      child: _SurnameSheet(current: current),
+    ),
   );
 }
 
@@ -75,6 +69,57 @@ class _SurnameSheetState extends State<_SurnameSheet> {
               style:
                   TextStyle(fontSize: 17, fontWeight: FontWeight.w800)),
           const SizedBox(height: 12),
+          // 많이 쓰는 성씨 퀵 선택 — 스크롤 없이 바로 고른다.
+          // 다른 한자를 원하면 아래 목록에서 해당 성씨를 펼치면 된다.
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('많이 쓰는 성씨',
+                    style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: AppTheme.sub)),
+                const SizedBox(height: 6),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  children: _quickSurnames.map((name) {
+                    final first = surnamesByName[name]!.first;
+                    final sel = widget.current?.name == name &&
+                        widget.current?.hanja == first.hanja;
+                    return ChoiceChip(
+                      label: Text(name,
+                          style: TextStyle(
+                              fontSize: 14,
+                              color: sel
+                                  ? AppTheme.primaryDark
+                                  : AppTheme.ink,
+                              fontWeight: FontWeight.w700)),
+                      selected: sel,
+                      onSelected: (_) => Navigator.pop(
+                          context,
+                          SurnamePick(
+                              name: first.name,
+                              hanja: first.hanja,
+                              strokes: first.strokes)),
+                      selectedColor: AppTheme.primarySoft,
+                      showCheckmark: false,
+                      side: BorderSide(
+                        color: sel
+                            ? AppTheme.primary
+                            : AppTheme.chipBorder,
+                        width: sel ? 1.5 : 1,
+                      ),
+                      visualDensity: VisualDensity.compact,
+                    );
+                  }).toList(),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 10),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: TextField(
@@ -98,8 +143,8 @@ class _SurnameSheetState extends State<_SurnameSheet> {
                     padding:
                         const EdgeInsets.fromLTRB(20, 4, 20, 12),
                     itemCount: names.length,
-                    itemBuilder: (_, i) =>
-                        _surnameRow(names[i]),
+                    itemBuilder: (_, i) => _surnameRow(
+                        names[i], names.length <= 3),
                   ),
           ),
           const Divider(height: 1),
@@ -123,9 +168,11 @@ class _SurnameSheetState extends State<_SurnameSheet> {
     );
   }
 
-  Widget _surnameRow(String name) {
+  Widget _surnameRow(String name, bool autoOpen) {
     final options = surnamesByName[name]!;
-    final isOpen = _expanded == name;
+    // 검색 결과가 3개 이하이면 아코디언을 자동으로 펼쳐 한자를 바로 고른다.
+    // (전체 목록일 때는 200개가 넘으므로 자동 펼침을 하지 않는다.)
+    final isOpen = _expanded == name || autoOpen;
 
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 4),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../data/pure_korean_names.dart';
 import '../engine/generator.dart';
 import '../engine/saju.dart';
+import '../favorites.dart';
 import '../models.dart';
 import '../services/ad_service.dart';
 import '../theme.dart';
@@ -243,7 +244,7 @@ class _InfoChip extends StatelessWidget {
   }
 }
 
-class _NameCard extends StatelessWidget {
+class _NameCard extends StatefulWidget {
   final int rank;
   final NameAnalysis analysis;
   final BabyInfo baby;
@@ -256,26 +257,69 @@ class _NameCard extends StatelessWidget {
   });
 
   @override
+  State<_NameCard> createState() => _NameCardState();
+}
+
+class _NameCardState extends State<_NameCard> {
+  bool _saved = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkSaved();
+  }
+
+  Future<void> _checkSaved() async {
+    final s = await isFavorite(
+        widget.analysis.fullName, widget.analysis.hanjaName);
+    if (mounted) setState(() => _saved = s);
+  }
+
+  Future<void> _toggleSave() async {
+    final item = FavoriteItem(
+      baby: widget.baby,
+      picks: widget.analysis.picks,
+      total: widget.analysis.total,
+      savedAt: DateTime.now(),
+    );
+    if (_saved) {
+      await removeFavorite(item);
+      if (!mounted) return;
+      setState(() => _saved = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('보관함에서 삭제했어요.')),
+      );
+    } else {
+      await saveFavorite(item);
+      if (!mounted) return;
+      setState(() => _saved = true);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('보관함에 저장했어요.')),
+      );
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final a = analysis;
+    final a = widget.analysis;
     // 스크롤 버벅임 방지: 카드별 래스터 캐시를 만들어 스크롤 중 재그리기를 막는다.
     return RepaintBoundary(
       child: Card(
         margin: const EdgeInsets.symmetric(vertical: 6),
         child: InkWell(
           borderRadius: BorderRadius.circular(20),
-          onTap: onTap,
+          onTap: widget.onTap,
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Row(
               children: [
                 SizedBox(
                   width: 28,
-                  child: Text('$rank',
+                  child: Text('${widget.rank}',
                       style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w800,
-                          color: rank <= 3
+                          color: widget.rank <= 3
                               ? AppTheme.gold
                               : AppTheme.sub)),
                 ),
@@ -311,6 +355,21 @@ class _NameCard extends StatelessWidget {
                           ],
                         ],
                       ),
+                      // 한자 뜻 — 리스트에서 뜻을 모르고 일일이 눌러보지 않게 한다.
+                      if (!a.isPureKorean &&
+                          a.picks.any((p) => p.meaning.isNotEmpty)) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          a.picks
+                              .map((p) => p.meaning.isNotEmpty
+                                  ? '${p.char} ${p.meaning}'
+                                  : p.char)
+                              .join(' · '),
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                              fontSize: 12, color: AppTheme.sub),
+                        ),
+                      ],
                       const SizedBox(height: 6),
                       Wrap(
                         spacing: 10,
@@ -340,6 +399,15 @@ class _NameCard extends StatelessWidget {
                   ),
                 ),
                 ScoreRing(score: a.total, size: 64, strokeWidth: 7),
+                IconButton(
+                  icon: Icon(
+                    _saved ? Icons.bookmark : Icons.bookmark_border,
+                    color: _saved ? AppTheme.gold : AppTheme.sub,
+                  ),
+                  onPressed: _toggleSave,
+                  tooltip: '보관함 저장',
+                  visualDensity: VisualDensity.compact,
+                ),
                 const Icon(Icons.chevron_right,
                     color: AppTheme.sub),
               ],
