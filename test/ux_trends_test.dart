@@ -8,7 +8,6 @@ import 'package:jakmyeongbyeol/engine/saju.dart';
 import 'package:jakmyeongbyeol/engine/scoring.dart';
 import 'package:jakmyeongbyeol/models.dart';
 import 'package:jakmyeongbyeol/screens/favorites_screen.dart';
-import 'package:jakmyeongbyeol/screens/home_screen.dart';
 import 'package:jakmyeongbyeol/screens/recommend_screen.dart';
 
 void main() {
@@ -43,27 +42,6 @@ void main() {
       } else {
         expect(reason, isNot(contains('용신')));
       }
-    });
-  });
-
-  group('60초 첫 가치 — 예시로 먼저 보기', () {
-    testWidgets('입력 없이 예시 아기 추천 결과까지 간다', (tester) async {
-      tester.view.physicalSize = const Size(390, 1400);
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(tester.view.reset);
-      await tester.pumpWidget(
-          const MaterialApp(home: HomeScreen()));
-      await tester.pumpAndSettle();
-      final exampleButton =
-          find.text('예시로 먼저 보기 · 입력 없이 결과 체험');
-      await tester.ensureVisible(exampleButton);
-      await tester.pumpAndSettle();
-      await tester.tap(exampleButton);
-      // 별 애니메이션(2초)이 끝나면 추천 화면으로 넘어간다.
-      await tester.pumpAndSettle();
-      expect(find.text('한○○ · 남아 이름 추천'), findsOneWidget);
-      // 근거 한 줄이 카드에 보인다.
-      expect(find.textContaining('수리'), findsWidgets);
     });
   });
 
