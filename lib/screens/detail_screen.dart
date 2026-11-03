@@ -453,23 +453,22 @@ class _DetailScreenState extends State<DetailScreen> {
                 for (final stage in buildLifeStory(a)) ...[
                   Row(
                     children: [
-                      // 배지 글자가 길면 점수 텍스트를 밀어내 넘치므로
-                      // 배지를 줄이고 글자를 줄바꿈하게 한다.
-                      Flexible(
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 10, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: AppTheme.primarySoft,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Text(
-                              '${stage.title} · ${stage.ageRange}',
-                              style: const TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppTheme.primary)),
+                      // 뱃지는 시기 이름만 한 줄에 보여준다. 나이 범위까지
+                      // 넣으면 줄바꿈되거나(예전 Flexible 방식) 4px 넘쳐서,
+                      // 범위는 빼고 제목만 남긴다.
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: AppTheme.primarySoft,
+                          borderRadius: BorderRadius.circular(12),
                         ),
+                        child: Text(stage.title,
+                            softWrap: false,
+                            style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                color: AppTheme.primary)),
                       ),
                       const Spacer(),
                       Text(

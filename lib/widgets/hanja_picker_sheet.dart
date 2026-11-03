@@ -17,9 +17,11 @@ import 'common.dart';
 /// - 칩을 탭해도 시트가 바로 닫히지 않는다. 선택 상태만 바뀌고,
 ///   [onSelected]로 바깥에 즉시 알린다. 시트를 스와이프로 내리거나
 ///   바깥을 터치해 닫으면 그 선택이 그대로 남는다.
-/// - 첫 진입 버벅임을 줄이려고 목록은 40개씩 끊어 보여주고,
-///   '더 보기'를 누르면 다음 40개를 붙인다. 한 번에 전부 만드는
-///   Wrap이 시트 올라오는 애니메이션을 잡아먹던 것이 원인이다.
+/// - 첫 진입 버벅임을 줄이려고 목록은 시트 올라오는 애니메이션이
+///   끝난 뒤에 한 번에 그린다. 한 번에 전부 만드는 Wrap이 애니메이션과
+///   같은 프레임에 그리면 올라올 때 끊겼는데, 애니메이션이 끝난 뒤에는
+///   정지 화면이라 같은 양을 그려도 체감이 안 된다.
+///   그래서 '더 보기' 분할은 없애고 처음부터 전체를 스크롤하게 한다.
 /// - 하단 시스템 내비게이션 바에 마지막 한자가 가려지지 않게
 ///   SafeArea(하단)로 감싼다. 닫기 버튼은 두지 않는다 — 스와이프나
 ///   바깥 터치로 닫는 것이 모달의 기본 동작이다.
@@ -41,12 +43,12 @@ class HanjaPickerSheet extends StatefulWidget {
 }
 
 class _HanjaPickerSheetState extends State<HanjaPickerSheet> {
-  static const _pageSize = 40;
-
   final _queryCtrl = TextEditingController();
   final _scrollCtrl = ScrollController();
   late int _currentSelected;
-  int _visibleCount = _pageSize;
+  // 시트 진입 애니메이션이 끝날 때까지 목록 그리기를 미룬다.
+  bool _ready = false;
+  Animation<double>? _routeAnimation;
 
   @override
   void initState() {
@@ -55,24 +57,44 @@ class _HanjaPickerSheetState extends State<HanjaPickerSheet> {
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_routeAnimation == null) {
+      final animation = ModalRoute.of(context)?.animation;
+      if (animation == null || animation.isCompleted) {
+        // 모달이 아닌 채로 바로 그리는 경우(테스트 등)는 즉시 그린다.
+        _ready = true;
+      } else {
+        _routeAnimation = animation;
+        animation.addStatusListener(_onAnimationStatus);
+      }
+    }
+  }
+
+  void _onAnimationStatus(AnimationStatus status) {
+    if (status == AnimationStatus.completed && mounted) {
+      setState(() => _ready = true);
+    }
+  }
+
+  @override
   void dispose() {
     _queryCtrl.dispose();
     _scrollCtrl.dispose();
+    _routeAnimation?.removeStatusListener(_onAnimationStatus);
     super.dispose();
   }
 
   void _onQueryChanged(String _) {
-    // 검색어가 바뀌면 처음부터 다시 보여주고 맨 위로 올린다.
-    setState(() => _visibleCount = _pageSize);
+    // 검색어가 바뀌면 맨 위로 올린다.
     if (_scrollCtrl.hasClients) _scrollCtrl.jumpTo(0);
+    setState(() {});
   }
 
   @override
   Widget build(BuildContext context) {
     final filtered = filterHanjaOptions(widget.options, _queryCtrl.text);
     final query = _queryCtrl.text.trim();
-    final visible = filtered.take(_visibleCount).toList();
-    final hasMore = filtered.length > _visibleCount;
     return SafeArea(
       top: false,
       child: Column(
@@ -111,23 +133,23 @@ class _HanjaPickerSheetState extends State<HanjaPickerSheet> {
           ),
           const SizedBox(height: 12),
           Expanded(
-            child: query.isNotEmpty && filtered.isEmpty
-                ? const Center(
-                    child: Text(
-                      '검색 결과가 없어요. 한자나 뜻을 다르게 입력해 보세요.',
-                      style: TextStyle(fontSize: 13, color: AppTheme.sub),
-                    ),
-                  )
-                : SingleChildScrollView(
-                    controller: _scrollCtrl,
-                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Wrap(
+            child: !_ready
+                ? const Center(child: CircularProgressIndicator())
+                : query.isNotEmpty && filtered.isEmpty
+                    ? const Center(
+                        child: Text(
+                          '검색 결과가 없어요. 한자나 뜻을 다르게 입력해 보세요.',
+                          style:
+                              TextStyle(fontSize: 13, color: AppTheme.sub),
+                        ),
+                      )
+                    : SingleChildScrollView(
+                        controller: _scrollCtrl,
+                        padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
+                        child: Wrap(
                           spacing: 8,
                           runSpacing: 8,
-                          children: visible.map((e) {
+                          children: filtered.map((e) {
                             final sel = _currentSelected == e.key;
                             final hasMeaning =
                                 e.value.meaning.isNotEmpty;
@@ -185,20 +207,7 @@ class _HanjaPickerSheetState extends State<HanjaPickerSheet> {
                             );
                           }).toList(),
                         ),
-                        if (hasMore) ...[
-                          const SizedBox(height: 16),
-                          Center(
-                            child: TextButton(
-                              onPressed: () => setState(() =>
-                                  _visibleCount += _pageSize),
-                              child: Text(
-                                  '더 보기 (${filtered.length - _visibleCount}개 더)'),
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
+                      ),
           ),
         ],
       ),

@@ -48,8 +48,9 @@ void main() {
     expect(richTextContaining('潤 젖을 16획'), findsNothing);
   });
 
-  testWidgets('목록은 40개씩 더 보기로 늘어난다', (tester) async {
-    // '도'는 64개라 첫 페이지(40개) 뒤에 더 보기가 남는다.
+  testWidgets('처음부터 전체 목록을 스크롤할 수 있다', (tester) async {
+    // '도'는 64개라 '더 보기' 분할이 있던 시절에는 첫 페이지 뒤에
+    // 남았다. 이제는 분할 없이 64개가 한 번에 보인다.
     tester.view.physicalSize = const Size(390, 1200);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.reset);
@@ -67,13 +68,8 @@ void main() {
       ),
     ));
     await tester.pumpAndSettle();
-    expect(find.byType(ChoiceChip), findsNWidgets(40));
-    final more = find.textContaining('더 보기');
-    await tester.ensureVisible(more);
-    await tester.pumpAndSettle();
-    await tester.tap(more);
-    await tester.pumpAndSettle();
     expect(find.byType(ChoiceChip), findsNWidgets(64));
+    expect(find.textContaining('더 보기'), findsNothing);
   });
 
   testWidgets('고르면 시트가 닫히지 않고 선택이 바깥에 전달된다', (tester) async {
