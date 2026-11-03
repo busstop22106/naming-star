@@ -438,7 +438,7 @@ class _AnalyzeScreenState extends State<AnalyzeScreen> {
                         TextSpan(
                           text: e.value.meaning.isNotEmpty
                               ? ' ${e.value.meaning} ${e.value.strokes}획'
-                              : ' ${e.value.strokes}획',
+                              : ' 뜻없음 ${e.value.strokes}획',
                           style: const TextStyle(fontSize: 13),
                         ),
                       ],

@@ -357,7 +357,7 @@ class _NameCard extends StatelessWidget {
                           a.picks
                               .map((p) => p.meaning.isNotEmpty
                                   ? '${p.char} ${p.meaning}'
-                                  : p.char)
+                                  : '${p.char} 뜻없음')
                               .join(' · '),
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(

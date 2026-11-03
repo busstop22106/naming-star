@@ -158,7 +158,7 @@ class _DetailScreenState extends State<DetailScreen> {
                               child: Text(
                                   a.isPureKorean
                                       ? '${p.syllable} (발음오행 ${elementNames[p.element]})'
-                                      : '${p.char} ${p.meaning}',
+                                      : '${p.char} ${p.meaning.isNotEmpty ? p.meaning : '뜻없음'}',
                                   style: const TextStyle(
                                       fontSize: 11,
                                       color: Colors.white)),
@@ -614,7 +614,7 @@ class _HanjaPicker extends StatelessWidget {
                 final sel = o.char == cur.char;
                 final sub = o.meaning.isNotEmpty
                     ? '${o.meaning} · ${o.strokes}획'
-                    : '${o.strokes}획';
+                    : '뜻없음 · ${o.strokes}획';
                 return GestureDetector(
                   onTap: () => onChanged(o),
                   child: Container(
