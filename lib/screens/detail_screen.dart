@@ -71,18 +71,23 @@ class _DetailScreenState extends State<DetailScreen> {
       total: _analysis.total,
       savedAt: DateTime.now(),
     );
-    if (_saved) {
-      await removeFavorite(item);
-      setState(() => _saved = false);
-      if (mounted) {
+    try {
+      // 저장소 응답이 멈춰도 버튼이 무응답으로 보이지 않게 5초 제한을 둔다.
+      if (_saved) {
+        await removeFavorite(item).timeout(const Duration(seconds: 5));
+        if (!mounted) return;
+        setState(() => _saved = false);
         showSingleSnackBar(messenger, '보관함에서 삭제했어요.');
-      }
-    } else {
-      await saveFavorite(item);
-      setState(() => _saved = true);
-      _triggerPop();
-      if (mounted) {
+      } else {
+        await saveFavorite(item).timeout(const Duration(seconds: 5));
+        if (!mounted) return;
+        setState(() => _saved = true);
+        _triggerPop();
         showSingleSnackBar(messenger, '보관함에 저장했어요.');
+      }
+    } catch (_) {
+      if (mounted) {
+        showSingleSnackBar(messenger, '저장에 실패했어요. 다시 시도해 주세요.');
       }
     }
   }
@@ -364,6 +369,43 @@ class _DetailScreenState extends State<DetailScreen> {
                       highlight: true),
                 if (saju.huishin != null)
                   _SajuRow('희신', elementNames[saju.huishin]!),
+                // 부족한 오행: 개수가 가장 적은 오행을 알려줘서
+                // 이름 한자 선택에 참고하게 한다.
+                Builder(
+                  builder: (_) {
+                    final lacking =
+                        lackingElements(saju.elementCounts);
+                    final minCount = lacking.isEmpty
+                        ? 0
+                        : (saju.elementCounts[lacking.first] ?? 0);
+                    if (minCount >= 2) {
+                      return const _SajuRow(
+                          '부족한 오행', '크게 부족한 오행이 없어요');
+                    }
+                    final names = lacking
+                        .map((e) => elementNames[e]!)
+                        .join(' · ');
+                    final hasLacking = _picks
+                        .any((p) => lacking.contains(p.element));
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _SajuRow('부족한 오행', names, highlight: true),
+                        Padding(
+                          padding:
+                              const EdgeInsets.only(top: 2, bottom: 2),
+                          child: Text(
+                            hasLacking
+                                ? '이 이름은 부족한 오행($names)을 이미 포함하고 있어요.'
+                                : '이름 한자에 $names 오행을 더하면 사주 보완에 도움이 돼요.',
+                            style: const TextStyle(
+                                fontSize: 12, color: AppTheme.sub),
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                ),
                 const SizedBox(height: 8),
                 ...saju.notes.map((n) => Padding(
                       padding:
@@ -409,19 +451,23 @@ class _DetailScreenState extends State<DetailScreen> {
                 for (final stage in buildLifeStory(a)) ...[
                   Row(
                     children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: AppTheme.primarySoft,
-                          borderRadius: BorderRadius.circular(12),
+                      // 배지 글자가 길면 점수 텍스트를 밀어내 넘치므로
+                      // 배지를 줄이고 글자를 줄바꿈하게 한다.
+                      Flexible(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: AppTheme.primarySoft,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                              '${stage.title} · ${stage.ageRange}',
+                              style: const TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppTheme.primary)),
                         ),
-                        child: Text(
-                            '${stage.title} · ${stage.ageRange}',
-                            style: const TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700,
-                                color: AppTheme.primary)),
                       ),
                       const Spacer(),
                       Text(

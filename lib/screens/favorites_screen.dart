@@ -18,6 +18,7 @@ class FavoritesScreen extends StatefulWidget {
 class _FavoritesScreenState extends State<FavoritesScreen> {
   List<FavoriteItem> _items = [];
   bool _loading = true;
+  bool _loadError = false;
 
   @override
   void initState() {
@@ -26,11 +27,21 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
   }
 
   Future<void> _load() async {
-    final items = await loadFavorites();
-    if (mounted) {
+    try {
+      // 저장소 응답이 멈춰도 스피너가 영원히 돌지 않게 5초 제한을 둔다.
+      final items =
+          await loadFavorites().timeout(const Duration(seconds: 5));
+      if (!mounted) return;
       setState(() {
         _items = items;
         _loading = false;
+        _loadError = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _loadError = true;
       });
     }
   }
@@ -60,7 +71,22 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
       appBar: AppBar(title: const Text('보관함')),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
-          : _items.isEmpty
+          : _loadError
+              ? EmptyState(
+                  title: '보관함을 불러오지 못했어요.',
+                  subtitle: '저장소 응답이 늦어지고 있어요. 다시 시도해 주세요.',
+                  action: ElevatedButton(
+                    onPressed: () {
+                      setState(() {
+                        _loading = true;
+                        _loadError = false;
+                      });
+                      _load();
+                    },
+                    child: const Text('다시 시도'),
+                  ),
+                )
+              : _items.isEmpty
               ? EmptyState(
                   title: '아직 저장한 이름이 없어요.',
                   subtitle: '마음에 드는 이름에서 북마크를 눌러 저장하세요.\n별이 반짝이는 이름, 하나씩 모아보세요.',

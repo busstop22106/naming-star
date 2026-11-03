@@ -252,6 +252,19 @@ const Map<String, String> elementNames = {
   '수': '수(水)',
 };
 
+/// 사주에서 개수가 가장 적은 오행들을 목→화→토→금→수 순서로 돌려준다.
+/// 동점인 오행은 모두 포함한다. 없는 오행은 0개로 취급한다.
+/// 이름 한자에 어떤 오행을 더하면 보완이 되는지 알려주는 기준이다.
+List<String> lackingElements(Map<String, int> counts) {
+  const order = ['목', '화', '토', '금', '수'];
+  var min = 1 << 30;
+  for (final e in order) {
+    final c = counts[e] ?? 0;
+    if (c < min) min = c;
+  }
+  return order.where((e) => (counts[e] ?? 0) == min).toList();
+}
+
 const Map<String, String> elementColors = {
   '목': '초록',
   '화': '빨강',

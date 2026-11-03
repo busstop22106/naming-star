@@ -389,6 +389,7 @@ class _MemberNode extends StatelessWidget {
     final branch = member.memberSaju.year.branch;
     final emoji = zodiacEmojis[branch] ?? '⭐';
     final zodiac = zodiacNames[branch] ?? '';
+    final symbol = genderSymbolForRole(member.label);
     return SizedBox(
       width: 80,
       child: Column(
@@ -436,6 +437,20 @@ class _MemberNode extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
+              // 역할 이름 옆 성별 기호 (동생은 알 수 없어 표시 안 함)
+              if (symbol.isNotEmpty) ...[
+                const SizedBox(width: 2),
+                Text(
+                  symbol,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: symbol == '♂'
+                        ? const Color(0xFF3B82C4)
+                        : const Color(0xFFE85D75),
+                  ),
+                ),
+              ],
               if (isBest) ...[
                 const SizedBox(width: 2),
                 const Icon(Icons.favorite,

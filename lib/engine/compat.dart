@@ -120,6 +120,25 @@ String zodiacLabel(String memberBranch, String babyBranch) {
   }
 }
 
+/// 역할 이름으로 성별 기호를 돌려준다.
+/// '동생'은 역할만으로 성별을 알 수 없어 빈 문자열이다.
+String genderSymbolForRole(String role) {
+  switch (role) {
+    case '아빠':
+    case '형':
+    case '오빠':
+    case '할아버지':
+      return '♂';
+    case '엄마':
+    case '누나':
+    case '언니':
+    case '할머니':
+      return '♀';
+    default:
+      return '';
+  }
+}
+
 /// 구성원 한 명과의 궁합 결과
 class MemberCompat {
   final String label; // '아빠', '엄마', '형' 등 표시 이름
