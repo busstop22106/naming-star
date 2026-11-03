@@ -6,6 +6,8 @@ import 'package:flutter/material.dart';
 /// 둥글림을 키우고 그림자를 부드럽게 해서, 보기만 해도 기분 좋아지는
 /// 귀엽고 따뜻한 무드를 만든다. 폰트는 시스템 폰트 유지
 /// (커스텀 폰트 파일은 GitHub 스냅샷 푸시가 불가해서 별도 단계로).
+/// 단, 한자는 기기 기본 CJK 글꼴이 명조/궁서 계열로 잡히는 경우가 있어
+/// 한자 글꼴 폴백(hanjaFontFallback)으로 고딕 계열을 우선 지정한다.
 class AppTheme {
   static const bg = Color(0xFFFFF9F1);
   static const surface = Colors.white;
@@ -21,6 +23,16 @@ class AppTheme {
   static const hint = Color(0xFFB8B0CC); // 입력 힌트용 밝은 회색
   static const chipBorder = Color(0xFFD9D0E8); // 미선택 칩 테두리용 연보라 회색
   static const line = Color(0xFFF0E7D8);
+  /// 한자 글꼴 폴백 — 가장 일반적인 고딕(산세리프) 한자부터 찾는다.
+  /// 앞 이름이 없는 기기에서는 시스템 산세리프로 떨어지는데, 그 산세리프의
+  /// CJK 글꼴도 고딕 계열이라 명조/궁서 계열로 보이는 일은 없다.
+  static const hanjaFontFallback = [
+    'Noto Sans CJK KR',
+    'Noto Sans CJK',
+    'Noto Sans KR',
+    'sans-serif',
+  ];
+
   static const boy = Color(0xFF5B8DEF);
   static const girl = Color(0xFFF472A0);
   static const good = Color(0xFF43A06B);
@@ -112,7 +124,7 @@ class AppTheme {
             fontSize: 15, fontWeight: FontWeight.w700, color: ink),
         bodyMedium: TextStyle(color: ink, height: 1.55),
         bodySmall: TextStyle(color: sub, height: 1.5),
-      ),
+      ).apply(fontFamilyFallback: hanjaFontFallback),
     );
   }
 

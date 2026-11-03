@@ -161,7 +161,9 @@ class _DetailScreenState extends State<DetailScreen> {
                                       : '${p.char} ${p.meaning.isNotEmpty ? p.meaning : '뜻없음'}',
                                   style: const TextStyle(
                                       fontSize: 11,
-                                      color: Colors.white)),
+                                      color: Colors.white,
+                                      fontFamilyFallback:
+                                          AppTheme.hanjaFontFallback)),
                             );
                           }).toList(),
                         ),
@@ -638,6 +640,8 @@ class _HanjaPicker extends StatelessWidget {
                             style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w700,
+                                fontFamilyFallback:
+                                    AppTheme.hanjaFontFallback,
                                 color: sel
                                     ? Colors.white
                                     : AppTheme.ink)),
@@ -645,9 +649,13 @@ class _HanjaPicker extends StatelessWidget {
                         Text(sub,
                             style: TextStyle(
                                 fontSize: 11,
-                                color: sel
-                                    ? Colors.white70
-                                    : AppTheme.sub)),
+                                color: o.meaning.isNotEmpty
+                                    ? (sel
+                                        ? Colors.white70
+                                        : AppTheme.sub)
+                                    : (sel
+                                        ? Colors.white70
+                                        : AppTheme.hint))),
                         const SizedBox(width: 4),
                         ElementChip(o.element),
                       ],

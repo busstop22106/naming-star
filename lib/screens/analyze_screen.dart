@@ -12,6 +12,7 @@ import '../services/ad_service.dart';
 import '../services/family_members.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
+import '../widgets/hanja_picker_sheet.dart';
 import '../widgets/member_dialog.dart';
 import '../widgets/surname_picker.dart';
 import 'compat_screen.dart';
@@ -41,7 +42,6 @@ class AnalyzeScreen extends StatefulWidget {
 
 class _AnalyzeScreenState extends State<AnalyzeScreen> {
   final _givenCtrl = TextEditingController();
-  final _hanjaQueryCtrl = TextEditingController();
   late SurnamePick _surnamePick;
   late Gender _gender;
   late DateTime _birth;
@@ -142,7 +142,6 @@ class _AnalyzeScreenState extends State<AnalyzeScreen> {
   @override
   void dispose() {
     _givenCtrl.dispose();
-    _hanjaQueryCtrl.dispose();
     super.dispose();
   }
 
@@ -236,7 +235,6 @@ class _AnalyzeScreenState extends State<AnalyzeScreen> {
       _givenCtrl.text = item.picks.map((p) => p.syllable).join();
       _isPureKorean = item.picks.every((p) => p.char.isEmpty);
       _hanjaIdx.clear();
-      _hanjaQueryCtrl.clear();
       if (!_isPureKorean) {
         for (var i = 0; i < item.picks.length && i < 2; i++) {
           final opts = orderedHanja(item.picks[i].syllable);
@@ -398,64 +396,95 @@ class _AnalyzeScreenState extends State<AnalyzeScreen> {
     );
   }
 
-  // ── 한자 선택 ──
+  // ── 한자 선택 (음절별 모달) ──
+  //
+  // 예전에는 음절마다 한자 목록을 인라인으로 길게 늘어놓고 각자 안쪽
+  // 스크롤 영역(높이 168)을 줬는데, 그 영역이 화면 전체 스크롤을 가로채서
+  // 사용자가 의도하지 않게 한자 목록만 스크롤하는 일이 잦았다.
+  // 그래서 화면에는 선택된 한자 한 줄만 보여주고, 목록은 음절별 모달
+  // 시트(HanjaPickerSheet)에서 고르게 바꿨다. 시트 안에서만 목록이
+  // 스크롤되고, 화면 자체는 하나의 스크롤로 동작한다.
 
-  /// 음절 하나의 한자 선택 섹션.
-  /// 한자는 크게(19), 뜻·획수는 작게(13) 보여서 작은 화면에서도 식별되고,
-  /// 뜻이 있는 한자는 뜻+획수를, 뜻이 없는 한자는 획수만 보여준다.
-  Widget _hanjaSection(int index, String syllable) {
-    final filtered =
-        filterHanjaOptions(orderedHanja(syllable), _hanjaQueryCtrl.text);
-    if (_hanjaQueryCtrl.text.trim().isNotEmpty && filtered.isEmpty) {
-      return const SizedBox.shrink();
-    }
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          '$syllable (${filtered.length}개 한자)',
-          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+  /// 음절 하나의 선택된 한자 표시줄. 탭하면 모달 시트가 열린다.
+  Widget _hanjaSelectRow(int index, String syllable) {
+    final opts = orderedHanja(syllable);
+    final idx = (_hanjaIdx[index] ?? 0).clamp(0, opts.length - 1);
+    final sel = opts[idx];
+    final subColor =
+        sel.meaning.isNotEmpty ? AppTheme.sub : AppTheme.hint;
+    return InkWell(
+      onTap: () => _openHanjaPicker(index, syllable),
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          border: Border.all(color: AppTheme.chipBorder),
+          borderRadius: BorderRadius.circular(16),
         ),
-        const SizedBox(height: 6),
-        Container(
-          constraints: const BoxConstraints(maxHeight: 168),
-          child: SingleChildScrollView(
-            child: Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: filtered.map((e) {
-                final sel = (_hanjaIdx[index] ?? 0) == e.key;
-                final color = sel ? AppTheme.primaryDark : AppTheme.ink;
-                return ChoiceChip(
-                  label: RichText(
-                    text: TextSpan(
-                      style: TextStyle(
-                          color: color, fontWeight: FontWeight.w700),
-                      children: [
-                        TextSpan(
-                            text: e.value.char,
-                            style: const TextStyle(fontSize: 19)),
-                        TextSpan(
-                          text: e.value.meaning.isNotEmpty
-                              ? ' ${e.value.meaning} ${e.value.strokes}획'
-                              : ' 뜻없음 ${e.value.strokes}획',
-                          style: const TextStyle(fontSize: 13),
-                        ),
-                      ],
-                    ),
-                  ),
-                  selected: sel,
-                  onSelected: (_) =>
-                      setState(() => _hanjaIdx[index] = e.key),
-                  selectedColor: AppTheme.primarySoft,
-                  avatar: ElementChip(e.value.element),
-                );
-              }).toList(),
+        child: Row(
+          children: [
+            Text('${index + 1}자',
+                style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: AppTheme.sub)),
+            const SizedBox(width: 8),
+            Text(syllable,
+                style: const TextStyle(
+                    fontSize: 15, fontWeight: FontWeight.w700)),
+            const SizedBox(width: 10),
+            ElementChip(sel.element),
+            const SizedBox(width: 8),
+            Text(sel.char,
+                style: const TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w700,
+                    fontFamilyFallback: AppTheme.hanjaFontFallback)),
+            const SizedBox(width: 6),
+            Expanded(
+              child: Text(
+                sel.meaning.isNotEmpty
+                    ? '${sel.meaning} · ${sel.strokes}획'
+                    : '뜻없음 · ${sel.strokes}획',
+                style: TextStyle(fontSize: 13, color: subColor),
+                overflow: TextOverflow.ellipsis,
+              ),
             ),
+            const Icon(Icons.keyboard_arrow_down,
+                size: 20, color: AppTheme.sub),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// 음절 하나의 한자 선택 모달을 연다. 고른 인덱스를 받아 저장한다.
+  Future<void> _openHanjaPicker(int index, String syllable) async {
+    final opts = orderedHanja(syllable);
+    final sel = (_hanjaIdx[index] ?? 0).clamp(0, opts.length - 1);
+    final picked = await showModalBottomSheet<int>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppTheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => Padding(
+        padding:
+            EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
+        child: SizedBox(
+          height: MediaQuery.of(ctx).size.height * 0.85,
+          child: HanjaPickerSheet(
+            syllable: syllable,
+            options: opts,
+            selectedIndex: sel,
           ),
         ),
-      ],
+      ),
     );
+    if (picked != null && mounted) {
+      setState(() => _hanjaIdx[index] = picked);
+    }
   }
 
   // ── 가족 궁합 ──
@@ -874,7 +903,6 @@ class _AnalyzeScreenState extends State<AnalyzeScreen> {
                         fontWeight: FontWeight.w700),
                     onChanged: (_) => setState(() {
                           _hanjaIdx.clear();
-                          _hanjaQueryCtrl.clear();
                         }),
                   ),
                   const SizedBox(height: 12),
@@ -970,33 +998,9 @@ class _AnalyzeScreenState extends State<AnalyzeScreen> {
                         style: TextStyle(
                             fontSize: 12, color: AppTheme.sub)),
                     const SizedBox(height: 12),
-                    TextField(
-                      controller: _hanjaQueryCtrl,
-                      onChanged: (_) => setState(() {}),
-                      decoration: const InputDecoration(
-                        hintText: '한자나 뜻으로 검색 (예: 빛, 尹, 10획)',
-                        prefixIcon: Icon(Icons.search, size: 20),
-                        isDense: true,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    _hanjaSection(0, syls[0]),
-                    const SizedBox(height: 12),
-                    _hanjaSection(1, syls[1]),
-                    if (_hanjaQueryCtrl.text.trim().isNotEmpty &&
-                        filterHanjaOptions(orderedHanja(syls[0]),
-                                _hanjaQueryCtrl.text)
-                            .isEmpty &&
-                        filterHanjaOptions(orderedHanja(syls[1]),
-                                _hanjaQueryCtrl.text)
-                            .isEmpty) ...[
-                      const SizedBox(height: 8),
-                      const Text(
-                        '검색 결과가 없어요. 한자나 뜻을 다르게 입력해 보세요.',
-                        style:
-                            TextStyle(fontSize: 13, color: AppTheme.sub),
-                      ),
-                    ],
+                    _hanjaSelectRow(0, syls[0]),
+                    const SizedBox(height: 8),
+                    _hanjaSelectRow(1, syls[1]),
                     const SizedBox(height: 12),
                     SizedBox(
                       width: double.infinity,

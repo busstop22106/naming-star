@@ -48,7 +48,7 @@ void main() {
   });
 
   group('한자 선택 검색 UI', () {
-    testWidgets('검색하면 칩이 줄고, 한자는 크게·획수는 항상 보인다',
+    testWidgets('모달에서 검색하면 칩이 줄고, 한자는 17pt·획수는 항상 보인다',
         (tester) async {
       SharedPreferences.setMockInitialValues({});
       tester.view.physicalSize = const Size(390, 1400);
@@ -62,12 +62,18 @@ void main() {
       await tester.enterText(nameField, '도윤');
       await tester.pumpAndSettle();
 
+      // 두 번째 음절(윤) 행을 탭하면 한자 선택 모달이 열린다.
+      final secondRow = find.text('2자');
+      expect(secondRow, findsOneWidget);
+      await tester.ensureVisible(secondRow);
+      await tester.pumpAndSettle();
+      await tester.tap(secondRow);
+      await tester.pumpAndSettle();
+
       final searchField = find.byWidgetPredicate((w) =>
           w is TextField &&
           w.decoration?.hintText == '한자나 뜻으로 검색 (예: 빛, 尹, 10획)');
       expect(searchField, findsOneWidget);
-      await tester.ensureVisible(searchField);
-      await tester.pumpAndSettle();
       await tester.enterText(searchField, '빛');
       await tester.pumpAndSettle();
 
@@ -76,16 +82,16 @@ void main() {
               w is RichText && w.text.toPlainText().contains(text))
           .evaluate()
           .isNotEmpty;
-      // '빛'이 들어간 뜻(햇빛)만 남고, 다른 뜻(다스릴)은 사라진다.
+      // '빛'이 들어간 뜻(햇빛)만 남고, 다른 뜻(젖을)은 사라진다.
       expect(richTextContains('햇빛'), isTrue);
-      expect(richTextContains('다스릴'), isFalse);
+      expect(richTextContains('젖을'), isFalse);
       // 뜻이 있는 칩도 획수를 함께 보여준다.
       expect(richTextContains('햇빛 8획'), isTrue);
-      // 한자 글자는 크게 보인다.
+      // 한자 글자는 17pt로 보인다.
       final label = tester.widget<RichText>(find.byWidgetPredicate((w) =>
           w is RichText && w.text.toPlainText().contains('햇빛')));
       final spans = (label.text as TextSpan).children!;
-      expect((spans.first as TextSpan).style?.fontSize, 19);
+      expect((spans.first as TextSpan).style?.fontSize, 17);
     });
   });
 }

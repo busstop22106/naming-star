@@ -361,7 +361,10 @@ class _NameCard extends StatelessWidget {
                               .join(' · '),
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
-                              fontSize: 12, color: AppTheme.sub),
+                              fontSize: 12,
+                              color: AppTheme.sub,
+                              fontFamilyFallback:
+                                  AppTheme.hanjaFontFallback),
                         ),
                       ],
                       // 추천 근거 한 줄 — 점수가 뒷받침하는 이유만 문장으로 쓴다.
