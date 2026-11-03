@@ -77,7 +77,8 @@ class _MainNavState extends State<MainNav> {
             _analyzeGender = gender;
           }),
         ),
-        const SettingsScreen(),
+        SettingsScreen(
+            onGoToNaming: () => setState(() => _index = 0)),
       ]),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _index,

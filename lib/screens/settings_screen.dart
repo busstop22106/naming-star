@@ -7,7 +7,10 @@ import 'favorites_screen.dart';
 import 'terms_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
-  const SettingsScreen({super.key});
+  /// 보관함 빈 화면 '이름 지으러 가기'를 눌렀을 때 이름 짓기 탭으로
+  /// 보내는 콜백. MainNav에서 내려준다.
+  final VoidCallback? onGoToNaming;
+  const SettingsScreen({super.key, this.onGoToNaming});
 
   @override
   State<SettingsScreen> createState() => _SettingsScreenState();
@@ -37,8 +40,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
             onTap: () => Navigator.push(
               context,
               MaterialPageRoute(
-                  builder: (_) =>
-                      const FavoritesScreen()),
+                  builder: (_) => FavoritesScreen(
+                      onGoToNaming: widget.onGoToNaming)),
             ),
           ),
           const SizedBox(height: 16),

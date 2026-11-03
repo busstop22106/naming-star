@@ -11,9 +11,16 @@ import 'detail_screen.dart';
 /// [selectMode]가 true면 전면 화면은 그대로지만, 카드를 탭했을 때
 /// 상세 화면으로 들어가지 않고 그 항목을 돌려주며 닫힌다.
 /// 이름 분석 탭의 '보관함에서 불러오기'가 이 모드로 연다.
+/// [onGoToNaming]은 빈 화면 '이름 지으러 가기'를 눌렀을 때
+/// 이름 짓기 탭으로 보내는 콜백이다. 없으면(선택 모드 등)
+/// 그냥 뒤로만 간다 — 탭 전환은 MainNav의 상태라 화면
+/// 혼자서는 바꿀 수 없어, 랭킹 탭의 onAnalyzeName과 같은
+/// 방식으로 콜백을 받아 내려간다.
 class FavoritesScreen extends StatefulWidget {
   final bool selectMode;
-  const FavoritesScreen({super.key, this.selectMode = false});
+  final VoidCallback? onGoToNaming;
+  const FavoritesScreen(
+      {super.key, this.selectMode = false, this.onGoToNaming});
 
   @override
   State<FavoritesScreen> createState() => _FavoritesScreenState();
@@ -100,8 +107,16 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                   title: '아직 저장한 이름이 없어요.',
                   subtitle: '마음에 드는 이름에서 북마크를 눌러 저장하세요.\n별이 반짝이는 이름, 하나씩 모아보세요.',
                   // 빈 화면은 두 번째 온보딩 — 다음 행동 버튼을 반드시 둔다.
+                  // 보관함은 설정 탭 위에 얹힌 화면이라, 탭만 바꾸면
+                  // 이 화면이 그대로 위에 남아 있다. 그래서 먼저 닫고
+                  // 나서 콜백으로 탭을 바꾼다 (닫은 뒤 widget에 손대지
+                  // 않게 콜백을 미리 꺼내 둔다).
                   action: ElevatedButton(
-                    onPressed: () => Navigator.pop(context),
+                    onPressed: () {
+                      final goToNaming = widget.onGoToNaming;
+                      Navigator.pop(context);
+                      goToNaming?.call();
+                    },
                     child: const Text('이름 지으러 가기'),
                   ),
                 )
