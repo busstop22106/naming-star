@@ -127,7 +127,7 @@ String _firstHourStem(String dayStem) {
 
 SajuResult computeSaju(BabyInfo baby) {
   final notes = <String>[
-    '간이 만세력으로 계산한 참고용 사주예요. 절기 경계일 출생이나 정확한 용신 감정은 전문가 상담을 권장해요.',
+    '간이 만세력으로 계산한 사주예요. 절기 경계일에 태어났다면, 경계를 어느 쪽으로 보느냐에 따라 결과가 달라질 수 있어요.',
   ];
 
   // ── 연주 (입춘 기준) ──

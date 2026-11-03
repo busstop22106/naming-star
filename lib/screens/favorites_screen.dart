@@ -175,9 +175,15 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                                   setState(() {});
                                   // 연타해도 이전 토스트가 뒤에 줄줄이 뜨지 않게
                                   // 대기 중인 토스트를 비우고 새 토스트만 띄운다.
+                                  // 실행 취소 액션이 있으면 persist 기본값이
+                                  // true라 3초를 줘도 안 사라진다. 그래서
+                                  // persist: false를 명시한다.
                                   showSingleSnackBar(
                                     messenger,
                                     '보관함에서 삭제했어요.',
+                                    duration:
+                                        const Duration(seconds: 3),
+                                    persist: false,
                                     action: SnackBarAction(
                                       label: '실행 취소',
                                       onPressed: () async {

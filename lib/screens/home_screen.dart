@@ -379,7 +379,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             const SizedBox(height: 16),
             const Text(
-              '작명별의 분석은 전통 성명학의 간이 계산이에요. 수리·음양·오행은 학파별 차이가 있을 수 있으니 중요한 결정 전에는 전문가 상담을 권장합니다.',
+              '작명별의 분석은 전통 성명학의 수리·음양·오행 이론에 따라 계산해요.',
               style: TextStyle(fontSize: 11, color: AppTheme.sub),
               textAlign: TextAlign.center,
             ),

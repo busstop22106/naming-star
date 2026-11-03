@@ -305,7 +305,7 @@ class _DetailScreenState extends State<DetailScreen> {
           SectionCard(
             title: '사주 분석',
             icon: Icons.spa,
-            subtitle: '간이 만세력 · 참고용',
+            subtitle: '간이 만세력',
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -447,7 +447,7 @@ class _DetailScreenState extends State<DetailScreen> {
           SectionCard(
             title: '이 이름의 일대기',
             icon: Icons.timeline,
-            subtitle: '나이대별 흐름 · 재미로 보는 참고용 해석이에요',
+            subtitle: '나이대별 흐름',
             child: Column(
               children: [
                 for (final stage in buildLifeStory(a)) ...[

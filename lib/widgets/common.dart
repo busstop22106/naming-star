@@ -18,10 +18,20 @@ void showSingleSnackBar(
   ScaffoldMessengerState messenger,
   String message, {
   SnackBarAction? action,
+  Duration? duration,
+  bool? persist,
 }) {
   messenger.clearSnackBars();
-  messenger.showSnackBar(
-      SnackBar(content: Text(message), action: action));
+  messenger.showSnackBar(SnackBar(
+      content: Text(message),
+      action: action,
+      // 기본 4초가 아니라 명시한 시간 뒤에 사라지게 한다.
+      // 보관함 삭제 토스트는 3초로 지정해 둔다.
+      duration: duration ?? const Duration(seconds: 4),
+      // 주의: 액션이 있으면 SnackBar의 persist 기본값이 true라
+      // duration이 있어도 자동으로 안 사라진다. 시간 뒤에
+      // 사라지게 하려면 persist: false를 명시해야 한다.
+      persist: persist));
 }
 
 /// 종합 점수 링

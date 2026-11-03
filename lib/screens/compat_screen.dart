@@ -137,7 +137,7 @@ class CompatScreen extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           const Text(
-            '띠 궁합은 출생연도로 정해지는 부분이라 이름으로 바뀌지 않아요. 전체 점수는 간이 만세력으로 계산한 참고용이며, 정확한 감정은 전문가 상담을 권장해요.',
+            '띠 궁합은 출생연도로 정해지는 부분이라 이름으로 바뀌지 않아요. 전체 점수는 간이 만세력으로 계산해요.',
             style: TextStyle(fontSize: 11, color: AppTheme.sub, height: 1.5),
             textAlign: TextAlign.center,
           ),
