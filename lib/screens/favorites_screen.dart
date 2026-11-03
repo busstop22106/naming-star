@@ -7,9 +7,13 @@ import '../theme.dart';
 import '../widgets/common.dart';
 import 'detail_screen.dart';
 
-/// 보관함
+/// 보관함.
+/// [selectMode]가 true면 전면 화면은 그대로지만, 카드를 탭했을 때
+/// 상세 화면으로 들어가지 않고 그 항목을 돌려주며 닫힌다.
+/// 이름 분석 탭의 '보관함에서 불러오기'가 이 모드로 연다.
 class FavoritesScreen extends StatefulWidget {
-  const FavoritesScreen({super.key});
+  final bool selectMode;
+  const FavoritesScreen({super.key, this.selectMode = false});
 
   @override
   State<FavoritesScreen> createState() => _FavoritesScreenState();
@@ -47,6 +51,11 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
   }
 
   Future<void> _open(FavoriteItem item) async {
+    // 선택 모드에서는 상세로 들어가지 않고 항목을 그대로 돌려준다.
+    if (widget.selectMode) {
+      if (mounted) Navigator.pop(context, item);
+      return;
+    }
     final saju = computeSaju(item.baby);
     final analysis = analyzeName(
       surname: item.baby.surname,

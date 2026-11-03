@@ -17,6 +17,7 @@ import '../widgets/member_dialog.dart';
 import '../widgets/surname_picker.dart';
 import 'compat_screen.dart';
 import 'detail_screen.dart';
+import 'favorites_screen.dart';
 
 /// 직접 이름 분석 — 이미 정한 이름을 입력해 평가
 /// [baby]·[onBabyChanged]가 있으면 아기 기본 정보를 이름 짓기 탭과 공유한다.
@@ -154,73 +155,17 @@ class _AnalyzeScreenState extends State<AnalyzeScreen> {
   }
 
   /// 보관함에서 이름을 골라 입력 폼 전체를 채워요
+  /// 보관함 전면 화면(설정 > 보관함과 같은 화면)을 선택 모드로 연다.
+  /// 예전에는 바텀시트 목록으로 보여줬는데, 전면 화면이 익숙하고
+  /// 점수·삭제까지 같은 화면에서 되니 이쪽으로 바꿨다.
+  /// 빈 보관함이면 전면 화면의 빈 상태가 안내한다.
   Future<void> _loadFromFavorites() async {
-    final items = await loadFavorites();
-    if (!mounted) return;
-    if (items.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text('보관함이 비어 있어요. 이름 짓기에서 마음에 드는 이름을 보관해보세요.')),
-      );
-      return;
-    }
-    final picked = await showModalBottomSheet<FavoriteItem>(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        child: SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Padding(
-                padding: EdgeInsets.fromLTRB(20, 18, 20, 6),
-                child: Text('보관함에서 불러오기',
-                    style: TextStyle(
-                        fontSize: 16, fontWeight: FontWeight.w800)),
-              ),
-              const Padding(
-                padding: EdgeInsets.fromLTRB(20, 0, 20, 8),
-                child: Text('고르면 성씨·한자·생년월일까지 그대로 채워져요.',
-                    style: TextStyle(fontSize: 12, color: AppTheme.sub)),
-              ),
-              ConstrainedBox(
-                constraints: BoxConstraints(
-                    maxHeight: MediaQuery.of(ctx).size.height * 0.45),
-                child: ListView.separated(
-                  shrinkWrap: true,
-                  itemCount: items.length,
-                  separatorBuilder: (_, __) =>
-                      const Divider(height: 1, indent: 20, endIndent: 20),
-                  itemBuilder: (_, i) {
-                    final item = items[i];
-                    final b = item.baby;
-                    return ListTile(
-                      title: Text(
-                        item.hanjaName.isEmpty
-                            ? item.fullName
-                            : '${item.fullName} (${item.hanjaName})',
-                        style: const TextStyle(fontWeight: FontWeight.w700),
-                      ),
-                      subtitle: Text(
-                          '종합 ${item.total.toStringAsFixed(0)}점 · ${b.birth.year}년 ${b.birth.month}월 ${b.birth.day}일생'),
-                      trailing: const Icon(Icons.chevron_right),
-                      onTap: () => Navigator.pop(ctx, item),
-                    );
-                  },
-                ),
-              ),
-              const SizedBox(height: 8),
-            ],
-          ),
-        ),
+    final picked = await Navigator.of(context).push<FavoriteItem>(
+      MaterialPageRoute(
+        builder: (_) => const FavoritesScreen(selectMode: true),
       ),
     );
-    if (picked == null) return;
+    if (picked == null || !mounted) return;
     _applyFavorite(picked);
   }
 
@@ -458,11 +403,13 @@ class _AnalyzeScreenState extends State<AnalyzeScreen> {
     );
   }
 
-  /// 음절 하나의 한자 선택 모달을 연다. 고른 인덱스를 받아 저장한다.
+  /// 음절 하나의 한자 선택 모달을 연다.
+  /// 시트에서 고를 때마다 인덱스가 바로 저장되고, 시트를 내리면
+  /// 그 선택이 그대로 화면에 남는다 (시트가 값을 돌려주지 않는다).
   Future<void> _openHanjaPicker(int index, String syllable) async {
     final opts = orderedHanja(syllable);
     final sel = (_hanjaIdx[index] ?? 0).clamp(0, opts.length - 1);
-    final picked = await showModalBottomSheet<int>(
+    await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       backgroundColor: AppTheme.surface,
@@ -478,13 +425,13 @@ class _AnalyzeScreenState extends State<AnalyzeScreen> {
             syllable: syllable,
             options: opts,
             selectedIndex: sel,
+            onSelected: (picked) {
+              if (mounted) setState(() => _hanjaIdx[index] = picked);
+            },
           ),
         ),
       ),
     );
-    if (picked != null && mounted) {
-      setState(() => _hanjaIdx[index] = picked);
-    }
   }
 
   // ── 가족 궁합 ──
@@ -846,44 +793,53 @@ class _AnalyzeScreenState extends State<AnalyzeScreen> {
                         borderRadius:
                             BorderRadius.circular(14),
                       ),
-                      child: Wrap(
-                        alignment: WrapAlignment.spaceBetween,
-                        crossAxisAlignment: WrapCrossAlignment.center,
+                      // 성씨 정보와 변경 버튼을 한 Row에 두고 Spacer로
+                      // 끝까지 밀어내 분리한다. 예전 Wrap(spaceBetween)은
+                      // 너비가 빠듯하면 두 그룹이 달라붙어 보였고,
+                      // 글자 크기가 달라 상하 중심도 어긋나 보였다.
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                _surnamePick.hanja.isEmpty
-                                    ? _surnamePick.name
-                                    : '${_surnamePick.name}(${_surnamePick.hanja})',
-                                style: const TextStyle(
-                                    fontSize: 17,
-                                    fontWeight: FontWeight.w800,
-                                    color: AppTheme.primary),
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                '${_surnamePick.strokes}획',
-                                style: const TextStyle(
-                                    fontSize: 13,
-                                    color: AppTheme.sub,
-                                    fontWeight: FontWeight.w600),
-                              ),
-                            ],
+                          Text(
+                            _surnamePick.hanja.isEmpty
+                                ? _surnamePick.name
+                                : '${_surnamePick.name}(${_surnamePick.hanja})',
+                            style: const TextStyle(
+                                fontSize: 17,
+                                fontWeight: FontWeight.w800,
+                                color: AppTheme.primary),
                           ),
-                          const Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text('성씨 변경',
-                                  style: TextStyle(
-                                      fontSize: 13,
-                                      color: AppTheme.primary,
-                                      fontWeight: FontWeight.w600)),
-                              Icon(Icons.chevron_right,
-                                  size: 18,
-                                  color: AppTheme.primary),
-                            ],
+                          const SizedBox(width: 8),
+                          Text(
+                            '${_surnamePick.strokes}획',
+                            style: const TextStyle(
+                                fontSize: 13,
+                                color: AppTheme.sub,
+                                fontWeight: FontWeight.w600),
+                          ),
+                          const Spacer(),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 6),
+                            decoration: BoxDecoration(
+                              border: Border.all(
+                                  color: AppTheme.primary
+                                      .withValues(alpha: 0.35)),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text('성씨 변경',
+                                    style: TextStyle(
+                                        fontSize: 13,
+                                        color: AppTheme.primary,
+                                        fontWeight: FontWeight.w600)),
+                                Icon(Icons.chevron_right,
+                                    size: 18,
+                                    color: AppTheme.primary),
+                              ],
+                            ),
                           ),
                         ],
                       ),
