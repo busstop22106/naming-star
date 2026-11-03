@@ -353,6 +353,36 @@ class _AnalyzeScreenState extends State<AnalyzeScreen> {
   /// 음절 하나의 선택된 한자 표시줄. 탭하면 모달 시트가 열린다.
   Widget _hanjaSelectRow(int index, String syllable) {
     final opts = orderedHanja(syllable);
+    if (opts.isEmpty) {
+      // 한자음이 아닌 음절(예: '늘')은 쓸 수 있는 한자가 없다.
+      // 여기서 clamp(0, -1)가 되어 빌드 중 'Invalid argument(s): 0'
+      // 빨간 화면이 뜨던 자리다. 행은 안내만 보여주고 탭되지 않는다.
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          border: Border.all(color: AppTheme.chipBorder),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Row(
+          children: [
+            Text('${index + 1}자',
+                style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: AppTheme.sub)),
+            const SizedBox(width: 8),
+            Text(syllable,
+                style: const TextStyle(
+                    fontSize: 15, fontWeight: FontWeight.w700)),
+            const SizedBox(width: 10),
+            const Expanded(
+              child: Text('쓸 수 있는 한자가 없어요',
+                  style: TextStyle(fontSize: 13, color: AppTheme.sub)),
+            ),
+          ],
+        ),
+      );
+    }
     final idx = (_hanjaIdx[index] ?? 0).clamp(0, opts.length - 1);
     final sel = opts[idx];
     final subColor =
@@ -408,6 +438,8 @@ class _AnalyzeScreenState extends State<AnalyzeScreen> {
   /// 그 선택이 그대로 화면에 남는다 (시트가 값을 돌려주지 않는다).
   Future<void> _openHanjaPicker(int index, String syllable) async {
     final opts = orderedHanja(syllable);
+    // 빈 목록 행은 탭되지 않지만, 혹시 호출돼도 크래시 없이 닫는다.
+    if (opts.isEmpty) return;
     final sel = (_hanjaIdx[index] ?? 0).clamp(0, opts.length - 1);
     await showModalBottomSheet<void>(
       context: context,

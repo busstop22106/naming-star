@@ -95,6 +95,28 @@ void main() {
       expect((spans.first as TextSpan).style?.fontSize, 17);
     });
 
+    testWidgets('한자가 없는 음절(늘)이면 크래시 없이 안내가 보인다',
+        (tester) async {
+      SharedPreferences.setMockInitialValues({});
+      tester.view.physicalSize = const Size(390, 1400);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+      await tester.pumpWidget(const MaterialApp(home: AnalyzeScreen()));
+      await tester.pumpAndSettle();
+
+      final nameField = find.byWidgetPredicate((w) =>
+          w is TextField && w.decoration?.hintText == '이름 2자 (예: 도윤)');
+      await tester.enterText(nameField, '하늘');
+      await tester.pumpAndSettle();
+
+      // '늘' 행은 안내만 보이고, '하' 행은 정상적으로 보인다.
+      // (예전에는 여기서 clamp(0, -1) 때문에
+      // 'Invalid argument(s): 0' 빨간 화면이 떴다.)
+      expect(find.text('쓸 수 있는 한자가 없어요'), findsOneWidget);
+      expect(find.text('1자'), findsOneWidget);
+      expect(find.text('2자'), findsOneWidget);
+    });
+
     testWidgets('모달에서 고르고 내리면 행에 그 한자가 반영된다',
         (tester) async {
       SharedPreferences.setMockInitialValues({});
