@@ -41,6 +41,7 @@ class AnalyzeScreen extends StatefulWidget {
 
 class _AnalyzeScreenState extends State<AnalyzeScreen> {
   final _givenCtrl = TextEditingController();
+  final _hanjaQueryCtrl = TextEditingController();
   late SurnamePick _surnamePick;
   late Gender _gender;
   late DateTime _birth;
@@ -141,6 +142,7 @@ class _AnalyzeScreenState extends State<AnalyzeScreen> {
   @override
   void dispose() {
     _givenCtrl.dispose();
+    _hanjaQueryCtrl.dispose();
     super.dispose();
   }
 
@@ -234,6 +236,7 @@ class _AnalyzeScreenState extends State<AnalyzeScreen> {
       _givenCtrl.text = item.picks.map((p) => p.syllable).join();
       _isPureKorean = item.picks.every((p) => p.char.isEmpty);
       _hanjaIdx.clear();
+      _hanjaQueryCtrl.clear();
       if (!_isPureKorean) {
         for (var i = 0; i < item.picks.length && i < 2; i++) {
           final opts = orderedHanja(item.picks[i].syllable);
@@ -392,6 +395,66 @@ class _AnalyzeScreenState extends State<AnalyzeScreen> {
       SnackBar(
           content: Text(
               '사주에 가장 잘 맞는 한자로 골랐어요. (${best.picks.map((p) => p.char).join()} · 예상 ${best.total.toStringAsFixed(0)}점)')),
+    );
+  }
+
+  // ── 한자 선택 ──
+
+  /// 음절 하나의 한자 선택 섹션.
+  /// 한자는 크게(19), 뜻·획수는 작게(13) 보여서 작은 화면에서도 식별되고,
+  /// 뜻이 있는 한자는 뜻+획수를, 뜻이 없는 한자는 획수만 보여준다.
+  Widget _hanjaSection(int index, String syllable) {
+    final filtered =
+        filterHanjaOptions(orderedHanja(syllable), _hanjaQueryCtrl.text);
+    if (_hanjaQueryCtrl.text.trim().isNotEmpty && filtered.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          '$syllable (${filtered.length}개 한자)',
+          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+        ),
+        const SizedBox(height: 6),
+        Container(
+          constraints: const BoxConstraints(maxHeight: 168),
+          child: SingleChildScrollView(
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: filtered.map((e) {
+                final sel = (_hanjaIdx[index] ?? 0) == e.key;
+                final color = sel ? AppTheme.primaryDark : AppTheme.ink;
+                return ChoiceChip(
+                  label: RichText(
+                    text: TextSpan(
+                      style: TextStyle(
+                          color: color, fontWeight: FontWeight.w700),
+                      children: [
+                        TextSpan(
+                            text: e.value.char,
+                            style: const TextStyle(fontSize: 19)),
+                        TextSpan(
+                          text: e.value.meaning.isNotEmpty
+                              ? ' ${e.value.meaning} ${e.value.strokes}획'
+                              : ' ${e.value.strokes}획',
+                          style: const TextStyle(fontSize: 13),
+                        ),
+                      ],
+                    ),
+                  ),
+                  selected: sel,
+                  onSelected: (_) =>
+                      setState(() => _hanjaIdx[index] = e.key),
+                  selectedColor: AppTheme.primarySoft,
+                  avatar: ElementChip(e.value.element),
+                );
+              }).toList(),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -809,8 +872,10 @@ class _AnalyzeScreenState extends State<AnalyzeScreen> {
                     style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w700),
-                    onChanged: (_) =>
-                        setState(() => _hanjaIdx.clear()),
+                    onChanged: (_) => setState(() {
+                          _hanjaIdx.clear();
+                          _hanjaQueryCtrl.clear();
+                        }),
                   ),
                   const SizedBox(height: 12),
                   // 이름 종류 선택
@@ -905,50 +970,32 @@ class _AnalyzeScreenState extends State<AnalyzeScreen> {
                         style: TextStyle(
                             fontSize: 12, color: AppTheme.sub)),
                     const SizedBox(height: 12),
-                    for (var i = 0; i < 2; i++) ...[
-                      Text(
-                          '${syls[i]} (${orderedHanja(syls[i]).length}개 한자)',
-                          style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w700)),
-                      const SizedBox(height: 6),
-                      Container(
-                        constraints:
-                            const BoxConstraints(maxHeight: 168),
-                        child: SingleChildScrollView(
-                          child: Wrap(
-                            spacing: 8,
-                            runSpacing: 8,
-                            children: orderedHanja(syls[i])
-                                .asMap()
-                                .entries
-                                .map((e) {
-                              final sel =
-                                  (_hanjaIdx[i] ?? 0) == e.key;
-                              final label = e.value.meaning
-                                      .isNotEmpty
-                                  ? '${e.value.char} ${e.value.meaning}'
-                                  : '${e.value.char} ${e.value.strokes}획';
-                              return ChoiceChip(
-                                label: Text(label,
-                                    style: TextStyle(
-                                        color: sel
-                                            ? AppTheme.primaryDark
-                                            : AppTheme.ink,
-                                        fontWeight: FontWeight.w700)),
-                                selected: sel,
-                                onSelected: (_) => setState(
-                                    () => _hanjaIdx[i] = e.key),
-                                selectedColor:
-                                    AppTheme.primarySoft,
-                                avatar: ElementChip(
-                                    e.value.element),
-                              );
-                            }).toList(),
-                          ),
-                        ),
+                    TextField(
+                      controller: _hanjaQueryCtrl,
+                      onChanged: (_) => setState(() {}),
+                      decoration: const InputDecoration(
+                        hintText: '한자나 뜻으로 검색 (예: 빛, 尹, 10획)',
+                        prefixIcon: Icon(Icons.search, size: 20),
+                        isDense: true,
                       ),
-                      if (i == 0) const SizedBox(height: 12),
+                    ),
+                    const SizedBox(height: 12),
+                    _hanjaSection(0, syls[0]),
+                    const SizedBox(height: 12),
+                    _hanjaSection(1, syls[1]),
+                    if (_hanjaQueryCtrl.text.trim().isNotEmpty &&
+                        filterHanjaOptions(orderedHanja(syls[0]),
+                                _hanjaQueryCtrl.text)
+                            .isEmpty &&
+                        filterHanjaOptions(orderedHanja(syls[1]),
+                                _hanjaQueryCtrl.text)
+                            .isEmpty) ...[
+                      const SizedBox(height: 8),
+                      const Text(
+                        '검색 결과가 없어요. 한자나 뜻을 다르게 입력해 보세요.',
+                        style:
+                            TextStyle(fontSize: 13, color: AppTheme.sub),
+                      ),
                     ],
                     const SizedBox(height: 12),
                     SizedBox(

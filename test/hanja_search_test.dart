@@ -1,0 +1,91 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:jakmyeongbyeol/engine/hanja_order.dart';
+import 'package:jakmyeongbyeol/screens/analyze_screen.dart';
+
+void main() {
+  group('filterHanjaOptions', () {
+    test('빈 검색어면 전체를 원래 인덱스와 함께 돌려준다', () {
+      final ordered = orderedHanja('윤');
+      final filtered = filterHanjaOptions(ordered, '');
+      expect(filtered.length, ordered.length);
+      for (var i = 0; i < ordered.length; i++) {
+        expect(filtered[i].key, i);
+        expect(filtered[i].value, ordered[i]);
+      }
+    });
+
+    test('한자 한 글자로 찾는다', () {
+      final ordered = orderedHanja('윤');
+      final filtered = filterHanjaOptions(ordered, '尹');
+      expect(filtered.length, 1);
+      expect(filtered.single.value.char, '尹');
+      expect(filtered.single.key,
+          ordered.indexWhere((o) => o.char == '尹'));
+    });
+
+    test('뜻 부분 일치로 찾는다', () {
+      final ordered = orderedHanja('윤');
+      final filtered = filterHanjaOptions(ordered, '빛');
+      expect(filtered.map((e) => e.value.char).toList(), ['昀']);
+    });
+
+    test('획수는 숫자와 "N획" 모두 정확 일치로 찾는다', () {
+      final ordered = orderedHanja('윤');
+      final byDigits = filterHanjaOptions(ordered, '10');
+      final byStrokes = filterHanjaOptions(ordered, '10획');
+      expect(byDigits.map((e) => e.value.char).toSet(), {'倫', '倫'});
+      expect(byStrokes.map((e) => e.value.char).toSet(), {'倫', '倫'});
+      for (final e in byDigits) {
+        expect(e.value.strokes, 10);
+      }
+    });
+
+    test('없는 검색어는 빈 목록을 돌려준다', () {
+      expect(filterHanjaOptions(orderedHanja('윤'), 'zzz'), isEmpty);
+    });
+  });
+
+  group('한자 선택 검색 UI', () {
+    testWidgets('검색하면 칩이 줄고, 한자는 크게·획수는 항상 보인다',
+        (tester) async {
+      SharedPreferences.setMockInitialValues({});
+      tester.view.physicalSize = const Size(390, 1400);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+      await tester.pumpWidget(const MaterialApp(home: AnalyzeScreen()));
+      await tester.pumpAndSettle();
+
+      final nameField = find.byWidgetPredicate((w) =>
+          w is TextField && w.decoration?.hintText == '이름 2자 (예: 도윤)');
+      await tester.enterText(nameField, '도윤');
+      await tester.pumpAndSettle();
+
+      final searchField = find.byWidgetPredicate((w) =>
+          w is TextField &&
+          w.decoration?.hintText == '한자나 뜻으로 검색 (예: 빛, 尹, 10획)');
+      expect(searchField, findsOneWidget);
+      await tester.ensureVisible(searchField);
+      await tester.pumpAndSettle();
+      await tester.enterText(searchField, '빛');
+      await tester.pumpAndSettle();
+
+      bool richTextContains(String text) => find
+          .byWidgetPredicate((w) =>
+              w is RichText && w.text.toPlainText().contains(text))
+          .evaluate()
+          .isNotEmpty;
+      // '빛'이 들어간 뜻(햇빛)만 남고, 다른 뜻(다스릴)은 사라진다.
+      expect(richTextContains('햇빛'), isTrue);
+      expect(richTextContains('다스릴'), isFalse);
+      // 뜻이 있는 칩도 획수를 함께 보여준다.
+      expect(richTextContains('햇빛 8획'), isTrue);
+      // 한자 글자는 크게 보인다.
+      final label = tester.widget<RichText>(find.byWidgetPredicate((w) =>
+          w is RichText && w.text.toPlainText().contains('햇빛')));
+      final spans = (label.text as TextSpan).children!;
+      expect((spans.first as TextSpan).style?.fontSize, 19);
+    });
+  });
+}

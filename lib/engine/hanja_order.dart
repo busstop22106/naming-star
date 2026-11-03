@@ -29,3 +29,21 @@ List<HanjaPick> orderedHanja(String syllable) {
   });
   return [...curated, ...rest];
 }
+
+/// 한자 선택 검색 필터 (순수 함수)
+/// - 빈 검색어면 전체를 그대로 돌려준다.
+/// - 한자·뜻은 부분 일치, 획수는 '10' 또는 '10획' 정확 일치.
+/// - 원래 순서 인덱스를 함께 유지해서 선택 상태가 필터링에 흔들리지 않는다.
+List<MapEntry<int, HanjaPick>> filterHanjaOptions(
+    List<HanjaPick> ordered, String query) {
+  final all = ordered.asMap().entries.toList();
+  final q = query.trim();
+  if (q.isEmpty) return all;
+  final digits = q.endsWith('획') ? q.substring(0, q.length - 1) : q;
+  return all.where((e) {
+    final h = e.value;
+    return h.char.contains(q) ||
+        h.meaning.contains(q) ||
+        h.strokes.toString() == digits;
+  }).toList();
+}
