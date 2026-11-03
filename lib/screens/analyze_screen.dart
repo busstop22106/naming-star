@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../engine/best_hanja.dart';
 import '../engine/compat.dart';
@@ -8,6 +9,7 @@ import '../engine/scoring.dart';
 import '../favorites.dart';
 import '../models.dart';
 import '../services/ad_service.dart';
+import '../services/family_members.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
 import '../widgets/member_dialog.dart';
@@ -51,16 +53,30 @@ class _AnalyzeScreenState extends State<AnalyzeScreen> {
   final Map<int, int> _hanjaIdx = {};
   // 가족 궁합 모드
   bool _compatMode = false;
-  final List<_MemberInput> _members = [
-    _MemberInput('아빠', DateTime(1990, 5, 5)),
-    _MemberInput('엄마', DateTime(1992, 7, 7)),
-  ];
+  // 저장된 구성원이 있으면 불러오고, 없으면 기본값(아빠·엄마)을 쓴다.
+  final List<FamilyMemberInput> _members = defaultFamilyMembers();
 
   @override
   void initState() {
     super.initState();
     _applyShared(widget.baby ?? SharedBaby.initial());
+    _loadMembers();
   }
+
+  /// 저장된 가족 구성원을 불러와 화면에 반영한다.
+  /// 저장된 게 없으면 기본값을 그대로 둔다.
+  Future<void> _loadMembers() async {
+    final saved = await loadFamilyMembers();
+    if (!mounted || saved.isEmpty) return;
+    setState(() {
+      _members
+        ..clear()
+        ..addAll(saved);
+    });
+  }
+
+  /// 구성원이 바뀔 때마다 저장한다 — 앱을 껐다 켜도, 탭을 오가도 유지된다.
+  Future<void> _saveMembers() => saveFamilyMembers(_members);
 
   @override
   void didUpdateWidget(covariant AnalyzeScreen oldWidget) {
@@ -519,12 +535,13 @@ class _AnalyzeScreenState extends State<AnalyzeScreen> {
           orig.time = result.time;
           orig.timeUnknown = result.timeUnknown;
         } else {
-          _members.add(_MemberInput(label, result.birth!)
+          _members.add(FamilyMemberInput(label, result.birth!)
             ..time = result.time
             ..timeUnknown = result.timeUnknown);
         }
       }
     });
+    unawaited(_saveMembers());
   }
 
   /// 섹션 헤더 (아기 정보 / 가족 구성 구분용)
@@ -614,8 +631,10 @@ class _AnalyzeScreenState extends State<AnalyzeScreen> {
                       ),
                       if (_members.length > 1)
                         IconButton(
-                          onPressed: () =>
-                              setState(() => _members.removeAt(i)),
+                          onPressed: () {
+                            setState(() => _members.removeAt(i));
+                            unawaited(_saveMembers());
+                          },
                           icon: const Icon(Icons.close,
                               size: 18, color: AppTheme.sub),
                           tooltip: '구성원 삭제',
@@ -1042,13 +1061,4 @@ class _AnalyzeScreenState extends State<AnalyzeScreen> {
 }
 
 const _maxMembers = 6;
-
-/// 가족 궁합 구성원 입력 상태
-class _MemberInput {
-  String role;
-  DateTime birth;
-  TimeOfDay? time;
-  bool timeUnknown = true;
-  _MemberInput(this.role, this.birth);
-}
 
