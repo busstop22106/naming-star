@@ -40,21 +40,19 @@ void main() {
     });
   });
 
-  group('한자 뜻 우선 정렬', () {
-    test('curated 뒤의 나머지 구간에서는 뜻 없는 한자가 뜻 있는 한자보다 앞에 오지 않는다',
-        () {
+  group('한자 정렬', () {
+    // 2026-11-03 뜻 채우기(8,178/8,917건) 이후 '뜻 있는 것 먼저' 규칙은
+    // 획수 순서를 깨뜨려 폐기했다. 나머지는 획수 오름차순이 기준이다.
+    test('curated 뒤의 나머지 구간은 획수 오름차순이다', () {
       for (final syllable in ['도', '지', '윤']) {
         final ordered = orderedHanja(syllable);
         final curatedChars =
             hanjaBySyllable[syllable]!.map((e) => e.char).toSet();
         final rest =
             ordered.where((e) => !curatedChars.contains(e.char)).toList();
-        final firstEmpty =
-            rest.indexWhere((e) => e.meaning.isEmpty);
-        if (firstEmpty >= 0) {
-          expect(
-              rest.skip(firstEmpty).every((e) => e.meaning.isEmpty), isTrue,
-              reason: '$syllable: 뜻 없는 한자 뒤에 뜻 있는 한자가 오면 안 된다');
+        for (var i = 0; i + 1 < rest.length; i++) {
+          expect(rest[i].strokes <= rest[i + 1].strokes, isTrue,
+              reason: '$syllable: 획수 순서가 깨졌다');
         }
         // 첫 항목(기본 선택)은 curated 순서라 바뀌지 않는다.
         expect(curatedChars.contains(ordered.first.char), isTrue);

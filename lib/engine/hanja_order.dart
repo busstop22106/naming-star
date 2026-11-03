@@ -21,12 +21,9 @@ List<HanjaPick> orderedHanja(String syllable) {
   curated.sort((a, b) => curatedOrder
       .indexOf(a.char)
       .compareTo(curatedOrder.indexOf(b.char)));
-  rest.sort((a, b) {
-    final aHas = a.meaning.isNotEmpty ? 0 : 1;
-    final bHas = b.meaning.isNotEmpty ? 0 : 1;
-    if (aHas != bHas) return aHas.compareTo(bHas);
-    return a.strokes.compareTo(b.strokes);
-  });
+  // 뜻이 대부분 채워진 지금은 '뜻 있는 것 먼저'가 획수 순서를 깨뜨리기만
+  // 하므로, 나머지는 획수 오름차순으로 단순화한다 (뜻 없는 자도 획수 순으로 섞인다).
+  rest.sort((a, b) => a.strokes.compareTo(b.strokes));
   return [...curated, ...rest];
 }
 
