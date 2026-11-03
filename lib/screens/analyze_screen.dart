@@ -434,8 +434,8 @@ class _AnalyzeScreenState extends State<AnalyzeScreen> {
   }
 
   /// 음절 하나의 한자 선택 모달을 연다.
-  /// 시트에서 고를 때마다 인덱스가 바로 저장되고, 시트를 내리면
-  /// 그 선택이 그대로 화면에 남는다 (시트가 값을 돌려주지 않는다).
+  /// 시트에서 고르면 인덱스가 바로 저장되고 시트가 닫힌다
+  /// (시트가 값을 돌려주지 않는다).
   Future<void> _openHanjaPicker(int index, String syllable) async {
     final opts = orderedHanja(syllable);
     // 빈 목록 행은 탭되지 않지만, 혹시 호출돼도 크래시 없이 닫는다.

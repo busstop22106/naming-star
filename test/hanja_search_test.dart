@@ -117,7 +117,7 @@ void main() {
       expect(find.text('2자'), findsOneWidget);
     });
 
-    testWidgets('모달에서 고르고 내리면 행에 그 한자가 반영된다',
+    testWidgets('모달에서 고르면 시트가 닫히고 행에 그 한자가 반영된다',
         (tester) async {
       SharedPreferences.setMockInitialValues({});
       tester.view.physicalSize = const Size(390, 1400);
@@ -137,18 +137,12 @@ void main() {
       await tester.tap(secondRow);
       await tester.pumpAndSettle();
 
-      // 潤(젖을 16획)을 고르면 모달은 그대로 열려 있다.
+      // 潤(젖을 16획)을 고르면 모달이 닫히고 행에 반영된다.
       final runChip = find.byWidgetPredicate((w) =>
           w is RichText && w.text.toPlainText().contains('潤 젖을 16획'));
       await tester.ensureVisible(runChip);
       await tester.pumpAndSettle();
       await tester.tap(runChip);
-      await tester.pumpAndSettle();
-      expect(find.byType(HanjaPickerSheet), findsOneWidget);
-
-      // 제목을 아래로 끌어 모달을 내리면 행에 潤이 반영된다.
-      await tester.drag(
-          find.text('윤 한자 선택 (27개)'), const Offset(0, 900));
       await tester.pumpAndSettle();
       expect(find.byType(HanjaPickerSheet), findsNothing);
       expect(find.text('潤'), findsOneWidget);

@@ -14,9 +14,9 @@ import 'common.dart';
 /// - 한자는 17pt 고딕 폴백으로, 뜻·획수는 13pt로 보여준다.
 /// - 뜻이 없는 한자는 부가 정보를 옅은 회색으로 표시한다.
 /// - 선택 표시는 체크가 아니라 보라색 테두리(선택 1.5 / 미선택 1)이다.
-/// - 칩을 탭해도 시트가 바로 닫히지 않는다. 선택 상태만 바뀌고,
-///   [onSelected]로 바깥에 즉시 알린다. 시트를 스와이프로 내리거나
-///   바깥을 터치해 닫으면 그 선택이 그대로 남는다.
+/// - 칩을 탭하면 [onSelected]로 바깥에 알리고 시트가 바로 닫힌다.
+///   예전에는 닫히지 않고 선택만 바꾸는 방식이었는데, 고르고 나서도
+///   시트가 남아 있는 게 불편하다는 지적에 닫히는 방식으로 바꿨다.
 /// - 첫 진입 버벅임을 줄이려고 목록은 시트 올라오는 애니메이션이
 ///   끝난 뒤에 한 번에 그린다. 한 번에 전부 만드는 Wrap이 애니메이션과
 ///   같은 프레임에 그리면 올라올 때 끊겼는데, 애니메이션이 끝난 뒤에는
@@ -198,9 +198,12 @@ class _HanjaPickerSheetState extends State<HanjaPickerSheet> {
                                 width: sel ? 1.5 : 1,
                               ),
                               onSelected: (_) {
-                                setState(
-                                    () => _currentSelected = e.key);
+                                // 고르면 바깥에 알리고 바로 닫는다.
+                                // 부모 setState가 일어나는 동안 시트가 위에
+                                // 있어도, 시트는 모달 라우트라 부모 리빌드와
+                                // 무관하게 그대로 닫힌다.
                                 widget.onSelected(e.key);
+                                Navigator.pop(context);
                               },
                               selectedColor: AppTheme.primarySoft,
                               avatar: ElementChip(e.value.element),

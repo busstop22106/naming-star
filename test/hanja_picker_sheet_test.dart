@@ -72,7 +72,7 @@ void main() {
     expect(find.textContaining('더 보기'), findsNothing);
   });
 
-  testWidgets('고르면 시트가 닫히지 않고 선택이 바깥에 전달된다', (tester) async {
+  testWidgets('고르면 선택이 바깥에 전달되고 시트가 닫힌다', (tester) async {
     tester.view.physicalSize = const Size(390, 1200);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.reset);
@@ -111,18 +111,8 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(otherChip);
     await tester.pumpAndSettle();
-    // 시트는 그대로 열려 있고, 선택은 바깥에 전달됐다.
-    expect(find.byType(HanjaPickerSheet), findsOneWidget);
+    // 선택은 바깥에 전달되고 시트는 닫힌다.
     expect(picked, otherIdx);
-    // 선택된 칩은 체크가 아니라 보라색 테두리다.
-    final chip = tester.widget<ChoiceChip>(find.ancestor(
-        of: otherChip, matching: find.byType(ChoiceChip)));
-    expect(chip.showCheckmark, isFalse);
-    expect(chip.side?.color, const Color(0xFF5B4DBC));
-    expect(chip.side?.width, 1.5);
-    // 제목을 아래로 끌면 시트가 닫힌다.
-    await tester.drag(find.text('윤 한자 선택 (27개)'), const Offset(0, 600));
-    await tester.pumpAndSettle();
     expect(find.byType(HanjaPickerSheet), findsNothing);
   });
 }
