@@ -189,12 +189,15 @@ class FamilyCompatResult {
   List<MemberCompat> get ranked =>
       [...members]..sort((a, b) => b.total.compareTo(a.total));
 
+  /// 종합 점수에 따른 한 줄 평가. 55점 미만은 문구를 두지 않는다
+  /// (예전 '참고로만 봐주세요'는 책임 회피처럼 보여서 뺐다).
+  /// 빈 문자열이면 요약 카드에서 이 행을 그리지 않는다.
   String get grade {
     final t = total;
     if (t >= 85) return '아주 잘 맞는 이름이에요';
     if (t >= 70) return '잘 맞는 편이에요';
     if (t >= 55) return '무난한 궁합이에요';
-    return '참고로만 봐주세요';
+    return '';
   }
 }
 

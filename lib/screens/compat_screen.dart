@@ -64,14 +64,17 @@ class CompatScreen extends StatelessWidget {
                   const SizedBox(height: 14),
                   ScoreRing(score: result.total, size: 128),
                   const SizedBox(height: 10),
-                  Text(
-                    result.grade,
-                    style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                        color: AppTheme.scoreColor(result.total)),
-                  ),
-                  const SizedBox(height: 8),
+                  // 낮은 점수에는 평가 문구를 두지 않는다 (grade가 빈 문자열).
+                  if (result.grade.isNotEmpty) ...[
+                    Text(
+                      result.grade,
+                      style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: AppTheme.scoreColor(result.total)),
+                    ),
+                    const SizedBox(height: 8),
+                  ],
                   Text(
                     result.members.length > 1
                         ? '가장 잘 맞는 구성원 · ${best.label} ${best.total.toStringAsFixed(0)}점'
@@ -207,9 +210,6 @@ class _FamilyMapCardState extends State<_FamilyMapCard>
             const Text('누구와 가장 잘 맞을까?',
                 style:
                     TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
-            const SizedBox(height: 2),
-            const Text('가장 잘 맞는 구성원과는 하트가 두근두근 뛰어요.',
-                style: TextStyle(fontSize: 12, color: AppTheme.sub)),
             const SizedBox(height: 6),
             LayoutBuilder(
               builder: (context, constraints) {
@@ -256,6 +256,14 @@ class _FamilyMapCardState extends State<_FamilyMapCard>
                               beat: beat,
                             ),
                           ),
+                          // 가운데 아기는 선 다음, 하트·구성원보다 먼저 그린다.
+                          // 맨 나중에 그리면 아기 원이 엄마 점수 글자 왼쪽 끝과
+                          // 최고 궁합 하트 일부를 덮어 가려 보였다.
+                          Positioned(
+                            left: center.dx - 44,
+                            top: center.dy - 34,
+                            child: const _BabyNode(),
+                          ),
                           // 최고 궁합 선을 따라 흐르는 작은 하트
                           for (final phase in [0.0, 0.5])
                             _flowingHeart(points[bestIdx], center,
@@ -291,12 +299,6 @@ class _FamilyMapCardState extends State<_FamilyMapCard>
                                 isBest: i == bestIdx,
                               ),
                             ),
-                          // 가운데 아기
-                          Positioned(
-                            left: center.dx - 44,
-                            top: center.dy - 34,
-                            child: const _BabyNode(),
-                          ),
                         ],
                       );
                     },
