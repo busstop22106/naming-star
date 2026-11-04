@@ -39,6 +39,13 @@ void main() {
   });
 
   group('가족 구성원 저장/불러오기', () {
+    test('기본 구성원은 아빠 1987년·엄마 1990년', () {
+      final defaults = defaultFamilyMembers();
+      expect(defaults.map((m) => m.role).toList(), ['아빠', '엄마']);
+      expect(defaults[0].birth.year, 1987);
+      expect(defaults[1].birth.year, 1990);
+    });
+
     test('저장한 목록이 그대로 불러와진다', () async {
       SharedPreferences.setMockInitialValues({});
       await saveFamilyMembers([

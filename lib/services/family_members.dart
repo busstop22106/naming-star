@@ -59,8 +59,8 @@ class FamilyMemberInput {
 
 /// 처음 실행할 때의 기본 구성원 (기존 화면 초기값과 동일).
 List<FamilyMemberInput> defaultFamilyMembers() => [
-      FamilyMemberInput('아빠', DateTime(1990, 5, 5)),
-      FamilyMemberInput('엄마', DateTime(1992, 7, 7)),
+      FamilyMemberInput('아빠', DateTime(1987, 5, 5)),
+      FamilyMemberInput('엄마', DateTime(1990, 7, 7)),
     ];
 
 const _key = 'jakmyeongbyeol_family_members';

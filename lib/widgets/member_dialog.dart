@@ -8,12 +8,8 @@ import 'common.dart';
 /// 기본 연도로 따라간다. 사용자가 직접 고른 연도는 건드리지 않는다.)
 int memberDefaultYear(String role) {
   if (role == '할아버지' || role == '할머니') return 1955;
-  if (role == '아빠' ||
-      role == '엄마' ||
-      role == '남편' ||
-      role == '아내') {
-    return 1990;
-  }
+  if (role == '아빠' || role == '남편') return 1987;
+  if (role == '엄마' || role == '아내') return 1990;
   return 2021;
 }
 
