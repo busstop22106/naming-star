@@ -1016,7 +1016,7 @@ class _AnalyzeScreenState extends State<AnalyzeScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text('생년월일시',
-                      style: const TextStyle(
+                      style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w700)),
                   const SizedBox(height: 10),
