@@ -20,7 +20,7 @@ void main() {
     await tester.pumpAndSettle();
 
     // 분석 버튼 탭
-    await tester.tap(find.text('이 이름 분석하기'));
+    await tester.tap(find.text('이 이름으로 분석하기'));
     await tester.pumpAndSettle();
 
     // 오류 토스트가 없고 상세 화면으로 이동했는지 확인

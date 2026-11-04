@@ -1077,7 +1077,7 @@ class _AnalyzeScreenState extends State<AnalyzeScreen> {
           const SizedBox(height: 12),
           ElevatedButton(
             onPressed: _compatMode ? _analyzeCompat : _analyze,
-            child: Text(_compatMode ? '가족 궁합 보기' : '이 이름 분석하기'),
+            child: Text(_compatMode ? '가족 궁합 보기' : '이 이름으로 분석하기'),
           ),
           const SizedBox(height: 12),
           Text(

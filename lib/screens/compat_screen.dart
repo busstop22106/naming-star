@@ -186,9 +186,9 @@ class _FamilyMapCardState extends State<_FamilyMapCard>
       case 1:
         return [-90];
       case 2:
-        return [-145, -35]; // 좌상단 · 우상단
+        return [-135, -45]; // 좌상단 · 우상단
       case 3:
-        return [-145, -35, 90]; // 좌상단 · 우상단 · 하단
+        return [-135, -45, 90]; // 좌상단 · 우상단 · 하단
       case 4:
         return [-135, -45, 45, 135]; // 네 모서리
       default:
@@ -214,7 +214,9 @@ class _FamilyMapCardState extends State<_FamilyMapCard>
             LayoutBuilder(
               builder: (context, constraints) {
                 final w = constraints.maxWidth;
-                const h = 300.0;
+                // 지도 상단 빈 공간이 커 보여서 높이를 줄였다.
+                // (300 → 260, 아래쪽 노드가 박스 안에 들어가는 범위에서)
+                const h = 260.0;
                 final center = Offset(w / 2, h / 2);
                 final rx = w / 2 - 54;
                 const ry = h / 2 - 62;
@@ -512,9 +514,6 @@ class _BabyNode extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(height: 3),
-          const Text('아기',
-              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
         ],
       ),
     );
