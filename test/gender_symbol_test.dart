@@ -7,13 +7,13 @@ import 'package:jakmyeongbyeol/screens/compat_screen.dart';
 void main() {
   group('genderSymbolForRole', () {
     test('남성 역할은 ♂', () {
-      for (final role in ['아빠', '형', '오빠', '할아버지']) {
+      for (final role in ['아빠', '형', '오빠', '할아버지', '남편']) {
         expect(genderSymbolForRole(role), '♂', reason: role);
       }
     });
 
     test('여성 역할은 ♀', () {
-      for (final role in ['엄마', '누나', '언니', '할머니']) {
+      for (final role in ['엄마', '누나', '언니', '할머니', '아내']) {
         expect(genderSymbolForRole(role), '♀', reason: role);
       }
     });

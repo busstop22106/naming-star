@@ -571,7 +571,8 @@ class _AnalyzeScreenState extends State<AnalyzeScreen> {
       final used = _members.map((m) => m.role.split(' ').first).toSet();
       baseRole = memberRoleOptions.firstWhere((r) => !used.contains(r),
           orElse: () => '동생');
-      final isElder = ['아빠', '엄마', '할아버지', '할머니'].contains(baseRole);
+      final isElder =
+          ['아빠', '엄마', '남편', '아내', '할아버지', '할머니'].contains(baseRole);
       final isGrand = ['할아버지', '할머니'].contains(baseRole);
       final defaultYear = memberDefaultYear(baseRole);
       birth = isGrand
@@ -1014,7 +1015,7 @@ class _AnalyzeScreenState extends State<AnalyzeScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(_compatMode ? '아기 생년월일시' : '생년월일시',
+                  const Text('생년월일시',
                       style: const TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w700)),

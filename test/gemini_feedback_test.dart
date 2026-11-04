@@ -102,6 +102,8 @@ void main() {
       expect(memberDefaultYear('할머니'), 1955);
       expect(memberDefaultYear('아빠'), 1990);
       expect(memberDefaultYear('엄마'), 1990);
+      expect(memberDefaultYear('남편'), 1990);
+      expect(memberDefaultYear('아내'), 1990);
       expect(memberDefaultYear('형'), 2021);
       expect(memberDefaultYear('동생'), 2021);
     });
