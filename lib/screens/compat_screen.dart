@@ -218,7 +218,9 @@ class _FamilyMapCardState extends State<_FamilyMapCard>
                 // (300 → 260, 아래쪽 노드가 박스 안에 들어가는 범위에서)
                 const h = 260.0;
                 final center = Offset(w / 2, h / 2);
-                final rx = w / 2 - 54;
+                // 노드를 카드 가장자리에서 조금 띄우되, 점수 글자가
+                // 가운데 별 원에 닿지 않게 가로 반경은 여유 있게 둔다.
+                final rx = w / 2 - 46;
                 const ry = h / 2 - 62;
                 final angles = _angles(members.length);
                 final points = <Offset>[
@@ -262,8 +264,8 @@ class _FamilyMapCardState extends State<_FamilyMapCard>
                           // 맨 나중에 그리면 아기 원이 엄마 점수 글자 왼쪽 끝과
                           // 최고 궁합 하트 일부를 덮어 가려 보였다.
                           Positioned(
-                            left: center.dx - 44,
-                            top: center.dy - 34,
+                            left: center.dx - 26,
+                            top: center.dy - 26,
                             child: const _BabyNode(),
                           ),
                           // 최고 궁합 선을 따라 흐르는 작은 하트
@@ -482,14 +484,16 @@ class _BabyNode extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // 별 원은 구성원 원(52)과 같은 크기로 맞춘다. 예전 68짜리는
+    // 옆 구성원의 점수 글자 왼쪽을 덮어 가려 보였다.
     return SizedBox(
-      width: 88,
+      width: 52,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            width: 68,
-            height: 68,
+            width: 52,
+            height: 52,
             decoration: BoxDecoration(
               color: Colors.white,
               shape: BoxShape.circle,
