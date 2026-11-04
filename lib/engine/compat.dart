@@ -128,13 +128,11 @@ String genderSymbolForRole(String role) {
     case '형':
     case '오빠':
     case '할아버지':
-    case '남편':
       return '♂';
     case '엄마':
     case '누나':
     case '언니':
     case '할머니':
-    case '아내':
       return '♀';
     default:
       return '';
