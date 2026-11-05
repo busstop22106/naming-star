@@ -17,10 +17,14 @@ class RevealScreen extends StatefulWidget {
   /// 이름 분석·가족 궁합에서는 각 흐름에 맞는 문구를 넘긴다.
   final String message;
 
+  /// 문구 아래에 뜨는 작은 부제. 기본값은 이름 짓기용.
+  final String subMessage;
+
   const RevealScreen({
     super.key,
     required this.nextBuilder,
     this.message = '작명별이 이름을 고르고 있어요',
+    this.subMessage = '두근두근, 어떤 이름이 나올까요?',
   });
 
   @override
@@ -160,9 +164,9 @@ class _RevealScreenState extends State<RevealScreen>
                           ),
                         ),
                         const SizedBox(height: 6),
-                        const Text(
-                          '두근두근, 어떤 이름이 나올까요?',
-                          style: TextStyle(
+                        Text(
+                          widget.subMessage,
+                          style: const TextStyle(
                               fontSize: 13, color: AppTheme.sub),
                         ),
                       ],
