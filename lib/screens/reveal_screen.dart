@@ -13,7 +13,15 @@ import '../theme.dart';
 class RevealScreen extends StatefulWidget {
   final WidgetBuilder nextBuilder;
 
-  const RevealScreen({super.key, required this.nextBuilder});
+  /// 별 아래에 뜨는 문구. 기본값은 이름 짓기용.
+  /// 이름 분석·가족 궁합에서는 각 흐름에 맞는 문구를 넘긴다.
+  final String message;
+
+  const RevealScreen({
+    super.key,
+    required this.nextBuilder,
+    this.message = '작명별이 이름을 고르고 있어요',
+  });
 
   @override
   State<RevealScreen> createState() => _RevealScreenState();
@@ -141,18 +149,18 @@ class _RevealScreenState extends State<RevealScreen>
                   const SizedBox(height: 8),
                   Opacity(
                     opacity: textT,
-                    child: const Column(
+                    child: Column(
                       children: [
                         Text(
-                          '별이 이름을 고르고 있어요',
-                          style: TextStyle(
+                          widget.message,
+                          style: const TextStyle(
                             fontSize: 19,
                             fontWeight: FontWeight.w800,
                             color: AppTheme.ink,
                           ),
                         ),
-                        SizedBox(height: 6),
-                        Text(
+                        const SizedBox(height: 6),
+                        const Text(
                           '두근두근, 어떤 이름이 나올까요?',
                           style: TextStyle(
                               fontSize: 13, color: AppTheme.sub),

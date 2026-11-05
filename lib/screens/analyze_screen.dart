@@ -18,6 +18,7 @@ import '../widgets/surname_picker.dart';
 import 'compat_screen.dart';
 import 'detail_screen.dart';
 import 'favorites_screen.dart';
+import 'reveal_screen.dart';
 
 /// 직접 이름 분석 — 이미 정한 이름을 입력해 평가
 /// [baby]·[onBabyChanged]가 있으면 아기 기본 정보를 이름 짓기 탭과 공유한다.
@@ -265,10 +266,15 @@ class _AnalyzeScreenState extends State<AnalyzeScreen> {
         gender: _gender,
       );
     }
+    // 이름 짓기와 같은 별 애니메이션을 보여준 뒤 상세 화면으로 넘어간다.
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => DetailScreen(baby: baby, analysis: analysis),
+        builder: (_) => RevealScreen(
+          message: '작명별이 이름을 분석하고 있어요',
+          nextBuilder: (_) =>
+              DetailScreen(baby: baby, analysis: analysis),
+        ),
       ),
     );
   }
@@ -527,15 +533,20 @@ class _AnalyzeScreenState extends State<AnalyzeScreen> {
       babySaju: computeSaju(baby),
       picks: picks,
     );
+    // 이름 짓기와 같은 별 애니메이션을 보여준 뒤 궁합 화면으로 넘어간다.
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => CompatScreen(
-          babyFullName: '${_surnamePick.name}${picks.map((p) => p.syllable).join()}',
-          babyHanjaName:
-              _isPureKorean ? '' : picks.map((p) => p.char).join(),
-          isPureKorean: _isPureKorean,
-          result: result,
+        builder: (_) => RevealScreen(
+          message: '가족 구성원 간 궁합을 알아보고 있어요',
+          nextBuilder: (_) => CompatScreen(
+            babyFullName:
+                '${_surnamePick.name}${picks.map((p) => p.syllable).join()}',
+            babyHanjaName:
+                _isPureKorean ? '' : picks.map((p) => p.char).join(),
+            isPureKorean: _isPureKorean,
+            result: result,
+          ),
         ),
       ),
     );
@@ -1077,7 +1088,7 @@ class _AnalyzeScreenState extends State<AnalyzeScreen> {
           const SizedBox(height: 12),
           ElevatedButton(
             onPressed: _compatMode ? _analyzeCompat : _analyze,
-            child: Text(_compatMode ? '가족 궁합 보기' : '이 이름으로 분석하기'),
+            child: Text(_compatMode ? '가족 궁합 보기' : '이름 분석하기'),
           ),
           const SizedBox(height: 12),
           Text(
