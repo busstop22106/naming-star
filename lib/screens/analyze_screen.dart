@@ -272,7 +272,7 @@ class _AnalyzeScreenState extends State<AnalyzeScreen> {
       MaterialPageRoute(
         builder: (_) => RevealScreen(
           message: '작명별이 이름을 분석하고 있어요',
-          subMessage: '수리부터 사주까지 꼼꼼히 살펴보고 있어요.',
+          subMessage: '발음부터 사주까지 꼼꼼히 분석하고 있어요.',
           nextBuilder: (_) =>
               DetailScreen(baby: baby, analysis: analysis),
         ),
@@ -540,7 +540,7 @@ class _AnalyzeScreenState extends State<AnalyzeScreen> {
       MaterialPageRoute(
         builder: (_) => RevealScreen(
           message: '가족 구성원 간 궁합을 알아보고 있어요',
-          subMessage: '오행 보완·용신 조화·띠 궁합을 살펴보고 있어요.',
+          subMessage: '가족 궁합을 살펴보고 있어요.',
           nextBuilder: (_) => CompatScreen(
             babyFullName:
                 '${_surnamePick.name}${picks.map((p) => p.syllable).join()}',

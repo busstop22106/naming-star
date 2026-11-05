@@ -26,7 +26,7 @@ void main() {
 
     // 별 애니메이션 화면이 분석용 문구와 함께 보이는지 확인
     expect(find.text('작명별이 이름을 분석하고 있어요'), findsOneWidget);
-    expect(find.text('수리부터 사주까지 꼼꼼히 살펴보고 있어요.'),
+    expect(find.text('발음부터 사주까지 꼼꼼히 분석하고 있어요.'),
         findsOneWidget);
     await tester.pumpAndSettle();
 
