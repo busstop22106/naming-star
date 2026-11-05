@@ -20,13 +20,13 @@ void main() {
     await tester.pumpAndSettle();
 
     // 분석 버튼 탭 (탭 이벤트 처리용 펌프 1회 + 애니메이션 진행 펌프)
-    await tester.tap(find.text('이름 분석하기'));
+    await tester.tap(find.text('이 이름으로 분석하기'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
 
     // 별 애니메이션 화면이 분석용 문구와 함께 보이는지 확인
     expect(find.text('작명별이 이름을 분석하고 있어요'), findsOneWidget);
-    expect(find.text('발음부터 사주까지 꼼꼼히 분석하고 있어요.'),
+    expect(find.text('수리부터 사주까지 꼼꼼히 살펴보고 있어요.'),
         findsOneWidget);
     await tester.pumpAndSettle();
 
