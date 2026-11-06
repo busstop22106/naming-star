@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:jakmyeongbyeol/screens/analyze_screen.dart';
 import 'package:jakmyeongbyeol/screens/detail_screen.dart';
 
 void main() {
   testWidgets('순우리말 모드에서 한글 2자 입력 시 분석이 진행돼야 함', (tester) async {
+    // 전면 광고 게이트가 SharedPreferences 카운터를 읽기 때문에
+    // 모의 초기값을 넣어 둔다 (reveal_flow_test와 같은 방식).
+    SharedPreferences.setMockInitialValues({});
     // 긴 폼이 한 화면에 다 들어오도록 뷰포트를 크게 설정
     tester.view.physicalSize = const Size(1080, 2600);
     tester.view.devicePixelRatio = 1.0;

@@ -9,6 +9,7 @@ import '../engine/scoring.dart';
 import '../favorites.dart';
 import '../models.dart';
 import '../services/ad_service.dart';
+import '../services/interstitial_gate.dart';
 import '../services/family_members.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
@@ -295,17 +296,17 @@ class _AnalyzeScreenState extends State<AnalyzeScreen> {
         gender: _gender,
       );
     }
-    // 이름 짓기와 같은 별 애니메이션을 보여준 뒤 상세 화면으로 넘어간다.
+    // 4번째 시도마다 전면 광고가 애니메이션 대신 뜨고,
+    // 나머지 3번은 별 애니메이션을 보여준 뒤 상세 화면으로 넘어간다.
     setState(() => _navigating = true);
-    await Navigator.push(
+    await InterstitialGate.goToResult(
       context,
-      MaterialPageRoute(
-        builder: (_) => RevealScreen(
-          message: '작명별이 이름을 분석하고 있어요',
-          subMessage: '수리부터 사주까지 꼼꼼히 살펴보고 있어요.',
-          nextBuilder: (_) =>
-              DetailScreen(baby: baby, analysis: analysis),
-        ),
+      resultBuilder: (_) => DetailScreen(baby: baby, analysis: analysis),
+      revealBuilder: (_) => RevealScreen(
+        message: '작명별이 이름을 분석하고 있어요',
+        subMessage: '수리부터 사주까지 꼼꼼히 살펴보고 있어요.',
+        nextBuilder: (_) =>
+            DetailScreen(baby: baby, analysis: analysis),
       ),
     );
     if (mounted) setState(() => _navigating = false);
@@ -566,22 +567,29 @@ class _AnalyzeScreenState extends State<AnalyzeScreen> {
       babySaju: computeSaju(baby),
       picks: picks,
     );
-    // 이름 짓기와 같은 별 애니메이션을 보여준 뒤 궁합 화면으로 넘어간다.
+    // 4번째 시도마다 전면 광고가 애니메이션 대신 뜨고,
+    // 나머지 3번은 별 애니메이션을 보여준 뒤 궁합 화면으로 넘어간다.
     setState(() => _navigating = true);
-    await Navigator.push(
+    await InterstitialGate.goToResult(
       context,
-      MaterialPageRoute(
-        builder: (_) => RevealScreen(
-          message: '가족 구성원 간 궁합을 알아보고 있어요',
-          subMessage: '오행 보완·용신 조화·띠 궁합을 살펴보고 있어요.',
-          nextBuilder: (_) => CompatScreen(
-            babyFullName:
-                '${_surnamePick.name}${picks.map((p) => p.syllable).join()}',
-            babyHanjaName:
-                _isPureKorean ? '' : picks.map((p) => p.char).join(),
-            isPureKorean: _isPureKorean,
-            result: result,
-          ),
+      resultBuilder: (_) => CompatScreen(
+        babyFullName:
+            '${_surnamePick.name}${picks.map((p) => p.syllable).join()}',
+        babyHanjaName:
+            _isPureKorean ? '' : picks.map((p) => p.char).join(),
+        isPureKorean: _isPureKorean,
+        result: result,
+      ),
+      revealBuilder: (_) => RevealScreen(
+        message: '가족 구성원 간 궁합을 알아보고 있어요',
+        subMessage: '오행 보완·용신 조화·띠 궁합을 살펴보고 있어요.',
+        nextBuilder: (_) => CompatScreen(
+          babyFullName:
+              '${_surnamePick.name}${picks.map((p) => p.syllable).join()}',
+          babyHanjaName:
+              _isPureKorean ? '' : picks.map((p) => p.char).join(),
+          isPureKorean: _isPureKorean,
+          result: result,
         ),
       ),
     );

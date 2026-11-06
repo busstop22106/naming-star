@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../engine/saju.dart';
 import '../models.dart';
 import '../services/ad_service.dart';
+import '../services/interstitial_gate.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
 import '../widgets/surname_picker.dart';
@@ -124,15 +125,15 @@ class _HomeScreenState extends State<HomeScreen> {
       birthMinute: _timeUnknown ? null : _birthTime?.minute,
     );
     final saju = computeSaju(baby);
-    // 결과를 바로 보여주지 않고 별 애니메이션으로 기대감을 준 뒤 공개
-    // (출시 후 전면 광고는 RevealScreen 자리에 붙일 예정)
-    await Navigator.push(
+    // 4번째 시도마다 전면 광고가 애니메이션 대신 뜨고,
+    // 나머지 3번은 별 애니메이션을 보여준 뒤 공개한다.
+    await InterstitialGate.goToResult(
       context,
-      MaterialPageRoute(
-        builder: (_) => RevealScreen(
-          nextBuilder: (_) => RecommendScreen(
-              baby: baby, saju: saju, isPureKorean: _isPureKorean),
-        ),
+      resultBuilder: (_) => RecommendScreen(
+          baby: baby, saju: saju, isPureKorean: _isPureKorean),
+      revealBuilder: (_) => RevealScreen(
+        nextBuilder: (_) => RecommendScreen(
+            baby: baby, saju: saju, isPureKorean: _isPureKorean),
       ),
     );
     if (mounted) setState(() => _navigating = false);
