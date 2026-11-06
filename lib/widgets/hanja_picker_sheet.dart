@@ -162,6 +162,11 @@ class _HanjaPickerSheetState extends State<HanjaPickerSheet> {
                                         .withValues(alpha: 0.55)
                                     : AppTheme.hint);
                             return ChoiceChip(
+                              // 터치 타깃 48dp 보장 — 기본(compact 밀도)으로는
+                              // 칩 높이가 32dp 안팎이라 오탭이 잦다.
+                              // ChoiceChip 자체가 시맨틱 버튼 역할을 한다.
+                              materialTapTargetSize:
+                                  MaterialTapTargetSize.padded,
                               label: RichText(
                                 text: TextSpan(
                                   style: TextStyle(

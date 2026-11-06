@@ -200,8 +200,11 @@ class _RankList extends StatelessWidget {
                         style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w800,
-                            color:
-                                e.rank <= 3 ? AppTheme.gold : AppTheme.sub)),
+                            // 금색 #FFC53D는 흰 배경 1.58:1로 순위 숫자에 쓸 수
+                            // 없어 진한 primaryDark로 바꿨다.
+                            color: e.rank <= 3
+                                ? AppTheme.primaryDark
+                                : AppTheme.sub)),
                   ),
                   Expanded(
                     child: Column(

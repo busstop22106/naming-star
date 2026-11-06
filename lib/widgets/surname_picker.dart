@@ -320,6 +320,10 @@ class _SurnameSheetState extends State<_SurnameSheet> {
   }
 
   /// 직접 입력 다이얼로그
+  ///
+  /// 컨트롤러 3개는 다이얼로그가 닫힌 뒤에 dispose한다 — showDialog가
+  /// 돌려주는 Future가 끝나면(닫히면) 정리되게 then으로 연결한다.
+  /// 예전에는 dispose가 없어서 다이얼로그를 열 때마다 누수됐다.
   Future<SurnamePick?> _showManualDialog(
       BuildContext context) {
     final nameCtrl = TextEditingController();
@@ -391,6 +395,11 @@ class _SurnameSheetState extends State<_SurnameSheet> {
           ),
         ],
       ),
-    );
+    ).then((result) {
+      nameCtrl.dispose();
+      hanjaCtrl.dispose();
+      strokesCtrl.dispose();
+      return result;
+    });
   }
 }

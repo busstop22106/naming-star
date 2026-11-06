@@ -23,7 +23,23 @@ String choElement(String cho) {
   return '수'; // ㅁㅂㅃㅍ
 }
 
-const Set<int> _doubleVowels = {2, 3, 5, 8, 9, 10, 11, 13, 14, 15, 16, 18};
+/// 이중모음 중성 인덱스 (Unicode 중성 순서 기준)
+/// ㅑ(2) ㅒ(3) ㅕ(6) ㅖ(7) ㅘ(9) ㅙ(10) ㅚ(11) ㅛ(12) ㅝ(14) ㅞ(15) ㅟ(16)
+/// ㅠ(17) ㅢ(19). 단모음 ㅔ(5)·ㅗ(8)·ㅜ(13)·ㅡ(18)는 들어가지 않는다.
+const Set<int> _doubleVowels = {2, 3, 6, 7, 9, 10, 11, 12, 14, 15, 16, 17, 19};
+
+/// 종합 점수 이론 상한 (100점 만점 환산용).
+/// 각 차원의 도달 가능한 최대값에 가중치를 곱한 합이다.
+/// - 수리: suriGradeScore 최대 100 (대길) × 0.35 = 35
+/// - 사주 보완: 용신 45점 × 이름 2자 = 90 × 0.25 = 22.5
+/// - 발음: chain 최대 100 × 0.55 + pron 최대 80 × 0.45 = 91 × 0.20 = 18.2
+///   (pron은 기본 75 + 받침 없는 글자 보너스 5 = 80이 상한)
+/// - 음양: 길한 배열 95 × 0.10 = 9.5
+/// - 사용성: 기본 85 (감점만 있음) × 0.10 = 8.5
+/// 합계 35 + 22.5 + 18.2 + 9.5 + 8.5 = 93.7.
+/// 차원 점수 자체는 바꾸지 않고 종합 점수만 이 상한으로 나눠 100점 만점으로
+/// 환산한다 (부정 연상 30% 감점은 환산 전에 원점수에 적용).
+const double _theoreticalMaxTotal = 35.0 + 22.5 + 18.2 + 9.5 + 8.5; // = 93.7
 
 double _clamp(double v, [double min = 0, double max = 100]) =>
     v < min ? min : (v > max ? max : v);
@@ -232,7 +248,7 @@ NameAnalysis analyzeName({
       yyScore * 0.10 +
       usa * 0.10;
   if (badHit != null) total *= 0.7; // 부정 연상은 큰 감점
-  total = _clamp(total);
+  total = _clamp(total / _theoreticalMaxTotal * 100);
 
   return NameAnalysis(
     surname: surname,

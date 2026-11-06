@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
@@ -28,7 +29,9 @@ class AdService {
   static String get bannerAdUnitId => bannerAdUnitIdFor(AdPlacement.home);
 
   static String bannerAdUnitIdFor(AdPlacement placement) {
-    if (kDebugMode) {
+    // 디버그·프로필 빌드는 Google 공식 테스트 ID를 쓴다.
+    // (프로필 빌드도 실제 광고 ID가 나가면 안 된다.)
+    if (kDebugMode || kProfileMode) {
       return _testBannerId;
     }
     if (Platform.isAndroid) {
@@ -73,6 +76,17 @@ class _BannerAdWidgetState extends State<BannerAdWidget> {
   BannerAd? _bannerAd;
   bool _loaded = false;
 
+  /// 로드 실패 재시도 상태. 랭킹 화면은 IndexedStack에 상주해
+  /// initState가 세션당 1회만 실행되므로, 실패 시 여기서 직접 재시도한다.
+  int _retryCount = 0;
+  Timer? _retryTimer;
+  static const _maxRetries = 3;
+  static const _retryDelays = [
+    Duration(seconds: 2),
+    Duration(seconds: 5),
+    Duration(seconds: 10),
+  ];
+
   @override
   void initState() {
     super.initState();
@@ -88,17 +102,34 @@ class _BannerAdWidgetState extends State<BannerAdWidget> {
       request: const AdRequest(),
       listener: BannerAdListener(
         onAdLoaded: (_) {
-          if (mounted) setState(() => _loaded = true);
+          if (mounted) {
+            setState(() {
+              _loaded = true;
+              _retryCount = 0;
+            });
+          }
         },
         onAdFailedToLoad: (ad, err) {
           ad.dispose();
+          _bannerAd = null;
+          _scheduleRetry();
         },
       ),
     )..load();
   }
 
+  void _scheduleRetry() {
+    if (_retryCount >= _maxRetries) return;
+    final delay = _retryDelays[_retryCount];
+    _retryCount++;
+    _retryTimer = Timer(delay, () {
+      if (mounted) _loadAd();
+    });
+  }
+
   @override
   void dispose() {
+    _retryTimer?.cancel();
     _bannerAd?.dispose();
     super.dispose();
   }

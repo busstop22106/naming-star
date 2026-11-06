@@ -133,6 +133,41 @@ class BabyInfo {
         birthHour: j['birthHour'] as int?,
         birthMinute: j['birthMinute'] as int?,
       );
+
+  /// 파싱에 실패한 항목은 null을 돌려준다 — 보관함 불러올 때 그 항목만 건너뛴다.
+  /// (fromJson은 엄격 캐스트라 필드 하나만 어긋나도 예외가 나므로 별도로 둔다.)
+  static BabyInfo? tryFromJson(Map<String, dynamic> j) {
+    try {
+      final surname = j['surname'];
+      final strokes = j['surnameStrokes'];
+      final genderRaw = j['gender'];
+      final birthRaw = j['birth'];
+      if (surname is! String || surname.isEmpty) return null;
+      if (strokes is! num) return null;
+      if (genderRaw is! String ||
+          (genderRaw != 'boy' && genderRaw != 'girl')) {
+        return null;
+      }
+      if (birthRaw is! String) return null;
+      final birth = DateTime.parse(birthRaw);
+      final hour = j['birthHour'];
+      final minute = j['birthMinute'];
+      if (hour is num && (hour < 0 || hour > 23)) return null;
+      if (minute is num && (minute < 0 || minute > 59)) return null;
+      final hanja = j['surnameHanja'];
+      return BabyInfo(
+        surname: surname,
+        surnameHanja: hanja is String ? hanja : '',
+        surnameStrokes: strokes.toInt(),
+        gender: genderRaw == 'boy' ? Gender.boy : Gender.girl,
+        birth: birth,
+        birthHour: hour is num ? hour.toInt() : null,
+        birthMinute: minute is num ? minute.toInt() : null,
+      );
+    } catch (_) {
+      return null;
+    }
+  }
 }
 
 /// 사주 기둥 하나 (천간 + 지지)
@@ -207,6 +242,31 @@ class HanjaPick {
         element: j['element'] as String,
         meaning: j['meaning'] as String,
       );
+
+  /// 파싱에 실패한 항목은 null을 돌려준다 — 보관함 불러올 때 그 항목만 건너뛴다.
+  static HanjaPick? tryFromJson(Map<String, dynamic> j) {
+    try {
+      final syllable = j['syllable'];
+      final char = j['char'];
+      final strokes = j['strokes'];
+      final element = j['element'];
+      final meaning = j['meaning'];
+      if (syllable is! String || syllable.isEmpty) return null;
+      if (char is! String) return null;
+      if (strokes is! num) return null;
+      if (element is! String) return null;
+      if (meaning is! String) return null;
+      return HanjaPick(
+        syllable: syllable,
+        char: char,
+        strokes: strokes.toInt(),
+        element: element,
+        meaning: meaning,
+      );
+    } catch (_) {
+      return null;
+    }
+  }
 }
 
 /// 5개 평가 차원 중 하나

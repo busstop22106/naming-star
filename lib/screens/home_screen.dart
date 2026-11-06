@@ -28,6 +28,9 @@ class _HomeScreenState extends State<HomeScreen> {
   late bool _timeUnknown;
   bool _isPureKorean = false;
   SharedBaby? _lastSynced;
+  // 이동 중 연타 가드 — RevealScreen으로 넘어가는 동안 버튼을 눌러도
+  // 결과 화면이 2장 쌓이지 않게 한다.
+  bool _navigating = false;
 
   @override
   void initState() {
@@ -108,7 +111,9 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  void _goRecommend() {
+  Future<void> _goRecommend() async {
+    if (_navigating) return;
+    setState(() => _navigating = true);
     final baby = BabyInfo(
       surname: _surnamePick.name,
       surnameHanja: _surnamePick.hanja,
@@ -121,7 +126,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final saju = computeSaju(baby);
     // 결과를 바로 보여주지 않고 별 애니메이션으로 기대감을 준 뒤 공개
     // (출시 후 전면 광고는 RevealScreen 자리에 붙일 예정)
-    Navigator.push(
+    await Navigator.push(
       context,
       MaterialPageRoute(
         builder: (_) => RevealScreen(
@@ -130,6 +135,7 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
     );
+    if (mounted) setState(() => _navigating = false);
   }
 
   @override
@@ -374,7 +380,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             const SizedBox(height: 16),
             ElevatedButton(
-              onPressed: _goRecommend,
+              onPressed: _navigating ? null : _goRecommend,
               child: const Text('아기에게 좋은 이름 지어보기'),
             ),
             const SizedBox(height: 16),

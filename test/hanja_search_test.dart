@@ -36,8 +36,9 @@ void main() {
       final ordered = orderedHanja('윤');
       final byDigits = filterHanjaOptions(ordered, '10');
       final byStrokes = filterHanjaOptions(ordered, '10획');
-      expect(byDigits.map((e) => e.value.char).toSet(), {'倫', '倫'});
-      expect(byStrokes.map((e) => e.value.char).toSet(), {'倫', '倫'});
+      // 倫은 정자 倫의 호환 이체자라 선택 목록에서 빠진다.
+      expect(byDigits.map((e) => e.value.char).toSet(), {'倫'});
+      expect(byStrokes.map((e) => e.value.char).toSet(), {'倫'});
       for (final e in byDigits) {
         expect(e.value.strokes, 10);
       }

@@ -130,9 +130,19 @@ SajuResult computeSaju(BabyInfo baby) {
     '간이 만세력으로 계산한 사주예요. 절기 경계일에 태어났다면, 경계를 어느 쪽으로 보느냐에 따라 결과가 달라질 수 있어요.',
   ];
 
+  // ── 기준일: 23시 이후 출생은 자시(子時)라 다음날로 본다 ──
+  // 일주뿐 아니라 연주(입춘 판정)·월주(절기 판정)도 같은 기준일을 써야 한다.
+  // 2024-02-03 23시생은 출생일 기준이면 계묘년 을축월이지만,
+  // 다음날(2/4 입춘) 기준이면 갑진년 병인월이다.
+  var dayDate = DateTime(baby.birth.year, baby.birth.month, baby.birth.day);
+  if (!baby.timeUnknown && baby.birthHour != null && baby.birthHour! >= 23) {
+    dayDate = dayDate.add(const Duration(days: 1));
+    notes.add('23시 이후 출생이라 연·월·일주를 다음날 기준으로 계산했어요.');
+  }
+
   // ── 연주 (입춘 기준) ──
-  var y = baby.birth.year;
-  if (baby.birth.month == 1 || (baby.birth.month == 2 && baby.birth.day < 4)) {
+  var y = dayDate.year;
+  if (dayDate.month == 1 || (dayDate.month == 2 && dayDate.day < 4)) {
     y -= 1;
     notes.add('입춘(2/4) 이전 출생이라 연주는 전해 기준으로 계산했어요.');
   }
@@ -140,7 +150,7 @@ SajuResult computeSaju(BabyInfo baby) {
   final yearBranch = _branches[(y - 4) % 12];
 
   // ── 월주 ──
-  final mBranch = _monthBranch(baby.birth.month, baby.birth.day);
+  final mBranch = _monthBranch(dayDate.month, dayDate.day);
   final mBranchIdx = _branches.indexOf(mBranch);
   final baseStem = _firstMonthStem(yearStem);
   final baseIdx = _stems.indexOf(baseStem);
@@ -149,11 +159,7 @@ SajuResult computeSaju(BabyInfo baby) {
   final mStem = _stems[(baseIdx + (mBranchIdx - 2 + 12) % 12) % 10];
 
   // ── 일주 (기준일 2000-01-01 = 무오) ──
-  var dayDate = DateTime(baby.birth.year, baby.birth.month, baby.birth.day);
-  if (!baby.timeUnknown && baby.birthHour != null && baby.birthHour! >= 23) {
-    dayDate = dayDate.add(const Duration(days: 1));
-    notes.add('23시 이후 출생이라 일주는 다음날 기준으로 계산했어요.');
-  }
+  // dayDate는 위에서 23시 자시 보정이 끝난 기준일이다.
   final anchor = DateTime(2000, 1, 1);
   final diff = dayDate.difference(anchor).inDays;
   final idx = (((55 + diff - 1) % 60) + 60) % 60 + 1; // 1=갑자 … 55=무오

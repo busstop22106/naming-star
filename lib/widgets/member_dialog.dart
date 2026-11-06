@@ -209,7 +209,7 @@ class MemberDialogState extends State<MemberDialog> {
                       icon: const Icon(Icons.delete_outline, size: 18),
                       label: const Text('삭제'),
                       style: TextButton.styleFrom(
-                          foregroundColor: Colors.red),
+                          foregroundColor: AppTheme.danger),
                     ),
                   if (widget.canDelete) const Spacer(),
                   // 작은 화면 + 큰 글자에서도 버튼이 줄바꿈되게 Wrap 사용

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:jakmyeongbyeol/engine/hanja_order.dart';
 import 'package:jakmyeongbyeol/theme.dart';
+import 'package:jakmyeongbyeol/widgets/hanja_picker_sheet.dart';
 import 'package:jakmyeongbyeol/widgets/member_dialog.dart';
 
 /// 다양한 기기 크기·글자 크기에서 구성원 다이얼로그가 예외 없이 뜨는지 검증.
@@ -54,21 +56,42 @@ void main() {
     }
   }
 
+  // 한자 ChoiceChip 라벨 색상: 테스트 안에서 만든 칩이 아니라 실제
+  // HanjaPickerSheet를 펌프해서 선택/미선택 칩의 라벨 색상을 확인한다.
+  // (예전에는 테스트 안에서 직접 만든 ChoiceChip에 색상을 하드코딩한 뒤
+  // assert하는 자기충족 테스트라, 실제 칩 색상이 깨져도 실패하지 않았다.)
   testWidgets('한자 ChoiceChip label 색상이 명시되어 있다', (tester) async {
+    final opts = orderedHanja('윤');
+    final runIdx = opts.indexWhere((o) => o.char == '潤');
+    tester.view.physicalSize = const Size(390, 1200);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
     await tester.pumpWidget(MaterialApp(
       theme: AppTheme.theme,
       home: Scaffold(
-        body: ChoiceChip(
-          label: const Text('李 오얏',
-              style: TextStyle(
-                  color: AppTheme.ink, fontWeight: FontWeight.w700)),
-          selected: false,
-          onSelected: (_) {},
-          selectedColor: AppTheme.primarySoft,
+        body: SizedBox(
+          height: 1200,
+          child: HanjaPickerSheet(
+            syllable: '윤',
+            options: opts,
+            selectedIndex: runIdx,
+            onSelected: (_) {},
+          ),
         ),
       ),
     ));
-    final text = tester.widget<Text>(find.text('李 오얏'));
-    expect(text.style?.color, AppTheme.ink);
+    await tester.pumpAndSettle();
+    // 칩 라벨은 RichText(한자 span + 부가정보 span)라서 전체 문장으로 찾는다.
+    Finder richTextContaining(String s) => find.byWidgetPredicate(
+        (w) => w is RichText && w.text.toPlainText().contains(s));
+    // 선택된 칩(潤): 루트 TextSpan 색이 primaryDark
+    final selected =
+        tester.widget<RichText>(richTextContaining('潤 젖을 16획'));
+    expect((selected.text as TextSpan).style?.color,
+        AppTheme.primaryDark);
+    // 미선택 칩(㣧): 루트 TextSpan 색이 ink
+    final unselected =
+        tester.widget<RichText>(richTextContaining('㣧 뜻없음 11획'));
+    expect((unselected.text as TextSpan).style?.color, AppTheme.ink);
   });
 }

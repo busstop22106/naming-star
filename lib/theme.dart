@@ -19,7 +19,10 @@ class AppTheme {
   static const blush = Color(0xFFFFE9E9); // 볼터치 핑크 배경
   static const coral = Color(0xFFF4845F);
   static const ink = Color(0xFF2B2440);
-  static const sub = Color(0xFF8A839E);
+  // 보조 문구용 — 예전 #8A839E는 흰 배경 3.61:1·크림 배경 3.45:1로
+  // 11~12pt 보조 문구의 WCAG AA(4.5:1)에 미달이라 진하게 바꿨다.
+  // (흰 배경 5.31:1 · 크림 배경 5.08:1)
+  static const sub = Color(0xFF6E6880);
   static const hint = Color(0xFFB8B0CC); // 입력 힌트용 밝은 회색
   static const chipBorder = Color(0xFFD9D0E8); // 미선택 칩 테두리용 연보라 회색
   static const line = Color(0xFFF0E7D8);
@@ -35,6 +38,20 @@ class AppTheme {
 
   static const boy = Color(0xFF5B8DEF);
   static const girl = Color(0xFFF472A0);
+  // ── 명암비용 진한 변형 — boy/girl/pink/gold/bad는 흰 배경에서
+  // 3:1 안팎이라 작은 텍스트에는 쓸 수 없어, 텍스트용 진한 토큰을 둔다.
+  // 채움·선·아이콘 같은 그래픽 요소에는 원래 색을 그대로 쓴다.
+  static const boyDark = Color(0xFF2F6BDB); // 흰 배경 4.94:1
+  static const girlDark = Color(0xFFD6336C); // 흰 배경 4.62:1
+  static const pink = Color(0xFFFF5C7A); // 궁합 강조 핑크 (그래픽용)
+  static const pinkDark = Color(0xFFD6336C); // 궁합 텍스트용 진한 핑크
+  static const pinkSoft = Color(0xFFFFE3E9); // 궁합 강조 배경
+  static const pinkLight = Color(0xFFFF8FA5); // 흐르는 하트
+  static const mapLine = Color(0xFFDCD4EE); // 궁합 지도 일반 연결선
+  static const goldDark = Color(0xFF8A6D00); // 금색 구간 텍스트용 (4.92:1)
+  static const goodDark = Color(0xFF2E7D4F); // 5.05:1
+  static const warnDark = Color(0xFF8A6100); // 5.54:1
+  static const danger = Color(0xFFB3261E); // 삭제 등 위험 텍스트용 (6.54:1)
   static const good = Color(0xFF43A06B);
   static const warn = Color(0xFFE0A030);
   static const bad = Color(0xFFE05D5D);
@@ -133,6 +150,16 @@ class AppTheme {
     if (score >= 70) return gold;
     if (score >= 55) return warn;
     return bad;
+  }
+
+  /// 점수 구간별 텍스트용 색상 — scoreColor는 링·막대 같은 그래픽용이고,
+  /// 글자에는 금색·초록 등이 흰 배경에서 AA에 미달이라 진한 변형을 쓴다.
+  /// (금색 구간은 gold 대신 goldDark, 그 외도 같은 구간·같은 계열)
+  static Color scoreTextColor(double score) {
+    if (score >= 85) return goodDark;
+    if (score >= 70) return goldDark;
+    if (score >= 55) return warnDark;
+    return danger;
   }
 
   static String scoreWord(double score) {

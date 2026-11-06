@@ -314,7 +314,7 @@ String _balanceNote(Map<String, int> before, Map<String, int> after,
     return '이 이름($filled 기운)을 더하면 가족 전체의 오행 분포가 더 고르게 균형 잡혀요.';
   }
   if (spread(after) > spread(before)) {
-    return '이 이름을 더해도 가족 오행 균형은 크게 달라지지 않아요.';
+    return '이 이름($filled 기운)을 더하면 가족 전체의 오행 분포가 한쪽으로 더 치우쳐요.';
   }
   return '가족 오행 분포가 이미 고른 편이라 이름의 영향은 작아요.';
 }

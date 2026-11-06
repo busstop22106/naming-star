@@ -2,8 +2,8 @@ import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// PRO(유료) 상태 관리 (싱글톤)
-/// - 현재는 목업: 실제 인앱결제(IAP) 연동 전이라 SharedPreferences에 저장
-/// - 실결제 연동 시 in_app_purchase 패키지로 교체
+/// - 조회 전용: 실제 인앱결제(IAP) 연동 전까지 구매 경로는 없다.
+///   SharedPreferences에 저장된 PRO 여부만 읽는다.
 class ProService {
   static final ProService _instance = ProService._internal();
   factory ProService() => _instance;
@@ -35,20 +35,6 @@ class ProService {
   bool isRankFree(int rank) {
     if (isPro) return true;
     return rank <= freeRankLimit;
-  }
-
-  /// 목업 결제: 실제 IAP 연동 전까지 사용
-  /// TODO: in_app_purchase 패키지 연동 시 이 메서드를 실제 결제로 교체
-  Future<bool> purchasePro() async {
-    // 실제로는 여기서 스토어 결제 UI 호출
-    await Future.delayed(const Duration(seconds: 1));
-    final prefs = await SharedPreferences.getInstance();
-    final now = DateTime.now().toIso8601String();
-    await prefs.setBool(_key, true);
-    await prefs.setString(_keyDate, now);
-    isProNotifier.value = true;
-    _purchasedAt = now;
-    return true;
   }
 
   /// PRO 복원 (재설치 등)

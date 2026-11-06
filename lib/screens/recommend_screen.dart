@@ -27,6 +27,21 @@ class RecommendScreen extends StatefulWidget {
 class _RecommendScreenState extends State<RecommendScreen> {
   late final List<NameAnalysis> _names;
   String _sort = 'total';
+  // 이동 중 연타 가드 — 카드를 연타하면 상세 화면이 2장 쌓인다.
+  bool _navigating = false;
+
+  /// 상세 화면으로 이동한다. 이동 중에는 다시 눌러도 무시한다.
+  Future<void> _openDetail(NameAnalysis a) async {
+    if (_navigating) return;
+    setState(() => _navigating = true);
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => DetailScreen(baby: widget.baby, analysis: a),
+      ),
+    );
+    if (mounted) setState(() => _navigating = false);
+  }
 
   @override
   void initState() {
@@ -114,7 +129,7 @@ class _RecommendScreenState extends State<RecommendScreen> {
                             : '사주에 ${elementNames[saju.yongsin]} 기운이 필요해 이 기운을 담은 한자 위주로 골랐어요.')
                         : '사주를 바탕으로 이름 후보를 점수화했어요.',
                     style: const TextStyle(
-                        fontSize: 12, color: Colors.white70),
+                        fontSize: 12, color: Colors.white),
                   ),
                 ],
               ),
@@ -176,15 +191,7 @@ class _RecommendScreenState extends State<RecommendScreen> {
                   rank: i + 1,
                   analysis: a,
                   baby: widget.baby,
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => DetailScreen(
-                            baby: widget.baby, analysis: a),
-                      ),
-                    );
-                  },
+                  onTap: () => _openDetail(a),
                 );
               },
             ),
@@ -225,8 +232,9 @@ class _PillarBox extends StatelessWidget {
       child: Column(
         children: [
           Text(label,
+              // white60은 primary 위에서 3.45:1로 AA 미달이라 흰색으로 바꿨다.
               style: const TextStyle(
-                  fontSize: 11, color: Colors.white60)),
+                  fontSize: 11, color: Colors.white)),
           const SizedBox(height: 4),
           Container(
             width: double.infinity,
@@ -313,8 +321,11 @@ class _NameCard extends StatelessWidget {
                       style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w800,
+                          // 금색 #FFC53D는 흰 배경 1.58:1로 순위 숫자에 쓸 수
+                          // 없어 진한 primaryDark로 바꿨다. 금색은 별·아이콘
+                          // 같은 큰 그래픽 요소에만 쓴다.
                           color: rank <= 3
-                              ? AppTheme.gold
+                              ? AppTheme.primaryDark
                               : AppTheme.sub)),
                 ),
                 Expanded(

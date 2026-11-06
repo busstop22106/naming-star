@@ -35,15 +35,21 @@ void showSingleSnackBar(
 }
 
 /// 종합 점수 링
+///
+/// [darkBackground]가 true면 primary 카드 위처럼 진한 배경에 올리는
+/// 경우라, 숫자·등급을 흰색 계열로 그리고 링 바탕도 흰색 반투명으로
+/// 바꾼다. 기본(흰 카드 위)에서는 숫자 ink·등급 scoreTextColor를 쓴다.
 class ScoreRing extends StatelessWidget {
   final double score;
   final double size;
   final double strokeWidth;
+  final bool darkBackground;
   const ScoreRing({
     super.key,
     required this.score,
     this.size = 120,
     this.strokeWidth = 12,
+    this.darkBackground = false,
   });
 
   @override
@@ -56,7 +62,8 @@ class ScoreRing extends StatelessWidget {
         children: [
           CustomPaint(
             size: Size(size, size),
-            painter: _RingPainter(score, strokeWidth),
+            painter: _RingPainter(score, strokeWidth,
+                darkBackground: darkBackground),
           ),
           Column(
             mainAxisSize: MainAxisSize.min,
@@ -66,7 +73,8 @@ class ScoreRing extends StatelessWidget {
                 style: TextStyle(
                   fontSize: size * 0.30,
                   fontWeight: FontWeight.w800,
-                  color: AppTheme.ink,
+                  // 흰 배경에서는 ink(9:1 이상), 진한 배경에서는 흰색(6.5:1).
+                  color: darkBackground ? Colors.white : AppTheme.ink,
                 ),
               ),
               Text(
@@ -74,7 +82,11 @@ class ScoreRing extends StatelessWidget {
                 style: TextStyle(
                   fontSize: size * 0.13,
                   fontWeight: FontWeight.w600,
-                  color: AppTheme.scoreColor(score),
+                  // 진한 배경에서는 등급도 흰색으로 — scoreColor는
+                  // primary 위에서 good 2.0:1 / bad 1.82:1로 AA 미달이다.
+                  color: darkBackground
+                      ? Colors.white
+                      : AppTheme.scoreTextColor(score),
                 ),
               ),
             ],
@@ -88,14 +100,17 @@ class ScoreRing extends StatelessWidget {
 class _RingPainter extends CustomPainter {
   final double score;
   final double strokeWidth;
-  _RingPainter(this.score, this.strokeWidth);
+  final bool darkBackground;
+  _RingPainter(this.score, this.strokeWidth, {this.darkBackground = false});
 
   @override
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
     final radius = (size.width - strokeWidth) / 2;
     final bg = Paint()
-      ..color = AppTheme.line
+      ..color = darkBackground
+          ? Colors.white.withValues(alpha: 0.25)
+          : AppTheme.line
       ..style = PaintingStyle.stroke
       ..strokeWidth = strokeWidth
       ..strokeCap = StrokeCap.round;
@@ -120,7 +135,7 @@ class _RingPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _RingPainter old) =>
-      old.score != score;
+      old.score != score || old.darkBackground != darkBackground;
 }
 
 /// 차원별 점수 바
@@ -137,7 +152,11 @@ class DimensionBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // 막대·점은 그래픽이라 scoreColor를 쓰지만, '82 · 양호' 글자는
+    // 흰 배경에서 AA를 만족하는 scoreTextColor를 쓴다
+    // (금색 구간은 흰 배경 1.58:1로 미달이라 goldDark으로 바뀐다).
     final color = AppTheme.scoreColor(score);
+    final textColor = AppTheme.scoreTextColor(score);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Column(
@@ -171,7 +190,7 @@ class DimensionBar extends StatelessWidget {
                   style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
-                      color: color),
+                      color: textColor),
                 ),
               ),
             ],
@@ -428,28 +447,44 @@ class GenderButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 14),
-        decoration: BoxDecoration(
-          color: selected ? color.withValues(alpha: 0.14) : Colors.white,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(
-            color: selected ? color : AppTheme.line,
-            width: selected ? 1.6 : 1,
+    // GestureDetector만 쓰면 스크린리더가 버튼으로 못 읽고 포커스도
+    // 안 잡혀서, Semantics로 버튼 역할·선택 상태를 달아준다.
+    // 터치 높이는 48dp를 보장한다 (패딩 14*2 + 아이콘 24 = 52).
+    // 선택 상태의 아이콘·라벨은 글자라, boy/girl 원색(흰 배경 3.2:1/2.7:1)
+    // 대신 AA를 만족하는 진한 변형을 쓴다. 테두리·배경은 원색 유지.
+    final textColor = color == AppTheme.boy
+        ? AppTheme.boyDark
+        : color == AppTheme.girl
+            ? AppTheme.girlDark
+            : color;
+    return Semantics(
+      button: true,
+      selected: selected,
+      label: label,
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          constraints: const BoxConstraints(minHeight: 48),
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          decoration: BoxDecoration(
+            color: selected ? color.withValues(alpha: 0.14) : Colors.white,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(
+              color: selected ? color : AppTheme.line,
+              width: selected ? 1.6 : 1,
+            ),
           ),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, color: selected ? color : AppTheme.sub),
-            const SizedBox(width: 6),
-            Text(label,
-                style: TextStyle(
-                    fontWeight: FontWeight.w700,
-                    color: selected ? color : AppTheme.sub)),
-          ],
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, color: selected ? textColor : AppTheme.sub),
+              const SizedBox(width: 6),
+              Text(label,
+                  style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      color: selected ? textColor : AppTheme.sub)),
+            ],
+          ),
         ),
       ),
     );

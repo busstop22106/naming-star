@@ -23,6 +23,9 @@ class _DetailScreenState extends State<DetailScreen> {
   late List<HanjaPick> _picks;
   late NameAnalysis _analysis;
   bool _saved = false;
+  // 저장/삭제 비동기 작업 중 재탭 가드 — 연타하면 저장·삭제가
+  // 번갈아 실행돼 최종 상태가 뒤집힐 수 있다.
+  bool _saving = false;
 
   /// 저장 순간 별이 톡 튀는 피드백용 — 결과 공개·저장 2곳에만 모션을 둔다.
   bool _pop = false;
@@ -63,6 +66,8 @@ class _DetailScreenState extends State<DetailScreen> {
   }
 
   Future<void> _toggleSave() async {
+    if (_saving) return;
+    setState(() => _saving = true);
     // 토스트 쌓임 방지용 — 비동기 저장 전에 잡아둔다.
     final messenger = ScaffoldMessenger.of(context);
     final item = FavoriteItem(
@@ -74,21 +79,33 @@ class _DetailScreenState extends State<DetailScreen> {
     try {
       // 저장소 응답이 멈춰도 버튼이 무응답으로 보이지 않게 5초 제한을 둔다.
       if (_saved) {
-        await removeFavorite(item).timeout(const Duration(seconds: 5));
+        final ok =
+            await removeFavorite(item).timeout(const Duration(seconds: 5));
         if (!mounted) return;
-        setState(() => _saved = false);
-        showSingleSnackBar(messenger, '보관함에서 삭제했어요.');
+        if (!ok) {
+          showSingleSnackBar(messenger, '저장에 실패했어요. 다시 시도해 주세요.');
+        } else {
+          setState(() => _saved = false);
+          showSingleSnackBar(messenger, '보관함에서 삭제했어요.');
+        }
       } else {
-        await saveFavorite(item).timeout(const Duration(seconds: 5));
+        final ok =
+            await saveFavorite(item).timeout(const Duration(seconds: 5));
         if (!mounted) return;
-        setState(() => _saved = true);
-        _triggerPop();
-        showSingleSnackBar(messenger, '보관함에 저장했어요.');
+        if (!ok) {
+          showSingleSnackBar(messenger, '저장에 실패했어요. 다시 시도해 주세요.');
+        } else {
+          setState(() => _saved = true);
+          _triggerPop();
+          showSingleSnackBar(messenger, '보관함에 저장했어요.');
+        }
       }
     } catch (_) {
       if (mounted) {
         showSingleSnackBar(messenger, '저장에 실패했어요. 다시 시도해 주세요.');
       }
+    } finally {
+      if (mounted) setState(() => _saving = false);
     }
   }
 
@@ -110,7 +127,7 @@ class _DetailScreenState extends State<DetailScreen> {
                 color: _saved ? AppTheme.gold : AppTheme.ink,
               ),
             ),
-            onPressed: _toggleSave,
+            onPressed: _saving ? null : _toggleSave,
           ),
         ],
       ),
@@ -139,9 +156,11 @@ class _DetailScreenState extends State<DetailScreen> {
                             a.isPureKorean
                                 ? '순우리말 이름'
                                 : a.hanjaName,
+                            // white70은 primary 위에서 3.10:1로 AA 미달이라
+                            // 흰색(6.50:1)으로 바꿨다.
                             style: const TextStyle(
                                 fontSize: 16,
-                                color: Colors.white70)),
+                                color: Colors.white)),
                         const SizedBox(height: 8),
                         Wrap(
                           spacing: 6,
@@ -170,7 +189,8 @@ class _DetailScreenState extends State<DetailScreen> {
                       ],
                     ),
                   ),
-                  ScoreRing(score: a.total, size: 110),
+                  ScoreRing(
+                      score: a.total, size: 110, darkBackground: true),
                 ],
               ),
             ),
@@ -246,7 +266,8 @@ class _DetailScreenState extends State<DetailScreen> {
                           style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w800,
-                              color: AppTheme.scoreColor(a.total)),
+                              color:
+                                  AppTheme.scoreTextColor(a.total)),
                         ),
                       ],
                     ),
@@ -497,7 +518,7 @@ class _DetailScreenState extends State<DetailScreen> {
 
           const SizedBox(height: 12),
           ElevatedButton.icon(
-            onPressed: _toggleSave,
+            onPressed: _saving ? null : _toggleSave,
             icon: Icon(_saved
                 ? Icons.bookmark
                 : Icons.bookmark_border),
@@ -598,10 +619,15 @@ class _HanjaPicker extends StatelessWidget {
   Widget build(BuildContext context) {
     final cur = picks[index];
     final opts = orderedHanja(cur.syllable);
+    // 호환 한자로 저장된 pick은 목록에 없어 선택 표시가 안 뜨고
+    // 개수 표기도 줄어드므로, 현재 pick을 목록에 덧붙인다.
+    final displayOpts = opts.any((o) => o.char == cur.char)
+        ? opts
+        : [...opts, cur];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('이름 ${index + 1}자 · ${cur.syllable} (${opts.length}개)',
+        Text('이름 ${index + 1}자 · ${cur.syllable} (${displayOpts.length}개)',
             style: const TextStyle(
                 fontSize: 13, fontWeight: FontWeight.w700)),
         const SizedBox(height: 8),
@@ -611,16 +637,24 @@ class _HanjaPicker extends StatelessWidget {
             child: Wrap(
               spacing: 8,
               runSpacing: 8,
-              children: opts.map((o) {
+              children: displayOpts.map((o) {
                 final sel = o.char == cur.char;
                 final sub = o.meaning.isNotEmpty
                     ? '${o.meaning} · ${o.strokes}획'
                     : '뜻없음 · ${o.strokes}획';
-                return GestureDetector(
-                  onTap: () => onChanged(o),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 8),
+                // GestureDetector만 쓰면 스크린리더가 버튼으로 못 읽어
+                // Semantics를 달고, 터치 높이를 48dp로 보장한다
+                // (기존 패딩만으로는 약 32~36px였다).
+                return Semantics(
+                  button: true,
+                  selected: sel,
+                  label: '${o.char} ${o.meaning.isNotEmpty ? o.meaning : '뜻없음'} ${o.strokes}획',
+                  child: GestureDetector(
+                    onTap: () => onChanged(o),
+                    child: Container(
+                      constraints: const BoxConstraints(minHeight: 48),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 8),
                     decoration: BoxDecoration(
                       color: sel
                           ? AppTheme.primary
@@ -650,15 +684,16 @@ class _HanjaPicker extends StatelessWidget {
                                 fontSize: 11,
                                 color: o.meaning.isNotEmpty
                                     ? (sel
-                                        ? Colors.white70
+                                        ? Colors.white
                                         : AppTheme.sub)
                                     : (sel
-                                        ? Colors.white70
+                                        ? Colors.white
                                         : AppTheme.hint))),
                         const SizedBox(width: 4),
                         ElementChip(o.element),
                       ],
                     ),
+                  ),
                   ),
                 );
               }).toList(),
@@ -719,13 +754,17 @@ class _SajuRow extends StatelessWidget {
                 style: const TextStyle(
                     fontSize: 13, color: AppTheme.sub)),
           ),
-          Text(value,
-              style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
-                  color: highlight
-                      ? AppTheme.primary
-                      : AppTheme.ink)),
+          // 값은 길어지면 줄바꿈한다 — 부족한 오행이 4개면
+          // '화(火) · 토(土) · 금(金) · 수(水)'가 390px에서 넘친다.
+          Expanded(
+            child: Text(value,
+                style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: highlight
+                        ? AppTheme.primary
+                        : AppTheme.ink)),
+          ),
         ],
       ),
     );

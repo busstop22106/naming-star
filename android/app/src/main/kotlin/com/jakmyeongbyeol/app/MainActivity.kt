@@ -35,8 +35,24 @@ class MainActivity : FlutterActivity() {
                             data = Uri.parse("mailto:$email")
                             putExtra(Intent.EXTRA_SUBJECT, subject)
                         }
-                        startActivity(Intent.createChooser(intent, "문의하기"))
-                        result.success(true)
+                        // 메일 앱이 없는 기기에서 startActivity가
+                        // ActivityNotFoundException으로 크래시 나는 것을 방지.
+                        if (intent.resolveActivity(packageManager) == null) {
+                            result.error(
+                                "NO_MAIL_APP",
+                                "메일 앱이 설치되어 있지 않습니다",
+                                null
+                            )
+                        } else {
+                            try {
+                                startActivity(
+                                    Intent.createChooser(intent, "문의하기")
+                                )
+                                result.success(true)
+                            } catch (e: Exception) {
+                                result.error("LAUNCH_FAILED", e.message, null)
+                            }
+                        }
                     }
                 }
                 "shareText" -> {

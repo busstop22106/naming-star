@@ -54,8 +54,14 @@ class _AnalyzeScreenState extends State<AnalyzeScreen> {
   String? _appliedNameRequest;
   // 음절별 선택된 한자 인덱스
   final Map<int, int> _hanjaIdx = {};
+  // 보관함에서 불러온 호환 한자 등 orderedHanja() 목록에 없는 저장값.
+  // 음절별 임시 목록 끝에 덧붙여 저장된 이름 그대로 분석되게 한다.
+  final Map<int, HanjaPick> _extraHanja = {};
   // 가족 궁합 모드
   bool _compatMode = false;
+  // 이동 중 연타 가드 — 분석·궁합 화면으로 넘어가는 동안 버튼을 눌러도
+  // 결과 화면이 2장 쌓이지 않게 한다.
+  bool _navigating = false;
   // 저장된 구성원이 있으면 불러오고, 없으면 기본값(아빠·엄마)을 쓴다.
   final List<FamilyMemberInput> _members = defaultFamilyMembers();
 
@@ -100,6 +106,7 @@ class _AnalyzeScreenState extends State<AnalyzeScreen> {
           _gender = widget.analyzeGenderRequest!;
         }
         _hanjaIdx.clear();
+        _extraHanja.clear();
       });
       WidgetsBinding.instance.addPostFrameCallback((_) {
         widget.onAnalyzeNameConsumed?.call();
@@ -170,6 +177,17 @@ class _AnalyzeScreenState extends State<AnalyzeScreen> {
     _applyFavorite(picked);
   }
 
+  /// 음절의 한자 선택 목록. 보관함에서 불러온 호환 한자는 orderedHanja()에
+  /// 없어서, 저장된 이름 그대로 분석되도록 목록 끝에 임시로 덧붙인다.
+  /// (목록 끝에 붙이면 기존 인덱스가 그대로 유지된다.)
+  List<HanjaPick> _hanjaOptions(int index, String syllable) {
+    final opts = orderedHanja(syllable);
+    final extra = _extraHanja[index];
+    if (extra == null || extra.syllable != syllable) return opts;
+    if (opts.any((o) => o.char == extra.char)) return opts;
+    return [...opts, extra];
+  }
+
   void _applyFavorite(FavoriteItem item) {
     final baby = item.baby;
     setState(() {
@@ -181,11 +199,21 @@ class _AnalyzeScreenState extends State<AnalyzeScreen> {
       _givenCtrl.text = item.picks.map((p) => p.syllable).join();
       _isPureKorean = item.picks.every((p) => p.char.isEmpty);
       _hanjaIdx.clear();
+      _extraHanja.clear();
       if (!_isPureKorean) {
         for (var i = 0; i < item.picks.length && i < 2; i++) {
-          final opts = orderedHanja(item.picks[i].syllable);
-          final idx = opts.indexWhere((o) => o.char == item.picks[i].char);
-          if (idx >= 0) _hanjaIdx[i] = idx;
+          final saved = item.picks[i];
+          var opts = orderedHanja(saved.syllable);
+          var idx = opts.indexWhere((o) => o.char == saved.char);
+          if (idx < 0) {
+            // 호환 한자 등 목록에 없는 저장값: 목록 끝에 임시로 덧붙여
+            // 저장된 이름 그대로 분석되게 한다. (안 붙이면 _analyze()가
+            // 0번 한자로 조용히 바꿔 분석해 버린다.)
+            _extraHanja[i] = saved;
+            opts = _hanjaOptions(i, saved.syllable);
+            idx = opts.length - 1;
+          }
+          _hanjaIdx[i] = idx;
         }
       }
       _gender = baby.gender;
@@ -205,7 +233,8 @@ class _AnalyzeScreenState extends State<AnalyzeScreen> {
   List<String> get _syllables =>
       _givenCtrl.text.trim().split('').where((c) => c.trim().isNotEmpty).toList();
 
-  void _analyze() {
+  Future<void> _analyze() async {
+    if (_navigating) return;
     final syls = _syllables;
     if (syls.length != 2) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -248,7 +277,7 @@ class _AnalyzeScreenState extends State<AnalyzeScreen> {
     } else {
       final picks = <HanjaPick>[];
       for (var i = 0; i < 2; i++) {
-        final opts = orderedHanja(syls[i]);
+        final opts = _hanjaOptions(i, syls[i]);
         if (opts.isEmpty) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('\'${syls[i]}\' 음절의 한자 데이터가 없어요.')),
@@ -267,7 +296,8 @@ class _AnalyzeScreenState extends State<AnalyzeScreen> {
       );
     }
     // 이름 짓기와 같은 별 애니메이션을 보여준 뒤 상세 화면으로 넘어간다.
-    Navigator.push(
+    setState(() => _navigating = true);
+    await Navigator.push(
       context,
       MaterialPageRoute(
         builder: (_) => RevealScreen(
@@ -278,6 +308,7 @@ class _AnalyzeScreenState extends State<AnalyzeScreen> {
         ),
       ),
     );
+    if (mounted) setState(() => _navigating = false);
   }
 
   Future<void> _pickDate() async {
@@ -336,7 +367,7 @@ class _AnalyzeScreenState extends State<AnalyzeScreen> {
     }
     setState(() {
       for (var i = 0; i < 2; i++) {
-        final opts = orderedHanja(syls[i]);
+        final opts = _hanjaOptions(i, syls[i]);
         final idx = opts.indexWhere((o) => o.char == best.picks[i].char);
         if (idx >= 0) _hanjaIdx[i] = idx;
       }
@@ -359,7 +390,7 @@ class _AnalyzeScreenState extends State<AnalyzeScreen> {
 
   /// 음절 하나의 선택된 한자 표시줄. 탭하면 모달 시트가 열린다.
   Widget _hanjaSelectRow(int index, String syllable) {
-    final opts = orderedHanja(syllable);
+    final opts = _hanjaOptions(index, syllable);
     if (opts.isEmpty) {
       // 한자음이 아닌 음절(예: '늘')은 쓸 수 있는 한자가 없다.
       // 여기서 clamp(0, -1)가 되어 빌드 중 'Invalid argument(s): 0'
@@ -444,7 +475,7 @@ class _AnalyzeScreenState extends State<AnalyzeScreen> {
   /// 시트에서 고르면 인덱스가 바로 저장되고 시트가 닫힌다
   /// (시트가 값을 돌려주지 않는다).
   Future<void> _openHanjaPicker(int index, String syllable) async {
-    final opts = orderedHanja(syllable);
+    final opts = _hanjaOptions(index, syllable);
     // 빈 목록 행은 탭되지 않지만, 혹시 호출돼도 크래시 없이 닫는다.
     if (opts.isEmpty) return;
     final sel = (_hanjaIdx[index] ?? 0).clamp(0, opts.length - 1);
@@ -498,7 +529,7 @@ class _AnalyzeScreenState extends State<AnalyzeScreen> {
     }
     final picks = <HanjaPick>[];
     for (var i = 0; i < 2; i++) {
-      final opts = orderedHanja(syls[i]);
+      final opts = _hanjaOptions(i, syls[i]);
       if (opts.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('\'${syls[i]}\' 음절의 한자 데이터가 없어요.')),
@@ -510,7 +541,8 @@ class _AnalyzeScreenState extends State<AnalyzeScreen> {
     return picks;
   }
 
-  void _analyzeCompat() {
+  Future<void> _analyzeCompat() async {
+    if (_navigating) return;
     final picks = _buildPicks();
     if (picks == null) return;
     final baby = BabyInfo(
@@ -535,7 +567,8 @@ class _AnalyzeScreenState extends State<AnalyzeScreen> {
       picks: picks,
     );
     // 이름 짓기와 같은 별 애니메이션을 보여준 뒤 궁합 화면으로 넘어간다.
-    Navigator.push(
+    setState(() => _navigating = true);
+    await Navigator.push(
       context,
       MaterialPageRoute(
         builder: (_) => RevealScreen(
@@ -552,6 +585,7 @@ class _AnalyzeScreenState extends State<AnalyzeScreen> {
         ),
       ),
     );
+    if (mounted) setState(() => _navigating = false);
   }
 
   /// 같은 역할이 겹치면 '형 2'처럼 번호를 붙여 구분해요
@@ -904,6 +938,7 @@ class _AnalyzeScreenState extends State<AnalyzeScreen> {
                         fontWeight: FontWeight.w700),
                     onChanged: (_) => setState(() {
                           _hanjaIdx.clear();
+                          _extraHanja.clear();
                         }),
                   ),
                   const SizedBox(height: 12),
@@ -923,6 +958,7 @@ class _AnalyzeScreenState extends State<AnalyzeScreen> {
                     onSelectionChanged: (s) => setState(() {
                       _isPureKorean = s.first;
                       _hanjaIdx.clear();
+                      _extraHanja.clear();
                     }),
                   ),
                   if (_isPureKorean) ...[
@@ -1089,7 +1125,8 @@ class _AnalyzeScreenState extends State<AnalyzeScreen> {
           ],
           const SizedBox(height: 12),
           ElevatedButton(
-            onPressed: _compatMode ? _analyzeCompat : _analyze,
+            onPressed:
+                _navigating ? null : (_compatMode ? _analyzeCompat : _analyze),
             child: Text(_compatMode ? '가족 궁합 보기' : '이 이름으로 분석하기'),
           ),
           const SizedBox(height: 12),

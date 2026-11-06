@@ -41,18 +41,30 @@ void main() {
   });
 
   group('한자 정렬', () {
-    // 2026-11-03 뜻 채우기(8,178/8,917건) 이후 '뜻 있는 것 먼저' 규칙은
-    // 획수 순서를 깨뜨려 폐기했다. 나머지는 획수 오름차순이 기준이다.
-    test('curated 뒤의 나머지 구간은 획수 오름차순이다', () {
+    // 코드 리뷰 지적 반영: 호환 이체자는 목록에서 빼고, 나머지는
+    // '뜻 있는 것 먼저·각 그룹 안 획수 오름차순'이다.
+    test('curated 뒤의 나머지 구간은 뜻 있는 것 먼저, 각 그룹 안은 획수 오름차순이다', () {
       for (final syllable in ['도', '지', '윤']) {
         final ordered = orderedHanja(syllable);
         final curatedChars =
             hanjaBySyllable[syllable]!.map((e) => e.char).toSet();
         final rest =
             ordered.where((e) => !curatedChars.contains(e.char)).toList();
-        for (var i = 0; i + 1 < rest.length; i++) {
-          expect(rest[i].strokes <= rest[i + 1].strokes, isTrue,
-              reason: '$syllable: 획수 순서가 깨졌다');
+        // 뜻 있는 한자가 먼저, 뜻 없는 한자는 뒤에 (뜻 없는 한자가
+        // 아예 없는 음절도 있다 — '도'). 각 그룹 안은 획수 오름차순.
+        final firstNoMeaning = rest.indexWhere((e) => e.meaning.isEmpty);
+        final withMeaning =
+            firstNoMeaning < 0 ? rest : rest.sublist(0, firstNoMeaning);
+        final withoutMeaning =
+            firstNoMeaning < 0 ? const <HanjaPick>[] : rest.sublist(firstNoMeaning);
+        expect(withMeaning.every((e) => e.meaning.isNotEmpty), isTrue,
+            reason: '$syllable: 뜻 있는 한자가 앞에 와야 한다');
+        expect(withoutMeaning.every((e) => e.meaning.isEmpty), isTrue);
+        for (final group in [withMeaning, withoutMeaning]) {
+          for (var i = 0; i + 1 < group.length; i++) {
+            expect(group[i].strokes <= group[i + 1].strokes, isTrue,
+                reason: '$syllable: 획수 순서가 깨졌다');
+          }
         }
         // 첫 항목(기본 선택)은 curated 순서라 바뀌지 않는다.
         expect(curatedChars.contains(ordered.first.char), isTrue);
