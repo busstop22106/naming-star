@@ -323,11 +323,14 @@ class EmptyState extends StatelessWidget {
   final String title;
   final String subtitle;
   final Widget? action;
+  // 행동 버튼 아래에 붙는 작은 보조 문구 (예: 보관함 소실 안내).
+  final String? footnote;
   const EmptyState({
     super.key,
     required this.title,
     required this.subtitle,
     this.action,
+    this.footnote,
   });
 
   @override
@@ -357,6 +360,13 @@ class EmptyState extends StatelessWidget {
             if (action != null) ...[
               const SizedBox(height: 20),
               action!,
+            ],
+            if (footnote != null) ...[
+              const SizedBox(height: 12),
+              Text(footnote!,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                      fontSize: 12, color: AppTheme.sub, height: 1.5)),
             ],
           ],
         ),

@@ -277,6 +277,22 @@ class DimensionGrade {
   final String code; // 판정용 코드 (예: 'daegil')
   final String label; // 화면 표시 문구 (예: '사격 대길')
   const DimensionGrade({required this.code, required this.label});
+
+  // 값 객체 — 같은 코드·문구면 같은 등급이다. 테스트에서 동등 비교와
+  // 디버그 출력에 쓴다.
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is DimensionGrade &&
+          runtimeType == other.runtimeType &&
+          code == other.code &&
+          label == other.label;
+
+  @override
+  int get hashCode => Object.hash(code, label);
+
+  @override
+  String toString() => 'DimensionGrade(code: $code, label: $label)';
 }
 
 /// 5개 평가 차원 중 하나

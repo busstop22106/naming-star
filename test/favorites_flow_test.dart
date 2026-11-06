@@ -175,6 +175,16 @@ void main() {
       expect(find.text('아직 저장한 이름이 없어요.'), findsOneWidget);
     });
 
+    testWidgets('빈 보관함에는 기기 변경·재설치 시 소실 안내가 보인다',
+        (tester) async {
+      SharedPreferences.setMockInitialValues({});
+      await pumpFavorites(tester);
+      expect(
+        find.text('기기를 바꾸거나 앱을 다시 설치하면 보관함이 사라져요.'),
+        findsOneWidget,
+      );
+    });
+
     testWidgets('깨진 저장값이어도 빈 화면을 보여준다', (tester) async {
       SharedPreferences.setMockInitialValues(
           {'jakmyeongbyeol_favorites': 'not-json[['});

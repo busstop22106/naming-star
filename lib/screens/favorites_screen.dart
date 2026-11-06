@@ -106,6 +106,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
               ? EmptyState(
                   title: '아직 저장한 이름이 없어요.',
                   subtitle: '마음에 드는 이름에서 북마크를 눌러 저장하세요.\n별이 반짝이는 이름, 하나씩 모아보세요.',
+                  footnote: '기기를 바꾸거나 앱을 다시 설치하면 보관함이 사라져요.',
                   // 빈 화면은 두 번째 온보딩 — 다음 행동 버튼을 반드시 둔다.
                   // 보관함은 설정 탭 위에 얹힌 화면이라, 탭만 바꾸면
                   // 이 화면이 그대로 위에 남아 있다. 그래서 먼저 닫고
