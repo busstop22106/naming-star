@@ -39,13 +39,14 @@ class MainActivity : FlutterActivity() {
                         }
                         // 메일 앱이 없는 기기에서 startActivity가
                         // ActivityNotFoundException으로 크래시 나는 것을 방지.
-                        // resolveActivity(PackageManager)는 API 33부터
-                        // deprecated라 버전 가드로 나눈다.
+                        // PackageManager.resolveActivity(Intent, int)는 API 33부터
+                        // deprecated라 버전 가드로 나눈다. API 33 이상용 메서드는
+                        // Intent가 아니라 PackageManager에 있다.
                         @Suppress("DEPRECATION")
                         val hasMailApp = if (Build.VERSION.SDK_INT >=
                             Build.VERSION_CODES.TIRAMISU) {
-                            intent.resolveActivity(
-                                packageManager,
+                            packageManager.resolveActivity(
+                                intent,
                                 PackageManager.ResolveInfoFlags.of(0)
                             ) != null
                         } else {
