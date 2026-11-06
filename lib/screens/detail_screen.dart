@@ -558,7 +558,7 @@ class _ExpandableDimensionState extends State<_ExpandableDimension> {
                 DimensionBar(
                     title: d.title,
                     score: d.score,
-                    grade: d.grade),
+                    grade: d.grade.label),
                 Row(
                   children: [
                     Expanded(

@@ -269,12 +269,22 @@ class HanjaPick {
   }
 }
 
+/// 차원 등급 — 판정용 코드와 화면 표시 문구를 함께 가진다.
+/// 코드는 로직(근거 한 줄의 수리 라벨 등)에서 쓰고, label은 화면 표시용이다.
+/// 등급 문구(String)만으로 판정하던 역매핑을 없애기 위해 도입했다.
+/// 수리 코드는 81수리 등급 코드와 같은 값이다(daegil/gil/mixed/hyung).
+class DimensionGrade {
+  final String code; // 판정용 코드 (예: 'daegil')
+  final String label; // 화면 표시 문구 (예: '사격 대길')
+  const DimensionGrade({required this.code, required this.label});
+}
+
 /// 5개 평가 차원 중 하나
 class DimensionScore {
   final String key; // suri, yinyang, sound, resource, usability
   final String title; // 수리, 음양, 발음, 사주 보완, 사용성
   final double score; // 0~100
-  final String grade; // 대길/길/반길반흉/흉 등
+  final DimensionGrade grade; // 판정 코드 + 화면 표시 문구
   final String summary; // 한 줄 요약
   final List<String> details; // 상세 풀이
 

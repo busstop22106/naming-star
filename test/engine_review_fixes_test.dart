@@ -45,7 +45,8 @@ void main() {
         HanjaPick(syllable: '가', char: '加', strokes: 5, element: '목', meaning: '더할'),
         HanjaPick(syllable: '나', char: '佳', strokes: 8, element: '목', meaning: '아름다울'),
       ]);
-      expect(a.suri.grade, '사격 대길');
+      expect(a.suri.grade.label, '사격 대길');
+      expect(a.suri.grade.code, 'daegil');
       expect(a.suri.score, 100);
       expect(recommendReason(a), contains('수리 대길'));
       expect(recommendReason(a), isNot(contains('수리 흉')));
@@ -65,7 +66,8 @@ void main() {
         saju: computeSaju(baby),
         gender: Gender.boy,
       );
-      expect(a.suri.grade, '흉수 포함');
+      expect(a.suri.grade.label, '흉수 포함');
+      expect(a.suri.grade.code, 'hyung');
       expect(recommendReason(a), contains('수리 흉'));
     });
 
@@ -75,8 +77,26 @@ void main() {
         HanjaPick(syllable: '가', char: '加', strokes: 9, element: '목', meaning: '더할'),
         HanjaPick(syllable: '나', char: '佳', strokes: 8, element: '목', meaning: '아름다울'),
       ]);
-      expect(a.suri.grade, '반길반흉 포함');
+      expect(a.suri.grade.label, '반길반흉 포함');
+      expect(a.suri.grade.code, 'mixed');
       expect(recommendReason(a), contains('수리 반길반흉'));
+      expect(recommendReason(a), isNot(contains('수리 흉')));
+    });
+
+    test('사격 길 이름은 "수리 길"로 표시된다', () {
+      // 성 5획 + 이름 3·3획 → 원격 6·형격 8·이격 8(길), 정격 11(대길)
+      // 수리 84점이라 '사격 길'이다.
+      final a = analyze(
+        surnameStrokes: 5,
+        picks: const [
+          HanjaPick(syllable: '가', char: '加', strokes: 3, element: '목', meaning: '더할'),
+          HanjaPick(syllable: '나', char: '佳', strokes: 3, element: '목', meaning: '아름다울'),
+        ],
+      );
+      expect(a.suri.grade.label, '사격 길');
+      expect(a.suri.grade.code, 'gil');
+      expect(a.suri.score, 84);
+      expect(recommendReason(a), contains('수리 길'));
       expect(recommendReason(a), isNot(contains('수리 흉')));
     });
   });

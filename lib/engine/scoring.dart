@@ -78,10 +78,12 @@ NameAnalysis analyzeName({
   });
   final suriScore = suriSum / suriWeight;
   final suriGrade = hasHyung
-      ? '흉수 포함'
+      ? const DimensionGrade(code: 'hyung', label: '흉수 포함')
       : hasMixed
-          ? '반길반흉 포함'
-          : (suriScore >= 90 ? '사격 대길' : '사격 길');
+          ? const DimensionGrade(code: 'mixed', label: '반길반흉 포함')
+          : (suriScore >= 90
+              ? const DimensionGrade(code: 'daegil', label: '사격 대길')
+              : const DimensionGrade(code: 'gil', label: '사격 길'));
   if (hasMixed) {
     warnings.add('수리에 학파별 평가가 갈리는 반길반흉 수가 있어요. 보수적으로 보길 권해요.');
   }
@@ -148,8 +150,11 @@ NameAnalysis analyzeName({
   pron = _clamp(pron, 10, 100);
 
   final soundScore = _clamp(chain * 0.55 + pron * 0.45);
-  final soundGrade =
-      soundScore >= 80 ? '좋음' : (soundScore >= 60 ? '보통' : '주의');
+  final soundGrade = soundScore >= 80
+      ? const DimensionGrade(code: 'good', label: '좋음')
+      : (soundScore >= 60
+          ? const DimensionGrade(code: 'normal', label: '보통')
+          : const DimensionGrade(code: 'caution', label: '주의'));
 
   // 놀림감·부정 연상 체크
   final fullName = '$surname${picks[0].syllable}${picks[1].syllable}';
@@ -199,8 +204,10 @@ NameAnalysis analyzeName({
         '${huishin != null ? ', 희신 ${elementNames[huishin]}' : ''}');
   }
   final resourceGrade = resourceScore >= 80
-      ? '보완 우수'
-      : (resourceScore >= 50 ? '부분 보완' : '보완 미흡');
+      ? const DimensionGrade(code: 'excellent', label: '보완 우수')
+      : (resourceScore >= 50
+          ? const DimensionGrade(code: 'partial', label: '부분 보완')
+          : const DimensionGrade(code: 'lacking', label: '보완 미흡'));
 
   // ══════════ 5. 사용성 (10%) ══════════
   double usa = 85;
@@ -239,7 +246,11 @@ NameAnalysis analyzeName({
     usaDetails.add('읽기·쓰기가 조금 어려울 수 있는 조합이에요.');
   }
   usa = _clamp(usa);
-  final usaGrade = usa >= 80 ? '좋음' : (usa >= 65 ? '보통' : '주의');
+  final usaGrade = usa >= 80
+      ? const DimensionGrade(code: 'good', label: '좋음')
+      : (usa >= 65
+          ? const DimensionGrade(code: 'normal', label: '보통')
+          : const DimensionGrade(code: 'caution', label: '주의'));
 
   // ══════════ 종합 ══════════
   var total = suriScore * 0.35 +
@@ -267,7 +278,9 @@ NameAnalysis analyzeName({
     ),
     yinyang: DimensionScore(
       key: 'yinyang', title: '음양', score: yyScore,
-      grade: yyGood ? '조화' : '치우침',
+      grade: yyGood
+          ? const DimensionGrade(code: 'harmony', label: '조화')
+          : const DimensionGrade(code: 'skewed', label: '치우침'),
       summary: '획수 홀짝의 음양 조화',
       details: yyDetails,
     ),

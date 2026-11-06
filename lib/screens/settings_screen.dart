@@ -44,6 +44,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       onGoToNaming: widget.onGoToNaming)),
             ),
           ),
+          const Padding(
+            padding: EdgeInsets.only(left: 4, top: 4),
+            child: Text(
+              '기기를 바꾸거나 앱을 다시 설치하면 보관함이 사라져요.',
+              style: TextStyle(fontSize: 12, color: AppTheme.sub),
+            ),
+          ),
           const SizedBox(height: 16),
 
           // 앱 설정

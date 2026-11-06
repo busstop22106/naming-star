@@ -47,7 +47,7 @@ void main() {
     print('김도윤 종합: ${analysis.total.toStringAsFixed(1)}');
     for (final d in analysis.dimensions) {
       // ignore: avoid_print
-      print('  ${d.title}: ${d.score.toStringAsFixed(0)} (${d.grade})');
+      print('  ${d.title}: ${d.score.toStringAsFixed(0)} (${d.grade.label})');
     }
     // ignore: avoid_print
     print('용신: ${saju.yongsin}, 희신: ${saju.huishin}, 신강: ${saju.strongBody}');

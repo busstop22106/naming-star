@@ -1,7 +1,9 @@
 package com.jakmyeongbyeol.app
 
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
+import android.os.Build
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
@@ -37,7 +39,19 @@ class MainActivity : FlutterActivity() {
                         }
                         // 메일 앱이 없는 기기에서 startActivity가
                         // ActivityNotFoundException으로 크래시 나는 것을 방지.
-                        if (intent.resolveActivity(packageManager) == null) {
+                        // resolveActivity(PackageManager)는 API 33부터
+                        // deprecated라 버전 가드로 나눈다.
+                        @Suppress("DEPRECATION")
+                        val hasMailApp = if (Build.VERSION.SDK_INT >=
+                            Build.VERSION_CODES.TIRAMISU) {
+                            intent.resolveActivity(
+                                packageManager,
+                                PackageManager.ResolveInfoFlags.of(0)
+                            ) != null
+                        } else {
+                            intent.resolveActivity(packageManager) != null
+                        }
+                        if (!hasMailApp) {
                             result.error(
                                 "NO_MAIL_APP",
                                 "메일 앱이 설치되어 있지 않습니다",
