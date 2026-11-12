@@ -46,9 +46,12 @@ class AppTheme {
   ];
 
   // 성별 채움색 — 흰 글자가 올라가니 진한 쪽으로 골랐다
-  // (흰 글자: boy 4.94:1, girl 4.62:1).
-  static const boy = Color(0xFF2F6BDB);
-  static const girl = Color(0xFFD6336C);
+  // (흰 글자: boy 5.49:1, girl 5.57:1).
+  // 2026-11-12 톤다운: 랭킹 트렌드 카드에서 기존 색(#2F6BDB/#D6336C)이
+  // 채도 70%/65%로 너무 쨍하다는 지적 → 채도 45%로 낮췄다.
+  // 흰 글자 명암비는 오히려 올라갔다(4.94/4.62 → 5.49/5.57).
+  static const boy = Color(0xFF4169AA);
+  static const girl = Color(0xFFAE4266);
   // ── 명암비용 밝은 변형 — boy/girl 채움색은 어두워 카드 위 작은
   // 텍스트에는 쓸 수 없어, 텍스트용 밝은 토큰을 둔다.
   // 채움·선·아이콘 같은 그래픽 요소에는 원래 색을 그대로 쓴다.
