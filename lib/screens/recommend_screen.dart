@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import '../data/pure_korean_names.dart';
 import '../engine/generator.dart';
@@ -5,6 +7,8 @@ import '../engine/reason_line.dart';
 import '../engine/saju.dart';
 import '../models.dart';
 import '../services/ad_service.dart';
+import '../services/adfree_service.dart';
+import '../services/purchase_service.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
 import 'detail_screen.dart';
@@ -30,6 +34,55 @@ class _RecommendScreenState extends State<RecommendScreen> {
   // 이동 중 연타 가드 — 카드를 연타하면 상세 화면이 2장 쌓인다.
   bool _navigating = false;
 
+  /// 보상형 광고를 보고 공개한 1위 이름 (fullName).
+  /// 화면 메모리에만 둔다 — 화면을 나가면 다시 가려진다.
+  /// 정렬을 바꿔 1위가 달라지면, 공개한 이름이 아닌 카드는 다시 가려진다.
+  String? _revealedTopName;
+
+  /// 보상형 광고 표시 중 연타 가드.
+  bool _rewardedBusy = false;
+
+  /// 1위 확인 다이얼로그가 열려 있는지 (구매 완료 시 닫기 위해).
+  bool _topDialogOpen = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _names = widget.isPureKorean
+        ? generatePureKoreanNames(widget.baby, widget.saju)
+        : generateNames(widget.baby, widget.saju);
+    AdFreeService.instance.isAdFreeNotifier.addListener(_onAdFreeChanged);
+    PurchaseService.instance.errorNotifier.addListener(_onPurchaseError);
+  }
+
+  @override
+  void dispose() {
+    AdFreeService.instance.isAdFreeNotifier.removeListener(_onAdFreeChanged);
+    PurchaseService.instance.errorNotifier.removeListener(_onPurchaseError);
+    super.dispose();
+  }
+
+  /// 평생 광고 제거를 구매하면 1위 결과를 가리지 않는다.
+  /// 다이얼로그가 열려 있으면 닫고 공개를 알린다.
+  void _onAdFreeChanged() {
+    if (!mounted || !AdFreeService.instance.isAdFree) return;
+    final messenger = ScaffoldMessenger.of(context);
+    if (_topDialogOpen) {
+      _topDialogOpen = false;
+      Navigator.of(context, rootNavigator: true).pop();
+    }
+    setState(() {});
+    showSingleSnackBar(messenger, '평생 광고 없이 사용 중이에요. 1위 결과를 공개했어요.');
+  }
+
+  /// 구매 실패·취소 메시지를 스낵바로 보여준다.
+  void _onPurchaseError() {
+    final error = PurchaseService.instance.errorNotifier.value;
+    if (error == null || !mounted) return;
+    PurchaseService.instance.errorNotifier.value = null;
+    showSingleSnackBar(ScaffoldMessenger.of(context), error);
+  }
+
   /// 상세 화면으로 이동한다. 이동 중에는 다시 눌러도 무시한다.
   Future<void> _openDetail(NameAnalysis a) async {
     if (_navigating) return;
@@ -43,12 +96,67 @@ class _RecommendScreenState extends State<RecommendScreen> {
     if (mounted) setState(() => _navigating = false);
   }
 
-  @override
-  void initState() {
-    super.initState();
-    _names = widget.isPureKorean
-        ? generatePureKoreanNames(widget.baby, widget.saju)
-        : generateNames(widget.baby, widget.saju);
+  /// 1위 카드가 가려져 있는지 (광고 제거 상태면 절대 가리지 않는다).
+  bool _isTopMasked(NameAnalysis a) =>
+      _revealedTopName != a.fullName && !AdFreeService.instance.isAdFree;
+
+  /// 1위 확인 다이얼로그를 띄운다. 보상형 광고를 미리 로드해 둔다.
+  Future<void> _showTopResultDialog(NameAnalysis top) async {
+    _topDialogOpen = true;
+    // 다이얼로그를 여는 동안 다음 광고를 미리 받아둔다.
+    unawaited(AdService.loadRewardedAd());
+    await showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('1위 이름 확인하기'),
+        content: const Text(
+            '광고를 끝까지 보면 1위 이름을 바로 확인할 수 있어요.\n평생 광고 없이 사용하기를 구매하면 1위 결과가 항상 공개돼요.'),
+        actions: [
+          TextButton(
+            onPressed: () {
+              _topDialogOpen = false;
+              Navigator.pop(dialogContext);
+            },
+            child: const Text('닫기'),
+          ),
+          TextButton(
+            onPressed: () async {
+              // 구매 결과는 스트림으로 오고, 완료되면 _onAdFreeChanged가
+              // 다이얼로그를 닫는다. 취소·실패는 스낵바로 안내한다.
+              await PurchaseService.instance.buyAdFree();
+            },
+            child: Text(
+                '평생 광고 없이 보기 ${PurchaseService.instance.price}'),
+          ),
+          FilledButton(
+            onPressed: _rewardedBusy
+                ? null
+                : () async {
+                    _rewardedBusy = true;
+                    final result = await AdService.showRewardedAd();
+                    _rewardedBusy = false;
+                    if (!mounted || !dialogContext.mounted) return;
+                    final messenger = ScaffoldMessenger.of(context);
+                    switch (result) {
+                      case RewardedAdResult.earned:
+                        setState(() => _revealedTopName = top.fullName);
+                        _topDialogOpen = false;
+                        Navigator.pop(dialogContext);
+                        showSingleSnackBar(messenger, '1위 결과를 공개했어요.');
+                      case RewardedAdResult.dismissed:
+                        showSingleSnackBar(
+                            messenger, '광고를 끝까지 봐야 1위 결과를 볼 수 있어요.');
+                      case RewardedAdResult.unavailable:
+                        showSingleSnackBar(messenger,
+                            '광고를 불러오지 못했어요. 잠시 후 다시 시도해 주세요.');
+                    }
+                  },
+            child: const Text('광고 보고 바로 확인하기'),
+          ),
+        ],
+      ),
+    );
+    _topDialogOpen = false;
   }
 
   List<NameAnalysis> get _sorted {
@@ -195,11 +303,16 @@ class _RecommendScreenState extends State<RecommendScreen> {
               itemCount: sorted.length,
               itemBuilder: (_, i) {
                 final a = sorted[i];
+                // 1위(정렬 첫 항목)만 가린다. 공개한 이름·광고 제거 상태는 제외.
+                final masked = i == 0 && _isTopMasked(a);
                 return _NameCard(
                   rank: i + 1,
                   analysis: a,
                   baby: widget.baby,
-                  onTap: () => _openDetail(a),
+                  masked: masked,
+                  onTap: masked
+                      ? () => _showTopResultDialog(a)
+                      : () => _openDetail(a),
                 );
               },
             ),
@@ -298,15 +411,19 @@ class _InfoChip extends StatelessWidget {
 }
 
 /// 추천 이름 카드 — 저장은 상세 화면에서만 한다 (카드 북마크는 2026-10-30 제거).
+/// [masked]가 true면 1위 이름·점수를 '???'로 가리고 자물쇠를 보여준다.
+/// (한자·뜻·근거 문구는 이름을 유추할 수 있어 함께 숨긴다.)
 class _NameCard extends StatelessWidget {
   final int rank;
   final NameAnalysis analysis;
   final BabyInfo baby;
+  final bool masked;
   final VoidCallback onTap;
   const _NameCard({
     required this.rank,
     required this.analysis,
     required this.baby,
+    this.masked = false,
     required this.onTap,
   });
 
@@ -338,96 +455,134 @@ class _NameCard extends StatelessWidget {
                               : AppTheme.sub)),
                 ),
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Text(a.fullName,
-                              style: const TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.w800)),
-                          const SizedBox(width: 8),
-                          if (a.isPureKorean)
-                            Flexible(
-                              child: Text(
-                                  pureKoreanMeaning(a.givenName) ?? '',
-                                  overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(
-                                      fontSize: 13, color: AppTheme.sub)),
-                            )
-                          else
-                            Flexible(
-                              child: Text(a.hanjaName,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(
-                                      fontSize: 14, color: AppTheme.sub)),
+                  child: masked
+                      ? const Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('???',
+                                style: TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.w800)),
+                            SizedBox(height: 4),
+                            Row(
+                              children: [
+                                Icon(Icons.lock_outline,
+                                    size: 14, color: AppTheme.sub),
+                                SizedBox(width: 4),
+                                Text('탭해서 1위 이름 확인하기',
+                                    style: TextStyle(
+                                        fontSize: 12,
+                                        color: AppTheme.sub,
+                                        fontWeight: FontWeight.w700)),
+                              ],
                             ),
-                          if (a.rankBoy != null || a.rankGirl != null) ...[
-                            const SizedBox(width: 6),
-                            const GradeChip('흔한 이름', AppTheme.warn),
                           ],
-                        ],
-                      ),
-                      // 한자 뜻 — 리스트에서 뜻을 모르고 일일이 눌러보지 않게 한다.
-                      if (!a.isPureKorean &&
-                          a.picks.any((p) => p.meaning.isNotEmpty)) ...[
-                        const SizedBox(height: 4),
-                        Text(
-                          a.picks
-                              .map((p) => p.meaning.isNotEmpty
-                                  ? '${p.char} ${p.meaning}'
-                                  : '${p.char} 뜻없음')
-                              .join(' · '),
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                              fontSize: 12,
-                              color: AppTheme.sub,
-                              fontFamilyFallback:
-                                  AppTheme.hanjaFontFallback),
-                        ),
-                      ],
-                      // 추천 근거 한 줄 — 점수가 뒷받침하는 이유만 문장으로 쓴다.
-                      const SizedBox(height: 4),
-                      Text(
-                        recommendReason(a),
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                            fontSize: 12,
-                            color: AppTheme.primary,
-                            fontWeight: FontWeight.w700),
-                      ),
-                      const SizedBox(height: 6),
-                      Wrap(
-                        spacing: 10,
-                        runSpacing: 4,
-                        children: a.dimensions.map((d) {
-                          return Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Container(
-                                width: 8,
-                                height: 8,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: AppTheme.scoreColor(d.score),
-                                ),
+                        )
+                      : Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Text(a.fullName,
+                                    style: const TextStyle(
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.w800)),
+                                const SizedBox(width: 8),
+                                if (a.isPureKorean)
+                                  Flexible(
+                                    child: Text(
+                                        pureKoreanMeaning(a.givenName) ?? '',
+                                        overflow: TextOverflow.ellipsis,
+                                        style: const TextStyle(
+                                            fontSize: 13,
+                                            color: AppTheme.sub)),
+                                  )
+                                else
+                                  Flexible(
+                                    child: Text(a.hanjaName,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: const TextStyle(
+                                            fontSize: 14,
+                                            color: AppTheme.sub)),
+                                  ),
+                                if (a.rankBoy != null ||
+                                    a.rankGirl != null) ...[
+                                  const SizedBox(width: 6),
+                                  const GradeChip('흔한 이름', AppTheme.warn),
+                                ],
+                              ],
+                            ),
+                            // 한자 뜻 — 리스트에서 뜻을 모르고 일일이 눌러보지 않게 한다.
+                            if (!a.isPureKorean &&
+                                a.picks.any(
+                                    (p) => p.meaning.isNotEmpty)) ...[
+                              const SizedBox(height: 4),
+                              Text(
+                                a.picks
+                                    .map((p) => p.meaning.isNotEmpty
+                                        ? '${p.char} ${p.meaning}'
+                                        : '${p.char} 뜻없음')
+                                    .join(' · '),
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                    fontSize: 12,
+                                    color: AppTheme.sub,
+                                    fontFamilyFallback:
+                                        AppTheme.hanjaFontFallback),
                               ),
-                              const SizedBox(width: 4),
-                              Text(d.title,
-                                  style: const TextStyle(
-                                      fontSize: 11,
-                                      color: AppTheme.sub)),
                             ],
-                          );
-                        }).toList(),
-                      ),
-                    ],
-                  ),
+                            // 추천 근거 한 줄 — 점수가 뒷받침하는 이유만 문장으로 쓴다.
+                            const SizedBox(height: 4),
+                            Text(
+                              recommendReason(a),
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                  fontSize: 12,
+                                  color: AppTheme.primary,
+                                  fontWeight: FontWeight.w700),
+                            ),
+                            const SizedBox(height: 6),
+                            Wrap(
+                              spacing: 10,
+                              runSpacing: 4,
+                              children: a.dimensions.map((d) {
+                                return Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Container(
+                                      width: 8,
+                                      height: 8,
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        color: AppTheme.scoreColor(d.score),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(d.title,
+                                        style: const TextStyle(
+                                            fontSize: 11,
+                                            color: AppTheme.sub)),
+                                  ],
+                                );
+                              }).toList(),
+                            ),
+                          ],
+                        ),
                 ),
-                ScoreRing(score: a.total, size: 64, strokeWidth: 7),
-                const Icon(Icons.chevron_right,
-                    color: AppTheme.sub),
+                if (masked)
+                  Container(
+                    width: 64,
+                    height: 64,
+                    decoration: const BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: AppTheme.primarySoft,
+                    ),
+                    child: const Icon(Icons.lock_outline,
+                        size: 28, color: AppTheme.gold),
+                  )
+                else
+                  ScoreRing(score: a.total, size: 64, strokeWidth: 7),
+                const Icon(Icons.chevron_right, color: AppTheme.sub),
               ],
             ),
           ),

@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'ad_service.dart';
+import 'adfree_service.dart';
 
 /// 결과 직전 전면 광고 게이트.
 /// 이름 짓기·이름 분석·가족 궁합 세 흐름이 공유하는 단일 카운터로,
 /// 결과 시도마다 1씩 올리고 4의 배수(4·8·12…)면 광고 차례다.
+/// 평생 광고 제거를 구매했으면 광고를 안 보여주고 Reveal 경로로 바로 간다.
 class InterstitialGate {
   static const String countKey = 'jakmyeongbyeol_result_attempt_count';
   static const int adEvery = 4;
@@ -34,6 +36,15 @@ class InterstitialGate {
     required WidgetBuilder resultBuilder,
     required WidgetBuilder revealBuilder,
   }) async {
+    // 평생 광고 제거 상태면 광고 없이 Reveal 경로로 바로 간다.
+    // 카운터도 올리지 않는다 (광고 차례 계산이 의미가 없어진다).
+    if (AdFreeService.instance.isAdFree) {
+      await Navigator.push(
+        context,
+        MaterialPageRoute(builder: revealBuilder),
+      );
+      return;
+    }
     int attempt = 0;
     try {
       attempt = await recordAttempt();

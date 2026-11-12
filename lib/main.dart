@@ -11,6 +11,7 @@ import 'screens/ranking_screen.dart';
 import 'screens/settings_screen.dart';
 import 'services/ad_service.dart';
 import 'services/baby_info_store.dart';
+import 'services/purchase_service.dart';
 import 'services/share_link.dart';
 import 'theme.dart';
 
@@ -33,6 +34,13 @@ void main() async {
     await AdService.init().timeout(const Duration(seconds: 5));
   } catch (e) {
     debugPrint('AdMob 초기화 실패 — 광고 없이 계속: $e');
+  }
+  // 인앱결제 초기화: 스토어 구매 내역으로 평생 광고 제거 권한을 복원한다.
+  // 실패해도 앱 진입은 보장한다.
+  try {
+    await PurchaseService.instance.init().timeout(const Duration(seconds: 10));
+  } catch (e) {
+    debugPrint('구매 서비스 초기화 실패 — 광고 제거 없이 계속: $e');
   }
   runZonedGuarded(
     () => runApp(const JakmyeongbyeolApp()),

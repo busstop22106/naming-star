@@ -5,6 +5,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 
+import 'adfree_service.dart';
+
 /// AdMob 광고 관리
 /// - 디버그 빌드: Google 공식 테스트 ID 사용
 /// - 릴리즈(Android): 실제 광고 단위 ID (2026-10-22 AdMob 등록 완료)
@@ -149,7 +151,114 @@ class AdService {
   static Future<void> init() async {
     await MobileAds.instance.initialize();
     unawaited(loadInterstitialAd());
+    unawaited(loadRewardedAd());
   }
+
+  /// 보상형 광고 단위 ID.
+  /// 디버그·프로필 빌드는 Google 공식 테스트 ID, 릴리즈 Android는 실제 ID.
+  /// TODO(사용자: AdMob 콘솔에서 보상형 광고 단위를 생성한 뒤
+  /// _releaseRewardedId를 실제 ID로 교체할 것).
+  /// 교체 전에는 릴리즈에서 로드가 실패하고, 1위 결과는 가려진 채로 둔다.
+  static const String _testRewardedId =
+      'ca-app-pub-3940256099942544/5224354917';
+  static const String _releaseRewardedId =
+      'TODO_REPLACE_WITH_REAL_REWARDED_AD_UNIT_ID';
+
+  static String get rewardedAdUnitId {
+    if (kDebugMode || kProfileMode) {
+      return _testRewardedId;
+    }
+    if (Platform.isAndroid) {
+      return _releaseRewardedId;
+    }
+    return _testRewardedId;
+  }
+
+  static RewardedAd? _rewardedAd;
+  static bool _rewardedLoading = false;
+
+  /// 미리 로드된 보상형 광고가 있는지 여부.
+  static bool get isRewardedReady => _rewardedAd != null;
+
+  /// 보상형 광고를 미리 로드한다. 이미 로드됐거나 로딩 중이면 바로 반환한다.
+  static Future<void> loadRewardedAd() async {
+    if (_rewardedAd != null || _rewardedLoading) return;
+    _rewardedLoading = true;
+    try {
+      await RewardedAd.load(
+        adUnitId: rewardedAdUnitId,
+        request: const AdRequest(),
+        rewardedAdLoadCallback: RewardedAdLoadCallback(
+          onAdLoaded: (ad) {
+            _rewardedAd = ad;
+            _rewardedLoading = false;
+          },
+          onAdFailedToLoad: (error) {
+            _rewardedAd = null;
+            _rewardedLoading = false;
+          },
+        ),
+      );
+    } catch (_) {
+      _rewardedAd = null;
+      _rewardedLoading = false;
+    }
+  }
+
+  /// 준비된 보상형 광고를 보여준다. 끝까지 봐서 보상을 받으면
+  /// [RewardedAdResult.earned], 보상 없이 닫히면 dismissed,
+  /// 광고가 준비되지 않았거나 표시에 실패하면 unavailable을 반환한다.
+  /// 광고는 한 번만 보여준다 (보여준 뒤에는 다음 광고를 미리 로드한다).
+  static Future<RewardedAdResult> showRewardedAd() async {
+    final ad = _rewardedAd;
+    if (ad == null) {
+      unawaited(loadRewardedAd());
+      return RewardedAdResult.unavailable;
+    }
+    _rewardedAd = null;
+    var earned = false;
+    final completer = Completer<RewardedAdResult>();
+    void finish(RewardedAdResult value) {
+      if (!completer.isCompleted) completer.complete(value);
+    }
+    ad.fullScreenContentCallback = FullScreenContentCallback(
+      onAdDismissedFullScreenContent: (ad) {
+        ad.dispose();
+        finish(
+            earned ? RewardedAdResult.earned : RewardedAdResult.dismissed);
+        unawaited(loadRewardedAd());
+      },
+      onAdFailedToShowFullScreenContent: (ad, error) {
+        ad.dispose();
+        finish(RewardedAdResult.unavailable);
+        unawaited(loadRewardedAd());
+      },
+    );
+    try {
+      await ad.show(
+        onUserEarnedReward: (ad, reward) {
+          earned = true;
+        },
+      );
+    } catch (_) {
+      ad.dispose();
+      unawaited(loadRewardedAd());
+      return RewardedAdResult.unavailable;
+    }
+    return completer.future;
+  }
+}
+
+/// 보상형 광고 시청 결과.
+enum RewardedAdResult {
+  /// 끝까지 봐서 보상을 받음.
+  earned,
+
+  /// 보상 없이 닫음.
+  dismissed,
+
+  /// 광고가 준비되지 않았거나 표시에 실패함.
+  unavailable,
 }
 
 /// 하단 배너 광고 위젯
@@ -180,7 +289,21 @@ class _BannerAdWidgetState extends State<BannerAdWidget> {
   @override
   void initState() {
     super.initState();
-    _loadAd();
+    AdFreeService.instance.isAdFreeNotifier.addListener(_onAdFreeChanged);
+    if (!AdFreeService.instance.isAdFree) {
+      _loadAd();
+    }
+  }
+
+  /// 평생 광고 제거를 구매하면 로드된 배너를 버리고 다시 로드하지 않는다.
+  void _onAdFreeChanged() {
+    if (!AdFreeService.instance.isAdFree) return;
+    _retryTimer?.cancel();
+    _bannerAd?.dispose();
+    _bannerAd = null;
+    if (mounted) {
+      setState(() => _loaded = false);
+    }
   }
 
   void _loadAd() {
@@ -219,6 +342,7 @@ class _BannerAdWidgetState extends State<BannerAdWidget> {
 
   @override
   void dispose() {
+    AdFreeService.instance.isAdFreeNotifier.removeListener(_onAdFreeChanged);
     _retryTimer?.cancel();
     _bannerAd?.dispose();
     super.dispose();
@@ -226,6 +350,10 @@ class _BannerAdWidgetState extends State<BannerAdWidget> {
 
   @override
   Widget build(BuildContext context) {
+    // 평생 광고 제거 상태면 배너를 만들지 않는다.
+    if (AdFreeService.instance.isAdFree) {
+      return const SizedBox.shrink();
+    }
     if (!_loaded || _bannerAd == null) {
       return const SizedBox.shrink();
     }
