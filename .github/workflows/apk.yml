@@ -1,6 +1,16 @@
 name: 미리보기 APK 빌드
+
+# main에 푸시하면 자동으로 빌드하고, GitHub에서 수동으로도 실행할 수 있어요.
+# 실행 후 Actions 탭의 해당 실행 페이지 맨 아래 Artifacts에서 받아 폰에 설치하면 돼요.
+#
+# 주의: GitHub 커넥터 스냅샷 푸시는 .github/workflows/ 파일을 올릴 수 없다.
+# 이 파일은 맥북에서 git으로 올려야 한다.
+# (결정사주도 같은 방식으로 워크플로우를 관리한다.)
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
+
 jobs:
   build-apk:
     runs-on: ubuntu-latest
@@ -12,14 +22,20 @@ jobs:
           java-version: '17'
       - uses: subosito/flutter-action@v2
         with:
+          flutter-version: "3.47.x"
           channel: stable
-      - name: Restore debug keystore
-        run: |
-          mkdir -p ~/.android
-          echo "${{ secrets.DEBUG_KEYSTORE_BASE64 }}" | base64 -d > ~/.android/debug.keystore
-      - run: flutter pub get
-      - run: flutter build apk --debug
-      - uses: actions/upload-artifact@v4
+      - name: 의존성 설치
+        run: flutter pub get
+      - name: 정적 분석
+        run: flutter analyze
+      - name: 테스트
+        run: flutter test
+      - name: APK 빌드
+        run: flutter build apk --debug
+      - name: APK 업로드
+        uses: actions/upload-artifact@v4
         with:
           name: jakmyeongbyeol-debug-apk
           path: build/app/outputs/flutter-apk/app-debug.apk
+          if-no-files-found: error
+          retention-days: 30
