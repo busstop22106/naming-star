@@ -1,18 +1,27 @@
 // 이름 분석 결과 공유 링크 — 생성·파싱·분석 복원.
 //
-// 공유되는 https 링크:
+// 공유되는 짧은 링크 (기본):
+//   https://jakmyeongbyeol.netlify.app/s/<토큰>
+// 토큰은 파라미터를 통째로 압축한 것으로, 서버 없이 만든다:
+//   페이로드 = [전체이름, YYYYMMDD, 시간(없으면 빈칸), gender(boy|girl),
+//               성씨한자(없으면 빈칸), 이름한자(없으면 빈칸)] 을 '|'로 연결
+//   토큰 = '1'(버전) + base64url(UTF-8(페이로드)), 패딩('=') 제거
+//   예: 김도윤|20250315|14|boy|金|道允
+// 예전 전체 파라미터 링크도 그대로 받는다:
 //   https://busstop22106.github.io/naming-star/share.html?name=...&birth=YYYY-MM-DD&hour=0-23&gender=boy|girl&surname_hanja=金&hanja=道允
+//   https://jakmyeongbyeol.netlify.app/share.html?... (같은 전체 파라미터)
 // 앱이 받는 앱스킴:
 //   jakmyeongbyeol://analyze?name=...&birth=YYYY-MM-DD&hour=0-23&gender=boy|girl&surname_hanja=金&hanja=道允
 // hour는 생시를 모르면 생략한다. surname_hanja(성씨 한자 1자)와 hanja(이름
 // 한자 2자)는 순우리말이면 생략하고, 없는 예전 링크도 그대로 동작한다.
 // 랜딩 페이지(share.html)가 https 링크를 intent:// URL로 바꿔 앱을 열고,
 // 앱이 없으면 Play 스토어로 보낸다.
-// intent:// URL로 바꿔 앱을 열고, 앱이 없으면 Play 스토어로 보낸다.
-// App Links(assetlinks.json) 방식은 Pages 호스트 루트에 파일을 둬야 해서
-// 이 저장소에서는 쓸 수 없어 intent:// + 폴백 페이지를 쓴다.
+// App Links 검증 파일(assetlinks.json)은 Netlify 사이트 루트에 둔다.
+// (github.io 프로젝트 사이트에서는 호스트 루트에 파일을 둘 수 없어 불가했다.)
 //
 // 순수 Dart — Flutter import 없음. 엔진(사주·채점·한자 정렬)만 재사용한다.
+import 'dart:convert';
+
 import '../data/surnames.dart';
 import '../engine/hanja_order.dart';
 import '../engine/pure_korean.dart';
@@ -77,6 +86,11 @@ class SharedNameParams {
 const String _shareHost = 'busstop22106.github.io';
 const String _sharePath = '/naming-star/share.html';
 
+// 짧은 링크 호스트 (Netlify 무료 서브도메인).
+// 사이트 이름이 선점돼 jakmyeongbyeol-app으로 만들면 여기도 같이 바꿔야 한다.
+const String _shortHost = 'jakmyeongbyeol.netlify.app';
+const String _shortPath = '/s/';
+
 Map<String, String> _queryOf(SharedNameParams params) {
   final q = <String, String>{
     'name': params.name,
@@ -105,6 +119,98 @@ Uri buildAppUri(SharedNameParams params) => Uri(
       queryParameters: _queryOf(params),
     );
 
+/// 짧은 링크용 토큰을 만든다.
+/// 페이로드 = 이름|YYYYMMDD|시간|성별|성씨한자|이름한자 ('|' 연결, 없는 값은 빈칸).
+/// 토큰 = '1'(버전) + base64url(UTF-8(페이로드)), 패딩 제거.
+String encodeShareToken(SharedNameParams params) {
+  final birth = params.birth;
+  final payload = [
+    params.name,
+    '${birth.year}${birth.month.toString().padLeft(2, '0')}${birth.day.toString().padLeft(2, '0')}',
+    params.hour?.toString() ?? '',
+    params.gender.name,
+    params.surnameHanja ?? '',
+    params.hanja ?? '',
+  ].join('|');
+  final encoded =
+      base64Url.encode(utf8.encode(payload)).replaceAll('=', '');
+  return '1$encoded';
+}
+
+/// 짧은 링크용 토큰을 파라미터로 바꾼다. 형식이 틀리면 null.
+SharedNameParams? decodeShareToken(String token) {
+  if (token.isEmpty || token[0] != '1') return null;
+  final encoded = token.substring(1);
+  if (encoded.isEmpty) return null;
+  // base64url 패딩 복원 (디코더가 패딩을 요구할 수 있어 명시적으로 채운다).
+  final padded = encoded + '=' * ((4 - encoded.length % 4) % 4);
+  late final String payload;
+  try {
+    payload = utf8.decode(base64Url.decode(padded));
+  } catch (_) {
+    return null;
+  }
+  final fields = payload.split('|');
+  if (fields.length != 6) return null;
+  final name = fields[0];
+  if (name.length < 3 || name.length > 4) return null;
+  if (!RegExp(r'^[가-힣]+$').hasMatch(name)) return null;
+
+  final birthText = fields[1];
+  if (!RegExp(r'^\d{8}$').hasMatch(birthText)) return null;
+  final birth = DateTime.tryParse(
+    '${birthText.substring(0, 4)}-${birthText.substring(4, 6)}-${birthText.substring(6, 8)}',
+  );
+  if (birth == null) return null;
+  if (birth.year != int.parse(birthText.substring(0, 4)) ||
+      birth.month != int.parse(birthText.substring(4, 6)) ||
+      birth.day != int.parse(birthText.substring(6, 8))) {
+    return null;
+  }
+  if (birth.year < 1900 || birth.year > 2035) return null;
+
+  int? hour;
+  final hourText = fields[2];
+  if (hourText.isNotEmpty) {
+    hour = int.tryParse(hourText);
+    if (hour == null || hour < 0 || hour > 23) return null;
+  }
+
+  final Gender? gender = switch (fields[3]) {
+    'boy' => Gender.boy,
+    'girl' => Gender.girl,
+    _ => null,
+  };
+  if (gender == null) return null;
+
+  // 한자 선택: 틀린 값이면 그 파라미터만 버리고 기본값으로 떨어뜨린다.
+  final surnameHanjaText = fields[4];
+  final String? surnameHanja = surnameHanjaText.isNotEmpty &&
+          _isHanja(surnameHanjaText, 1)
+      ? surnameHanjaText
+      : null;
+  final hanjaText = fields[5];
+  final String? hanja =
+      hanjaText.isNotEmpty && _isHanja(hanjaText, 2) ? hanjaText : null;
+
+  return SharedNameParams(
+    name: name,
+    birth: DateTime(birth.year, birth.month, birth.day),
+    hour: hour,
+    gender: gender,
+    surnameHanja: surnameHanja,
+    hanja: hanja,
+  );
+}
+
+/// 실제로 공유되는 짧은 링크 (친구가 받는 주소).
+/// 예: https://jakmyeongbyeol.netlify.app/s/1...
+Uri buildShortShareUri(SharedNameParams params) => Uri(
+      scheme: 'https',
+      host: _shortHost,
+      path: '$_shortPath${encodeShareToken(params)}',
+    );
+
 /// [text]가 한자 [count]개로만 이뤄졌는지 확인한다.
 /// (CJK 통합 한자 + 호환 한자 범위. 범위를 벗어난 평면 외 한자는 드물어
 /// 형식이 틀린 것으로 보고 기본값으로 떨어뜨린다.)
@@ -114,17 +220,39 @@ bool _isHanja(String text, int count) {
 }
 
 /// 앱스킴 링크 또는 https 공유 링크를 파라미터로 바꾼다.
+/// 받는 형식:
+/// - 앱스킴 `jakmyeongbyeol://analyze?...` (전체 파라미터)
+/// - 예전 github.io 전체 파라미터 링크 (`/naming-star/share.html?...`)
+/// - Netlify 전체 파라미터 링크 (`/share.html?...`)
+/// - Netlify 짧은 링크 (`/s/<토큰>`)
 /// 형식이 틀리거나 값이 유효하지 않으면 null (링크를 무시한다).
 /// 단, 한자 선택 파라미터가 틀렸을 때는 그 파라미터만 무시하고 기본값으로
 /// 떨어뜨린다 — 이름·생년월일이 유효하면 링크는 살린다.
 SharedNameParams? parseShareUri(Uri uri) {
   final isAppLink = uri.scheme == 'jakmyeongbyeol' && uri.host == 'analyze';
-  final isShareLink = uri.scheme == 'https' &&
+  final isOldShareLink = uri.scheme == 'https' &&
       uri.host == _shareHost &&
       uri.path == _sharePath;
-  if (!isAppLink && !isShareLink) return null;
+  final isShortHost = uri.scheme == 'https' && uri.host == _shortHost;
+  if (!isAppLink && !isOldShareLink && !isShortHost) return null;
 
-  final q = uri.queryParameters;
+  if (isShortHost) {
+    // 짧은 링크: /s/<토큰>
+    if (uri.pathSegments.length == 2 && uri.pathSegments[0] == 's') {
+      return decodeShareToken(uri.pathSegments[1]);
+    }
+    // 전체 파라미터 링크: /share.html?...
+    if (uri.path == '/share.html') {
+      return _parseQueryParams(uri.queryParameters);
+    }
+    return null;
+  }
+  return _parseQueryParams(uri.queryParameters);
+}
+
+/// 전체 파라미터 쿼리(name/birth/hour/gender/surname_hanja/hanja)를
+/// SharedNameParams로 바꾼다. 핵심 값이 유효하지 않으면 null.
+SharedNameParams? _parseQueryParams(Map<String, String> q) {
   final name = q['name'];
   if (name == null || name.length < 3 || name.length > 4) return null;
   if (!RegExp(r'^[가-힣]+$').hasMatch(name)) return null;

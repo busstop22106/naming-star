@@ -32,6 +32,18 @@
                 <category android:name="android.intent.category.BROWSABLE"/>
                 <data android:scheme="jakmyeongbyeol" android:host="analyze"/>
             </intent-filter>
+            <!-- App Links: Netlify 짧은 링크(https://jakmyeongbyeol.netlify.app/s/...)
+                 및 전체 파라미터 링크(/share.html). 검증 파일은 사이트 루트의
+                 .well-known/assetlinks.json (netlify-site/ 폴더 참조).
+                 지문이 채워지기 전에는 브라우저 랜딩 페이지로 열리고,
+                 거기서 intent 버튼을 눌러 앱을 여는 흐름으로 동작한다. -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="https" android:host="jakmyeongbyeol.netlify.app" android:pathPrefix="/s/"/>
+                <data android:scheme="https" android:host="jakmyeongbyeol.netlify.app" android:pathPrefix="/share.html"/>
+            </intent-filter>
         </activity>
         <!-- AdMob 앱 ID (실제 ID, 2026-10-22 교체) -->
         <meta-data

@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>작명별 이름 분석 결과</title>
+<style>
+  body { margin: 0; background: #0C1226; color: #EEF1FA;
+    font-family: -apple-system, "Malgun Gothic", "Noto Sans KR", sans-serif; }
+  .wrap { max-width: 480px; margin: 0 auto; padding: 56px 24px 40px; text-align: center; }
+  .star { font-size: 56px; line-height: 1; }
+  h1 { font-size: 22px; margin: 20px 0 8px; }
+  .sub { color: #93A0BE; font-size: 15px; line-height: 1.7; margin: 0 0 28px; }
+  .card { background: #151D38; border: 1px solid #27335A; border-radius: 24px;
+    padding: 24px 20px; margin-bottom: 24px; }
+  .name { font-size: 32px; font-weight: 800; margin-bottom: 8px; }
+  .birth { color: #93A0BE; font-size: 15px; line-height: 1.7; }
+  .btn { display: block; background: #E3B959; color: #131A30;
+    font-size: 17px; font-weight: 800; text-decoration: none;
+    border-radius: 20px; padding: 16px; margin-bottom: 12px; }
+  .install { display: block; color: #E3B959; font-size: 15px;
+    text-decoration: none; padding: 12px; }
+  .note { color: #93A0BE; font-size: 13px; line-height: 1.7; margin-top: 24px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="star">⭐</div>
+  <h1>작명별 이름 분석 결과</h1>
+  <p class="sub">친구가 공유한 이름 분석 결과예요.<br>앱에서 바로 확인할 수 있어요.</p>
+  <div class="card">
+    <div class="name" id="name">이름 분석 결과</div>
+    <div class="birth" id="birth"></div>
+  </div>
+  <a class="btn" id="openBtn" href="#">앱에서 결과 보기</a>
+  <a class="install" id="installLink" href="https://play.google.com/store/apps/details?id=com.jakmyeongbyeol.app">Play 스토어에서 작명별 설치하기</a>
+  <p class="note">앱이 설치돼 있으면 위 버튼을 누르면 결과 화면이 바로 열려요.<br>
+  버튼이 동작하지 않으면 설치 링크로 앱을 먼저 설치해주세요.</p>
+</div>
+<script>
+(function () {
+  // 짧은 링크 토큰 디코드 (Dart 쪽 encodeShareToken/decodeShareToken과 동일 규칙).
+  // 토큰 = '1'(버전) + base64url(UTF-8('이름|YYYYMMDD|시간|성별|성씨한자|이름한자')).
+  function decodeToken(token) {
+    if (!token || token.charAt(0) !== '1') return null;
+    var s = token.slice(1).replace(/-/g, '+').replace(/_/g, '/');
+    while (s.length % 4 !== 0) s += '=';
+    try {
+      var bin = atob(s);
+      var bytes = new Uint8Array(bin.length);
+      for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+      var payload = new TextDecoder('utf-8').decode(bytes);
+      var f = payload.split('|');
+      if (f.length !== 6) return null;
+      var name = f[0];
+      if (!/^[가-힣]{3,4}$/.test(name)) return null;
+      if (!/^\d{8}$/.test(f[1])) return null;
+      var y = Number(f[1].slice(0, 4)), m = Number(f[1].slice(4, 6)), d = Number(f[1].slice(6, 8));
+      var dt = new Date(y, m - 1, d);
+      if (dt.getFullYear() !== y || dt.getMonth() !== m - 1 || dt.getDate() !== d) return null;
+      if (y < 1900 || y > 2035) return null;
+      if (f[2] !== '' && (!/^\d+$/.test(f[2]) || Number(f[2]) < 0 || Number(f[2]) > 23)) return null;
+      if (f[3] !== 'boy' && f[3] !== 'girl') return null;
+      var surnameHanja = f[4] || null;
+      var hanja = f[5] || null;
+      if (surnameHanja !== null && !/^[\u4E00-\u9FFF\uf900-\ufaff]$/.test(surnameHanja)) return null;
+      if (hanja !== null && !/^[\u4E00-\u9FFF\uf900-\ufaff]{2}$/.test(hanja)) return null;
+      return {
+        name: name,
+        birth: f[1].slice(0, 4) + '-' + f[1].slice(4, 6) + '-' + f[1].slice(6, 8),
+        hour: f[2] === '' ? null : f[2],
+        gender: f[3],
+        surnameHanja: surnameHanja,
+        hanja: hanja
+      };
+    } catch (e) {
+      return null;
+    }
+  }
+
+  // 파라미터 읽기: /s/<토큰> 또는 /share.html?전체파라미터
+  var p = null;
+  var path = location.pathname;
+  if (path.indexOf('/s/') === 0) {
+    var raw = path.slice(3).split('/')[0] || '';
+    var token = raw;
+    try { token = decodeURIComponent(raw); } catch (e) { token = raw; }
+    p = decodeToken(token);
+  } else {
+    var q = new URLSearchParams(location.search);
+    var name = q.get('name') || '';
+    if (name) {
+      p = {
+        name: name,
+        birth: q.get('birth') || '',
+        hour: q.get('hour'),
+        gender: q.get('gender') || '',
+        surnameHanja: q.get('surname_hanja'),
+        hanja: q.get('hanja')
+      };
+    }
+  }
+
+  if (p) {
+    // 미리보기: 이름·생년월일·시간·성별
+    document.getElementById('name').textContent = p.name;
+    var lines = [];
+    if (p.birth) {
+      var b = p.birth.split('-');
+      if (b.length === 3) lines.push(b[0] + '년 ' + Number(b[1]) + '월 ' + Number(b[2]) + '일');
+    }
+    if (p.hour !== null && p.hour !== '') lines.push(p.hour + '시 출생');
+    if (p.gender === 'boy') lines.push('남자');
+    if (p.gender === 'girl') lines.push('여자');
+    document.getElementById('birth').textContent = lines.join(' · ');
+
+    // intent URL: 전체 파라미터를 담은 앱스킴으로 넘긴다.
+    // 앱이 있으면 열고, 없으면 Play 스토어로 보낸다.
+    var params = new URLSearchParams();
+    params.set('name', p.name);
+    if (p.birth) params.set('birth', p.birth);
+    if (p.hour !== null && p.hour !== '') params.set('hour', p.hour);
+    params.set('gender', p.gender);
+    if (p.surnameHanja) params.set('surname_hanja', p.surnameHanja);
+    if (p.hanja) params.set('hanja', p.hanja);
+    var fallback = encodeURIComponent('https://play.google.com/store/apps/details?id=com.jakmyeongbyeol.app');
+    document.getElementById('openBtn').href = 'intent://analyze?' + params.toString() +
+      '#Intent;scheme=jakmyeongbyeol;package=com.jakmyeongbyeol.app;S.browser_fallback_url=' + fallback + ';end';
+  } else {
+    document.getElementById('name').textContent = '공유 링크를 열 수 없어요';
+    document.getElementById('birth').textContent = '링크가 잘못됐어요. 공유한 사람에게 링크를 다시 받아주세요.';
+    document.getElementById('openBtn').style.display = 'none';
+  }
+})();
+</script>
+</body>
+</html>
