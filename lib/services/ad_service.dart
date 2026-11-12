@@ -156,13 +156,12 @@ class AdService {
 
   /// 보상형 광고 단위 ID.
   /// 디버그·프로필 빌드는 Google 공식 테스트 ID, 릴리즈 Android는 실제 ID.
-  /// TODO(사용자: AdMob 콘솔에서 보상형 광고 단위를 생성한 뒤
-  /// _releaseRewardedId를 실제 ID로 교체할 것).
+  /// 릴리즈 ID: AdMob 콘솔 '1위 결과 공개 보상형' 단위 (2026-11-13 생성).
   /// 교체 전에는 릴리즈에서 로드가 실패하고, 1위 결과는 가려진 채로 둔다.
   static const String _testRewardedId =
       'ca-app-pub-3940256099942544/5224354917';
   static const String _releaseRewardedId =
-      'TODO_REPLACE_WITH_REAL_REWARDED_AD_UNIT_ID';
+      'ca-app-pub-2198921607879570/5000154500';
 
   static String get rewardedAdUnitId {
     if (kDebugMode || kProfileMode) {
