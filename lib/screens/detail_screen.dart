@@ -135,9 +135,17 @@ class _DetailScreenState extends State<DetailScreen> {
         padding: EdgeInsets.fromLTRB(
             20, 8, 20, 24 + MediaQuery.of(context).padding.bottom),
         children: [
-          // 이름 헤더
-          Card(
-            color: AppTheme.primary,
+          // 이름 헤더 — 밤하늘 그라데이션 카드 (흰 글자는 네이비 위 13.95:1)
+          Container(
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [AppTheme.deepNavy, AppTheme.deepNavyDark],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: AppTheme.deepBorder),
+            ),
             child: Padding(
               padding: const EdgeInsets.all(20),
               child: Row(
@@ -203,7 +211,7 @@ class _DetailScreenState extends State<DetailScreen> {
                   margin: const EdgeInsets.only(top: 8),
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFFFF3E0),
+                    color: AppTheme.warnSoft,
                     borderRadius: BorderRadius.circular(18),
                     border: Border.all(
                         color: AppTheme.warn.withValues(alpha: 0.4)),
@@ -658,7 +666,7 @@ class _HanjaPicker extends StatelessWidget {
                     decoration: BoxDecoration(
                       color: sel
                           ? AppTheme.primary
-                          : Colors.white,
+                          : AppTheme.surface,
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
                         color: sel
@@ -676,7 +684,7 @@ class _HanjaPicker extends StatelessWidget {
                                 fontFamilyFallback:
                                     AppTheme.hanjaFontFallback,
                                 color: sel
-                                    ? Colors.white
+                                    ? AppTheme.onGold
                                     : AppTheme.ink)),
                         const SizedBox(width: 6),
                         Text(sub,
@@ -684,10 +692,11 @@ class _HanjaPicker extends StatelessWidget {
                                 fontSize: 11,
                                 color: o.meaning.isNotEmpty
                                     ? (sel
-                                        ? Colors.white
+                                        ? AppTheme.onGold
                                         : AppTheme.sub)
                                     : (sel
-                                        ? Colors.white
+                                        ? AppTheme.onGold
+                                            .withValues(alpha: 0.65)
                                         : AppTheme.hint))),
                         const SizedBox(width: 4),
                         ElementChip(o.element),

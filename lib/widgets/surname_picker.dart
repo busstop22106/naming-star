@@ -194,7 +194,7 @@ class _SurnameSheetState extends State<_SurnameSheet> {
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 4),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppTheme.surface,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: AppTheme.line),
       ),

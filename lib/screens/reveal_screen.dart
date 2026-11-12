@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../theme.dart';
+import '../widgets/night_sky.dart';
 
 /// 이름 공개 전 기대감 연출 화면 (이름 짓기 → 결과 사이)
 ///
@@ -81,8 +82,12 @@ class _RevealScreenState extends State<RevealScreen>
       body: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: _go,
-        child: Center(
-          child: AnimatedBuilder(
+        child: Stack(
+          children: [
+            // 밤하늘 별빛 배경
+            const Starfield(),
+            Center(
+              child: AnimatedBuilder(
             animation: _ctrl,
             builder: (context, _) {
               final t = _ctrl.value;
@@ -176,6 +181,8 @@ class _RevealScreenState extends State<RevealScreen>
               );
             },
           ),
+            ),
+          ],
         ),
       ),
     );

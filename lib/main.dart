@@ -123,7 +123,7 @@ class _MainNavState extends State<MainNav> {
       bottomNavigationBar: NavigationBar(
         selectedIndex: _index,
         onDestinationSelected: (i) => setState(() => _index = i),
-        backgroundColor: Colors.white,
+        backgroundColor: AppTheme.surface,
         indicatorColor: AppTheme.primarySoft,
         destinations: const [
           NavigationDestination(

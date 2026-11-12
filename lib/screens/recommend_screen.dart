@@ -89,9 +89,17 @@ class _RecommendScreenState extends State<RecommendScreen> {
             sliver: SliverToBoxAdapter(
               child: Column(
                 children: [
-                  // 사주 요약
-                  Card(
-            color: AppTheme.primary,
+                  // 사주 요약 — 밤하늘 그라데이션 카드 (흰 글자는 네이비 위 13.95:1)
+                  Container(
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [AppTheme.deepNavy, AppTheme.deepNavyDark],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: AppTheme.deepBorder),
+            ),
             child: Padding(
               padding: const EdgeInsets.all(18),
               child: Column(
@@ -283,7 +291,8 @@ class _InfoChip extends StatelessWidget {
           style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w700,
-              color: highlight ? AppTheme.ink : Colors.white)),
+              // 금색 칩 위 글자는 어두운 색이어야 보인다 (onGold 9.32:1).
+              color: highlight ? AppTheme.onGold : Colors.white)),
     );
   }
 }

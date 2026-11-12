@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../theme.dart';
+import 'night_sky.dart';
 
 /// 출생 시간 표기 — 24시간 숫자만 쓰면 오전/오후를 헷갈린다.
 /// 사주에서는 오전 3시 30분(인시)과 오후 3시 30분(신시)이 완전히 다르다.
@@ -36,9 +37,9 @@ void showSingleSnackBar(
 
 /// 종합 점수 링
 ///
-/// [darkBackground]가 true면 primary 카드 위처럼 진한 배경에 올리는
+/// [darkBackground]가 true면 헤더 카드 위처럼 진한 네이비 배경에 올리는
 /// 경우라, 숫자·등급을 흰색 계열로 그리고 링 바탕도 흰색 반투명으로
-/// 바꾼다. 기본(흰 카드 위)에서는 숫자 ink·등급 scoreTextColor를 쓴다.
+/// 바꾼다. 기본(카드 위)에서는 숫자 ink·등급 scoreTextColor를 쓴다.
 class ScoreRing extends StatelessWidget {
   final double score;
   final double size;
@@ -73,7 +74,7 @@ class ScoreRing extends StatelessWidget {
                 style: TextStyle(
                   fontSize: size * 0.30,
                   fontWeight: FontWeight.w800,
-                  // 흰 배경에서는 ink(9:1 이상), 진한 배경에서는 흰색(6.5:1).
+                  // 카드 위에서는 ink(14.71:1), 진한 네이비 배경에서는 흰색(13.95:1).
                   color: darkBackground ? Colors.white : AppTheme.ink,
                 ),
               ),
@@ -83,7 +84,7 @@ class ScoreRing extends StatelessWidget {
                   fontSize: size * 0.13,
                   fontWeight: FontWeight.w600,
                   // 진한 배경에서는 등급도 흰색으로 — scoreColor는
-                  // primary 위에서 good 2.0:1 / bad 1.82:1로 AA 미달이다.
+                  // 진한 배경 위에서 good·bad가 AA 미달이다.
                   color: darkBackground
                       ? Colors.white
                       : AppTheme.scoreTextColor(score),
@@ -153,7 +154,7 @@ class DimensionBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // 막대·점은 그래픽이라 scoreColor를 쓰지만, '82 · 양호' 글자는
-    // 흰 배경에서 AA를 만족하는 scoreTextColor를 쓴다
+    // 카드 위에서 AA를 만족하는 scoreTextColor를 쓴다
     // (금색 구간은 흰 배경 1.58:1로 미달이라 goldDark으로 바뀐다).
     final color = AppTheme.scoreColor(score);
     final textColor = AppTheme.scoreTextColor(score);
@@ -281,36 +282,47 @@ class StarHero extends StatelessWidget {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [Color(0xFFFFF3D6), Color(0xFFEDE8FB)],
+          colors: [AppTheme.deepNavy, AppTheme.deepNavyDark],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: AppTheme.deepBorder),
         boxShadow: AppTheme.softShadow,
       ),
-      child: Row(
+      child: Stack(
         children: [
-          Image.asset(
-            'assets/icon/splash-star.png',
-            width: imageSize,
-            height: imageSize,
-            errorBuilder: (context, error, stackTrace) =>
-                const Icon(Icons.star, size: 64, color: AppTheme.gold),
+          Row(
+            children: [
+              Image.asset(
+                'assets/icon/splash-star.png',
+                width: imageSize,
+                height: imageSize,
+                errorBuilder: (context, error, stackTrace) =>
+                    const Icon(Icons.star, size: 64, color: AppTheme.gold),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(title,
+                        style: const TextStyle(
+                            fontSize: 24, fontWeight: FontWeight.w800)),
+                    const SizedBox(height: 4),
+                    Text(subtitle,
+                        style: const TextStyle(
+                            fontSize: 13, color: AppTheme.sub, height: 1.5)),
+                  ],
+                ),
+              ),
+            ],
           ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title,
-                    style: const TextStyle(
-                        fontSize: 24, fontWeight: FontWeight.w800)),
-                const SizedBox(height: 4),
-                Text(subtitle,
-                    style: const TextStyle(
-                        fontSize: 13, color: AppTheme.sub, height: 1.5)),
-              ],
-            ),
+          // 우상단 초승달 장식
+          const Positioned(
+            top: 0,
+            right: 0,
+            child: CrescentMoon(size: 26),
           ),
         ],
       ),
@@ -397,19 +409,20 @@ class GradeChip extends StatelessWidget {
   }
 }
 
-/// 오행 색상
+/// 오행 색상 — 카드 위 14pt 굵은 글자 기준 (굵은 14pt는 large 텍스트라 3:1이면
+/// 되지만, 여유 있게 4:1 이상인 값으로 골랐다).
 Color elementColor(String e) {
   switch (e) {
     case '목':
       return const Color(0xFF43A06B);
     case '화':
-      return const Color(0xFFE05D5D);
+      return const Color(0xFFF07070);
     case '토':
       return const Color(0xFFC98A1B);
     case '금':
       return const Color(0xFF8A93A6);
     case '수':
-      return const Color(0xFF4A7FB5);
+      return const Color(0xFF5B93C9);
     default:
       return AppTheme.sub;
   }
@@ -460,8 +473,8 @@ class GenderButton extends StatelessWidget {
     // GestureDetector만 쓰면 스크린리더가 버튼으로 못 읽고 포커스도
     // 안 잡혀서, Semantics로 버튼 역할·선택 상태를 달아준다.
     // 터치 높이는 48dp를 보장한다 (패딩 14*2 + 아이콘 24 = 52).
-    // 선택 상태의 아이콘·라벨은 글자라, boy/girl 원색(흰 배경 3.2:1/2.7:1)
-    // 대신 AA를 만족하는 진한 변형을 쓴다. 테두리·배경은 원색 유지.
+    // 선택 상태의 아이콘·라벨은 글자라, boy/girl 채움색 대신 카드 위에서
+    // AA를 만족하는 밝은 변형(boyDark/girlDark)을 쓴다. 테두리·배경은 원색 유지.
     final textColor = color == AppTheme.boy
         ? AppTheme.boyDark
         : color == AppTheme.girl
@@ -477,7 +490,9 @@ class GenderButton extends StatelessWidget {
           constraints: const BoxConstraints(minHeight: 48),
           padding: const EdgeInsets.symmetric(vertical: 14),
           decoration: BoxDecoration(
-            color: selected ? color.withValues(alpha: 0.14) : Colors.white,
+            color: selected
+                ? color.withValues(alpha: 0.14)
+                : AppTheme.surface,
             borderRadius: BorderRadius.circular(18),
             border: Border.all(
               color: selected ? color : AppTheme.line,

@@ -5,6 +5,7 @@ import '../services/ad_service.dart';
 import '../services/interstitial_gate.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
+import '../widgets/night_sky.dart';
 import '../widgets/surname_picker.dart';
 import 'recommend_screen.dart';
 import 'reveal_screen.dart';
@@ -150,10 +151,14 @@ class _HomeScreenState extends State<HomeScreen> {
             : formatTimeOfDay(_birthTime!));
 
     return Scaffold(
-      body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.all(20),
-          children: [
+      body: Stack(
+        children: [
+          // 밤하늘 별빛 배경 — 스크롤해도 그대로 있다
+          const Starfield(),
+          SafeArea(
+            child: ListView(
+              padding: const EdgeInsets.all(20),
+              children: [
             const SizedBox(height: 8),
             // 헤더
             const StarHero(
@@ -190,7 +195,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               height: 44,
                               alignment: Alignment.center,
                               decoration: BoxDecoration(
-                                color: Colors.white,
+                                color: AppTheme.deepNavy,
                                 borderRadius:
                                     BorderRadius.circular(12),
                               ),
@@ -397,6 +402,8 @@ class _HomeScreenState extends State<HomeScreen> {
             const SizedBox(height: 12),
           ],
         ),
+          ),
+        ],
       ),
     );
   }

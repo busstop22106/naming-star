@@ -1,31 +1,40 @@
 import 'package:flutter/material.dart';
 
-/// 작명별 디자인 시스템 — '반짝이는 별 친구' 컨셉
+/// 작명별 디자인 시스템 — '밤하늘' 컨셉 (2026-11-12 변경)
 ///
-/// 앱 아이콘(노란 별 캐릭터 + 라벤더 하늘)의 색감을 화면으로 가져왔다.
-/// 둥글림을 키우고 그림자를 부드럽게 해서, 보기만 해도 기분 좋아지는
-/// 귀엽고 따뜻한 무드를 만든다. 폰트는 시스템 폰트 유지
-/// (커스텀 폰트 파일은 GitHub 스냅샷 푸시가 불가해서 별도 단계로).
-/// 단, 한자는 기기 기본 CJK 글꼴이 명조/궁서 계열로 잡히는 경우가 있어
-/// 한자 글꼴 폴백(hanjaFontFallback)으로 고딕 계열을 우선 지정한다.
+/// 예전 '반짝이는 별 친구'(크림 배경·바이올렛)에서 밤하늘 다크로 바꿨다.
+/// 색은 결정사주 프로토타입 3번 '밤하늘 다크'의 팔레트와 같다.
+/// 깊은 밤하늘 배경에 금빛 포인트, 카드 위에 별빛이 박힌 느낌이다.
+/// 폰트는 시스템 폰트 유지 (커스텀 폰트 파일은 GitHub 스냅샷 푸시가
+/// 불가해서 별도 단계로). 단, 한자는 기기 기본 CJK 글꼴이 명조/궁서
+/// 계열로 잡히는 경우가 있어 한자 글꼴 폴백(hanjaFontFallback)으로
+/// 고딕 계열을 우선 지정한다.
+///
+/// 명암비: 모든 텍스트 토큰은 카드(#151D38) 위에서 WCAG AA(4.5:1)를
+/// 만족하도록 골랐다 (2026-11-12 계산 확인 — ink 14.71:1, sub 6.34:1,
+/// hint 4.88:1, gold 8.97:1, boyDark 7.92:1, girlDark 7.69:1,
+/// goodDark 9.53:1, warnDark 9.89:1, danger 7.27:1).
 class AppTheme {
-  static const bg = Color(0xFFFFF9F1);
-  static const surface = Colors.white;
-  static const primary = Color(0xFF5B4DBC); // 밝은 바이올렛 (아이콘 하늘빛)
-  static const primaryDark = Color(0xFF3D348B); // 강조·그라데이션용 진한 바이올렛
-  static const primarySoft = Color(0xFFEDE8FB);
-  static const gold = Color(0xFFFFC53D); // 별 노랑
-  static const starBg = Color(0xFFFFF6D8); // 별 배경 크림
-  static const blush = Color(0xFFFFE9E9); // 볼터치 핑크 배경
-  static const coral = Color(0xFFF4845F);
-  static const ink = Color(0xFF2B2440);
-  // 보조 문구용 — 예전 #8A839E는 흰 배경 3.61:1·크림 배경 3.45:1로
-  // 11~12pt 보조 문구의 WCAG AA(4.5:1)에 미달이라 진하게 바꿨다.
-  // (흰 배경 5.31:1 · 크림 배경 5.08:1)
-  static const sub = Color(0xFF6E6880);
-  static const hint = Color(0xFFB8B0CC); // 입력 힌트용 밝은 회색
-  static const chipBorder = Color(0xFFD9D0E8); // 미선택 칩 테두리용 연보라 회색
-  static const line = Color(0xFFF0E7D8);
+  static const bg = Color(0xFF0C1226); // 밤하늘
+  static const surface = Color(0xFF151D38); // 카드
+  static const primary = Color(0xFFE3B959); // 금빛 (액센트)
+  // 다크 테마라 '진한' 변형도 같은 금빛이다 — 글자가 어두운 면 위에
+  // 놓이기 때문에 밝은 금색이 텍스트용이다. 선택 칩 라벨·순위 숫자 등
+  // 텍스트 자리에 쓴다 (선택: primaryDark, 미선택: ink 규칙 유지).
+  static const primaryDark = Color(0xFFE3B959);
+  static const primarySoft = Color(0xFF2B3048); // 선택 칩 배경 — 금빛 틴트 진한 네이비
+  static const gold = Color(0xFFE3B959); // 별·강조 금빛
+  // 금색 버튼 위 어두운 글자 (프로토타입 --pacc-ink #131A30).
+  static const onGold = Color(0xFF131A30);
+  // 헤더 카드용 깊은 네이비 그라데이션 (프로토타입 decision 카드).
+  static const deepNavy = Color(0xFF1D2A52);
+  static const deepNavyDark = Color(0xFF131C3A);
+  static const deepBorder = Color(0xFF33477F);
+  static const ink = Color(0xFFEEF1FA);
+  static const sub = Color(0xFF93A0BE); // 보조 문구용
+  static const hint = Color(0xFF7C8BB0); // 입력 힌트용
+  static const chipBorder = Color(0xFF27335A); // 미선택 칩 테두리용
+  static const line = Color(0xFF27335A);
   /// 한자 글꼴 폴백 — 가장 일반적인 고딕(산세리프) 한자부터 찾는다.
   /// 앞 이름이 없는 기기에서는 시스템 산세리프로 떨어지는데, 그 산세리프의
   /// CJK 글꼴도 고딕 계열이라 명조/궁서 계열로 보이는 일은 없다.
@@ -36,30 +45,33 @@ class AppTheme {
     'sans-serif',
   ];
 
-  static const boy = Color(0xFF5B8DEF);
-  static const girl = Color(0xFFF472A0);
-  // ── 명암비용 진한 변형 — boy/girl/pink/gold/bad는 흰 배경에서
-  // 3:1 안팎이라 작은 텍스트에는 쓸 수 없어, 텍스트용 진한 토큰을 둔다.
+  // 성별 채움색 — 흰 글자가 올라가니 진한 쪽으로 골랐다
+  // (흰 글자: boy 4.94:1, girl 4.62:1).
+  static const boy = Color(0xFF2F6BDB);
+  static const girl = Color(0xFFD6336C);
+  // ── 명암비용 밝은 변형 — boy/girl 채움색은 어두워 카드 위 작은
+  // 텍스트에는 쓸 수 없어, 텍스트용 밝은 토큰을 둔다.
   // 채움·선·아이콘 같은 그래픽 요소에는 원래 색을 그대로 쓴다.
-  static const boyDark = Color(0xFF2F6BDB); // 흰 배경 4.94:1
-  static const girlDark = Color(0xFFD6336C); // 흰 배경 4.62:1
+  static const boyDark = Color(0xFF8FB4F5); // 카드 위 7.92:1
+  static const girlDark = Color(0xFFFF8FA5); // 카드 위 7.69:1
   static const pink = Color(0xFFFF5C7A); // 궁합 강조 핑크 (그래픽용)
-  static const pinkDark = Color(0xFFD6336C); // 궁합 텍스트용 진한 핑크
-  static const pinkSoft = Color(0xFFFFE3E9); // 궁합 강조 배경
+  static const pinkDark = Color(0xFFFF8FA5); // 궁합 텍스트용 밝은 핑크
+  static const pinkSoft = Color(0xFF3A2233); // 궁합 강조 배경 (어두운 장미)
   static const pinkLight = Color(0xFFFF8FA5); // 흐르는 하트
-  static const mapLine = Color(0xFFDCD4EE); // 궁합 지도 일반 연결선
-  static const goldDark = Color(0xFF8A6D00); // 금색 구간 텍스트용 (4.92:1)
-  static const goodDark = Color(0xFF2E7D4F); // 5.05:1
-  static const warnDark = Color(0xFF8A6100); // 5.54:1
-  static const danger = Color(0xFFB3261E); // 삭제 등 위험 텍스트용 (6.54:1)
-  static const good = Color(0xFF43A06B);
-  static const warn = Color(0xFFE0A030);
-  static const bad = Color(0xFFE05D5D);
+  static const mapLine = Color(0xFF33477F); // 궁합 지도 일반 연결선
+  static const goldDark = Color(0xFFE3B959); // 금색 구간 텍스트용 (8.97:1)
+  static const goodDark = Color(0xFF4ADE80); // 9.53:1
+  static const warnDark = Color(0xFFF2C14E); // 9.89:1
+  static const danger = Color(0xFFFF8A80); // 삭제 등 위험 텍스트용 (7.27:1)
+  static const good = Color(0xFF4ADE80);
+  static const warn = Color(0xFFF2C14E);
+  static const bad = Color(0xFFF47070);
+  static const warnSoft = Color(0xFF2E2410); // 경고 박스 배경 (어두운 호박)
 
-  /// 카드 그림자 — 인디고 틴트의 부드러운 그림자
+  /// 카드 그림자 — 어두운 배경에서는 인디고 틴트가 안 보여 검정 그림자로.
   static List<BoxShadow> get softShadow => [
         BoxShadow(
-          color: primary.withValues(alpha: 0.10),
+          color: Colors.black.withValues(alpha: 0.35),
           blurRadius: 18,
           offset: const Offset(0, 6),
         ),
@@ -68,12 +80,16 @@ class AppTheme {
   static ThemeData get theme {
     return ThemeData(
       useMaterial3: true,
+      brightness: Brightness.dark,
       scaffoldBackgroundColor: bg,
       colorScheme: ColorScheme.fromSeed(
+        brightness: Brightness.dark,
         seedColor: primary,
         primary: primary,
+        onPrimary: onGold,
         secondary: gold,
         surface: surface,
+        onSurface: ink,
       ),
       appBarTheme: const AppBarTheme(
         backgroundColor: bg,
@@ -86,7 +102,7 @@ class AppTheme {
       cardTheme: CardThemeData(
         color: surface,
         elevation: 2,
-        shadowColor: primary.withValues(alpha: 0.12),
+        shadowColor: Colors.black.withValues(alpha: 0.35),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(24),
           side: const BorderSide(color: line),
@@ -121,7 +137,7 @@ class AppTheme {
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: primary,
-          foregroundColor: Colors.white,
+          foregroundColor: onGold,
           minimumSize: const Size.fromHeight(56),
           elevation: 2,
           shadowColor: primary.withValues(alpha: 0.3),
@@ -132,6 +148,14 @@ class AppTheme {
               const TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
         ),
       ),
+      navigationBarTheme: const NavigationBarThemeData(
+        backgroundColor: surface,
+        indicatorColor: primarySoft,
+      ),
+      dialogTheme: const DialogThemeData(backgroundColor: surface),
+      bottomSheetTheme:
+          const BottomSheetThemeData(backgroundColor: surface),
+      dividerTheme: const DividerThemeData(color: line),
       textTheme: const TextTheme(
         titleLarge: TextStyle(
             fontSize: 24, fontWeight: FontWeight.w800, color: ink),
@@ -153,8 +177,7 @@ class AppTheme {
   }
 
   /// 점수 구간별 텍스트용 색상 — scoreColor는 링·막대 같은 그래픽용이고,
-  /// 글자에는 금색·초록 등이 흰 배경에서 AA에 미달이라 진한 변형을 쓴다.
-  /// (금색 구간은 gold 대신 goldDark, 그 외도 같은 구간·같은 계열)
+  /// 글자에는 카드 위에서 AA를 만족하는 밝은 변형을 쓴다.
   static Color scoreTextColor(double score) {
     if (score >= 85) return goodDark;
     if (score >= 70) return goldDark;

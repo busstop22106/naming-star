@@ -1,7 +1,7 @@
 name: jakmyeongbyeol
 description: 사주와 전통 성명학 기반 아기 이름 작명 앱 '작명별'
 publish_to: 'none'
-version: 1.0.0+8
+version: 1.0.0+9
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
@@ -33,10 +33,10 @@ flutter_launcher_icons:
 
 # 스플래시 생성 설정: dart run flutter_native_splash:create
 flutter_native_splash:
-  color: "#FFF3E4"
+  color: "#0C1226"
   image: "assets/icon/splash-star.png"
   android_12:
-    color: "#FFF3E4"
+    color: "#0C1226"
     icon_background_color: "#E9DFFB"
 
 flutter:
