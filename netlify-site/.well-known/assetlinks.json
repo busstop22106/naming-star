@@ -1,1 +1,14 @@
-[{"relation":["delegate_permission/common.handle_all_urls"],"target":{"namespace":"android_app","package_name":"com.jakmyeongbyeol.app","sha256_cert_fingerprints":[]}}]
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.jakmyeongbyeol.app",
+      "sha256_cert_fingerprints": [
+        "3400CA7C16E3B9E21F08D6CDF5A97735B9A65EA45208A609BC455A4B0777A853"
+      ]
+    }
+  }
+]
