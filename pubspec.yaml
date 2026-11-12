@@ -37,7 +37,7 @@ flutter_native_splash:
   image: "assets/icon/splash-star.png"
   android_12:
     color: "#0C1226"
-    icon_background_color: "#E9DFFB"
+    icon_background_color: "#0C1226"
 
 flutter:
   uses-material-design: true
