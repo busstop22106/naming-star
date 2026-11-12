@@ -33,3 +33,7 @@ Play Console → 설정 → 앱 무결성 → "앱 서명 키 인증서" → SHA
 
 3개 지문을 `sha256_cert_fingerprints` 배열에 넣고 다시 배포한다.
 (Actions 디버그 APK 지문은 러너마다 새로 생기는 키라 쓸 수 없다 — 위 맥북 디버그 키만 유효하다.)
+
+## 드롭 배포 주의: `.well-known/`은 안 올라감
+Netlify 드래그앤드롭 배포는 `.`으로 시작하는 파일·폴더를 빼고 올린다 (Netlify 공식 확인된 동작). 그래서 `.well-known/assetlinks.json`은 드롭만으로는 라이브에 안 올라간다.
+우회 방법: 루트에 `assetlinks.json` 사본을 두고 `_redirects`에 `/.well-known/assetlinks.json /assetlinks.json 200` 규칙을 둔다. 지문을 바꿀 때는 두 파일(`.well-known/assetlinks.json`, `assetlinks.json`)을 함께 바꿀 것.
