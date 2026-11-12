@@ -76,7 +76,7 @@ class _DetailScreenState extends State<DetailScreen> {
     final text = '${_analysis.fullName} 이름은 몇 점짜리 이름일까? 👀 작명별에서 사주 기반으로 이름 점수를 알아보세요!\n$uri';
     try {
       await SharePlus.instance.share(
-        ShareParams(text: text, subject: '작명별 이름 분석 결과'),
+        ShareParams(text: text),
       );
     } catch (e) {
       debugPrint('공유 실패: $e');
