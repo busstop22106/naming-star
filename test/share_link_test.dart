@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:jakmyeongbyeol/engine/hanja_order.dart';
 import 'package:jakmyeongbyeol/models.dart';
 import 'package:jakmyeongbyeol/screens/detail_screen.dart';
 import 'package:jakmyeongbyeol/services/share_link.dart';
@@ -117,6 +118,122 @@ void main() {
       expect(resolved, isNotNull);
       expect(resolved!.analysis.fullName, '김하늘');
       expect(resolved.analysis.isPureKorean, isTrue);
+    });
+  });
+
+  group('한자 선택 공유', () {
+    test('한자 포함 링크 왕복이 된다', () {
+      final params = SharedNameParams(
+        name: '김도윤',
+        birth: DateTime(2025, 3, 15),
+        hour: 14,
+        gender: Gender.boy,
+        surnameHanja: '金',
+        hanja: '道允',
+      );
+      final httpsUri = buildShareUri(params);
+      expect(httpsUri.queryParameters['surname_hanja'], '金');
+      expect(httpsUri.queryParameters['hanja'], '道允');
+      expect(parseShareUri(httpsUri), params);
+      expect(parseShareUri(buildAppUri(params)), params);
+    });
+
+    test('공유된 한자 선택대로 분석이 복원된다', () {
+      // 첫 번째 후보가 아닌 한자를 골라 기본값과 달라지는지 확인한다.
+      final doOpts = orderedHanja('도');
+      final yunOpts = orderedHanja('윤');
+      final doChosen = doOpts.last;
+      final yunChosen = yunOpts.last;
+      expect(doChosen.char, isNot(doOpts.first.char));
+      final params = SharedNameParams(
+        name: '김도윤',
+        birth: DateTime(2025, 3, 15),
+        hour: 14,
+        gender: Gender.boy,
+        surnameHanja: '金',
+        hanja: doChosen.char + yunChosen.char,
+      );
+      final resolved = resolveSharedAnalysis(params);
+      expect(resolved, isNotNull);
+      expect(resolved!.analysis.picks[0].char, doChosen.char);
+      expect(resolved.analysis.picks[1].char, yunChosen.char);
+      // 상세 화면에서 다시 공유해도 같은 한자가 담긴다.
+      final reshared =
+          SharedNameParams.fromBabyAndAnalysis(resolved.baby, resolved.analysis);
+      expect(reshared.surnameHanja, '金');
+      expect(reshared.hanja, doChosen.char + yunChosen.char);
+    });
+
+    test('공유된 성씨 한자대로 획수가 복원된다', () {
+      final params = SharedNameParams(
+        name: '기서준',
+        birth: DateTime(2025, 3, 15),
+        hour: 10,
+        gender: Gender.boy,
+        surnameHanja: '箕',
+      );
+      final resolved = resolveSharedAnalysis(params);
+      expect(resolved, isNotNull);
+      expect(resolved!.baby.surnameHanja, '箕');
+      expect(resolved.baby.surnameStrokes, 14);
+    });
+
+    test('목록에 없는 성씨 한자는 첫 번째 항목으로 떨어진다', () {
+      final params = SharedNameParams(
+        name: '기서준',
+        birth: DateTime(2025, 3, 15),
+        hour: 10,
+        gender: Gender.boy,
+        surnameHanja: '金',
+      );
+      final resolved = resolveSharedAnalysis(params);
+      expect(resolved, isNotNull);
+      expect(resolved!.baby.surnameHanja, '奇');
+      expect(resolved.baby.surnameStrokes, 8);
+    });
+
+    test('틀린 한자 파라미터는 그 파라미터만 무시하고 링크는 살린다', () {
+      const base =
+          'jakmyeongbyeol://analyze?name=김도윤&birth=2025-03-15&gender=boy';
+      final badHanja = parseShareUri(Uri.parse('$base&hanja=XYZ'));
+      expect(badHanja, isNotNull);
+      expect(badHanja!.hanja, isNull);
+      expect(badHanja.name, '김도윤');
+      expect(parseShareUri(Uri.parse('$base&hanja=道'))?.hanja, isNull);
+      expect(
+          parseShareUri(Uri.parse('$base&surname_hanja=AB'))?.surnameHanja,
+          isNull);
+      final good = parseShareUri(
+          Uri.parse('$base&surname_hanja=金&hanja=道允'));
+      expect(good?.surnameHanja, '金');
+      expect(good?.hanja, '道允');
+    });
+
+    test('순우리말이면 한자 파라미터가 생략된다', () {
+      final params = SharedNameParams(
+        name: '김하늘',
+        birth: DateTime(2025, 3, 15),
+        hour: 10,
+        gender: Gender.girl,
+      );
+      final resolved = resolveSharedAnalysis(params)!;
+      expect(resolved.analysis.isPureKorean, isTrue);
+      final shared =
+          SharedNameParams.fromBabyAndAnalysis(resolved.baby, resolved.analysis);
+      final uri = buildShareUri(shared);
+      expect(uri.queryParameters.containsKey('hanja'), isFalse);
+      expect(uri.queryParameters.containsKey('surname_hanja'), isFalse);
+    });
+
+    test('한자 파라미터 없는 예전 링크도 동작한다', () {
+      final parsed = parseShareUri(Uri.parse(
+          'https://busstop22106.github.io/naming-star/share.html?name=%EA%B9%80%EB%8F%84%EC%9C%A4&birth=2025-03-15&hour=14&gender=boy'));
+      expect(parsed, isNotNull);
+      expect(parsed!.surnameHanja, isNull);
+      expect(parsed.hanja, isNull);
+      final resolved = resolveSharedAnalysis(parsed);
+      expect(resolved, isNotNull);
+      expect(resolved!.analysis.picks[0].char, orderedHanja('도').first.char);
     });
   });
 

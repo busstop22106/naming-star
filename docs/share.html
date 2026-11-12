@@ -54,17 +54,14 @@
       if (p.length === 3) lines.push(p[0] + '년 ' + Number(p[1]) + '월 ' + Number(p[2]) + '일');
     }
     if (hour !== null && hour !== '') lines.push(hour + '시 출생');
-    if (gender === 'boy') lines.push('남아');
-    if (gender === 'girl') lines.push('여아');
+    if (gender === 'boy') lines.push('남자');
+    if (gender === 'girl') lines.push('여자');
     document.getElementById('birth').textContent = lines.join(' · ');
   }
 
-  // intent URL: 앱이 있으면 열고, 없으면 Play 스토어로 보낸다.
-  var params = new URLSearchParams();
-  if (name) params.set('name', name);
-  if (birth) params.set('birth', birth);
-  if (hour !== null && hour !== '') params.set('hour', hour);
-  if (gender) params.set('gender', gender);
+  // intent URL: 받은 쿼리 파라미터를 그대로 넘긴다 (파라미터가 늘어도
+  // 여기서는 안 고쳐도 된다). 앱이 있으면 열고, 없으면 Play 스토어로 보낸다.
+  var params = new URLSearchParams(location.search);
   var fallback = encodeURIComponent('https://play.google.com/store/apps/details?id=com.jakmyeongbyeol.app');
   var intentUrl = 'intent://analyze?' + params.toString() +
     '#Intent;scheme=jakmyeongbyeol;package=com.jakmyeongbyeol.app;S.browser_fallback_url=' + fallback + ';end';
