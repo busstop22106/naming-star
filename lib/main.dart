@@ -1,15 +1,23 @@
 import 'dart:async';
 
+import 'package:app_links/app_links.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'models.dart';
 import 'screens/analyze_screen.dart';
+import 'screens/detail_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/ranking_screen.dart';
 import 'screens/settings_screen.dart';
 import 'services/ad_service.dart';
 import 'services/baby_info_store.dart';
+import 'services/share_link.dart';
 import 'theme.dart';
+
+/// 공유 딥링크로 들어올 때 DetailScreen을 띄우는 네비게이터 키.
+/// 링크는 MainNav의 initState보다 먼저 도착할 수 있어, context 대신
+/// 이 키로 push한다.
+final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -42,6 +50,7 @@ class JakmyeongbyeolApp extends StatelessWidget {
     return MaterialApp(
       title: '작명별',
       debugShowCheckedModeBanner: false,
+      navigatorKey: _navigatorKey,
       theme: AppTheme.theme,
       locale: const Locale('ko'),
       localizationsDelegates: const [
@@ -73,6 +82,60 @@ class _MainNavState extends State<MainNav> {
   void initState() {
     super.initState();
     _restoreBaby();
+    _initDeepLinks();
+  }
+
+  /// 공유 딥링크 수신 — 앱이 꺼진 채로 열린 경우(getInitialLink)와
+  /// 실행 중에 열린 경우(uriLinkStream)를 둘 다 받는다.
+  /// 파싱·분석에 실패한 링크는 조용히 무시한다 (크래시 금지).
+  StreamSubscription<Uri>? _linkSub;
+  String? _lastHandledLink;
+
+  Future<void> _initDeepLinks() async {
+    final appLinks = AppLinks();
+    _linkSub = appLinks.uriLinkStream.listen(
+      _handleDeepLink,
+      onError: (Object e) => debugPrint('딥링크 수신 실패: $e'),
+    );
+    try {
+      final initial = await appLinks.getInitialLink();
+      if (initial != null) _handleDeepLink(initial);
+    } catch (e) {
+      debugPrint('초기 딥링크 확인 실패: $e');
+    }
+  }
+
+  void _handleDeepLink(Uri uri) {
+    // 초기 링크가 스트림으로도 한 번 더 오는 경우가 있어 같은 링크는
+    // 2초 안에는 한 번만 처리한다.
+    final key = uri.toString();
+    if (key == _lastHandledLink) return;
+    _lastHandledLink = key;
+    Future.delayed(const Duration(seconds: 2), () {
+      if (_lastHandledLink == key) _lastHandledLink = null;
+    });
+    final params = parseShareUri(uri);
+    if (params == null) return;
+    final resolved = resolveSharedAnalysis(params);
+    if (resolved == null) return;
+    // 첫 프레임 전일 수 있으니 다음 프레임에 이동한다.
+    // 전면 광고·RevealScreen은 거치지 않고 결과 화면으로 바로 간다.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _navigatorKey.currentState?.push(
+        MaterialPageRoute(
+          builder: (_) => DetailScreen(
+            baby: resolved.baby,
+            analysis: resolved.analysis,
+          ),
+        ),
+      );
+    });
+  }
+
+  @override
+  void dispose() {
+    _linkSub?.cancel();
+    super.dispose();
   }
 
   Future<void> _restoreBaby() async {

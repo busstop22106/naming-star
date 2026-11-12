@@ -25,6 +25,13 @@
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
+            <!-- 이름 분석 결과 공유 딥링크: jakmyeongbyeol://analyze?name=...&birth=...&hour=...&gender=... -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="jakmyeongbyeol" android:host="analyze"/>
+            </intent-filter>
         </activity>
         <!-- AdMob 앱 ID (실제 ID, 2026-10-22 교체) -->
         <meta-data

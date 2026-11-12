@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>작명별 이름 분석 결과</title>
+<style>
+  body { margin: 0; background: #0C1226; color: #EEF1FA;
+    font-family: -apple-system, "Malgun Gothic", "Noto Sans KR", sans-serif; }
+  .wrap { max-width: 480px; margin: 0 auto; padding: 56px 24px 40px; text-align: center; }
+  .star { font-size: 56px; line-height: 1; }
+  h1 { font-size: 22px; margin: 20px 0 8px; }
+  .sub { color: #93A0BE; font-size: 15px; line-height: 1.7; margin: 0 0 28px; }
+  .card { background: #151D38; border: 1px solid #27335A; border-radius: 24px;
+    padding: 24px 20px; margin-bottom: 24px; }
+  .name { font-size: 32px; font-weight: 800; margin-bottom: 8px; }
+  .birth { color: #93A0BE; font-size: 15px; line-height: 1.7; }
+  .btn { display: block; background: #E3B959; color: #131A30;
+    font-size: 17px; font-weight: 800; text-decoration: none;
+    border-radius: 20px; padding: 16px; margin-bottom: 12px; }
+  .install { display: block; color: #E3B959; font-size: 15px;
+    text-decoration: none; padding: 12px; }
+  .note { color: #93A0BE; font-size: 13px; line-height: 1.7; margin-top: 24px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="star">⭐</div>
+  <h1>작명별 이름 분석 결과</h1>
+  <p class="sub">친구가 공유한 이름 분석 결과예요.<br>앱에서 바로 확인할 수 있어요.</p>
+  <div class="card">
+    <div class="name" id="name">이름 분석 결과</div>
+    <div class="birth" id="birth"></div>
+  </div>
+  <a class="btn" id="openBtn" href="#">앱에서 결과 보기</a>
+  <a class="install" id="installLink" href="https://play.google.com/store/apps/details?id=com.jakmyeongbyeol.app">Play 스토어에서 작명별 설치하기</a>
+  <p class="note">앱이 설치돼 있으면 위 버튼을 누르면 결과 화면이 바로 열려요.<br>
+  버튼이 동작하지 않으면 설치 링크로 앱을 먼저 설치해주세요.</p>
+</div>
+<script>
+(function () {
+  var q = new URLSearchParams(location.search);
+  var name = q.get('name') || '';
+  var birth = q.get('birth') || '';
+  var hour = q.get('hour');
+  var gender = q.get('gender') || '';
+
+  // 미리보기: 이름·생년월일·시간·성별
+  if (name) {
+    document.getElementById('name').textContent = name;
+    var lines = [];
+    if (birth) {
+      var p = birth.split('-');
+      if (p.length === 3) lines.push(p[0] + '년 ' + Number(p[1]) + '월 ' + Number(p[2]) + '일');
+    }
+    if (hour !== null && hour !== '') lines.push(hour + '시 출생');
+    if (gender === 'boy') lines.push('남아');
+    if (gender === 'girl') lines.push('여아');
+    document.getElementById('birth').textContent = lines.join(' · ');
+  }
+
+  // intent URL: 앱이 있으면 열고, 없으면 Play 스토어로 보낸다.
+  var params = new URLSearchParams();
+  if (name) params.set('name', name);
+  if (birth) params.set('birth', birth);
+  if (hour !== null && hour !== '') params.set('hour', hour);
+  if (gender) params.set('gender', gender);
+  var fallback = encodeURIComponent('https://play.google.com/store/apps/details?id=com.jakmyeongbyeol.app');
+  var intentUrl = 'intent://analyze?' + params.toString() +
+    '#Intent;scheme=jakmyeongbyeol;package=com.jakmyeongbyeol.app;S.browser_fallback_url=' + fallback + ';end';
+  document.getElementById('openBtn').href = intentUrl;
+})();
+</script>
+</body>
+</html>

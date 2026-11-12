@@ -106,8 +106,11 @@ void main() {
         (tester) async {
       SharedPreferences.setMockInitialValues({});
       await pumpDetail(tester);
+      // 공유 버튼이 추가돼 앱바에 IconButton이 2개라, 툴팁 없는 북마크만 찾는다.
       final bookmark = find.descendant(
-          of: find.byType(AppBar), matching: find.byType(IconButton));
+          of: find.byType(AppBar),
+          matching: find.byWidgetPredicate(
+              (w) => w is IconButton && w.tooltip == null));
       expect(bookmark, findsOneWidget);
 
       await tester.tap(bookmark);

@@ -13,6 +13,8 @@ dependencies:
     sdk: flutter
   shared_preferences: ^2.2.2
   google_mobile_ads: ^9.2.0
+  app_links: ^7.2.2
+  share_plus: ^13.3.1
 
 dev_dependencies:
   flutter_test:

@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:share_plus/share_plus.dart';
 import '../engine/hanja_order.dart';
 import '../engine/life_story.dart';
 import '../engine/saju.dart';
 import '../engine/scoring.dart';
 import '../favorites.dart';
 import '../models.dart';
+import '../services/share_link.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
 
@@ -65,6 +67,26 @@ class _DetailScreenState extends State<DetailScreen> {
     _checkSaved();
   }
 
+  /// 분석 결과를 링크로 공유한다. 받는 사람은 링크를 열면
+  /// 같은 이름·생년월일시로 계산한 결과 화면을 바로 본다.
+  Future<void> _share() async {
+    final params =
+        SharedNameParams.fromBabyAndAnalysis(widget.baby, _analysis);
+    final uri = buildShareUri(params);
+    final text = '작명별에서 ${_analysis.fullName} 이름 분석 결과를 확인해보세요!\n$uri';
+    try {
+      await SharePlus.instance.share(
+        ShareParams(text: text, subject: '작명별 이름 분석 결과'),
+      );
+    } catch (e) {
+      debugPrint('공유 실패: $e');
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('공유하는 데 실패했어요.')),
+      );
+    }
+  }
+
   Future<void> _toggleSave() async {
     if (_saving) return;
     setState(() => _saving = true);
@@ -118,6 +140,11 @@ class _DetailScreenState extends State<DetailScreen> {
       appBar: AppBar(
         title: const Text('이름 상세 분석'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.ios_share, color: AppTheme.ink),
+            tooltip: '공유하기',
+            onPressed: _share,
+          ),
           IconButton(
             icon: AnimatedScale(
               scale: _pop ? 1.35 : 1.0,
