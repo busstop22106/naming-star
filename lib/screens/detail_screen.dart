@@ -73,7 +73,7 @@ class _DetailScreenState extends State<DetailScreen> {
     final params =
         SharedNameParams.fromBabyAndAnalysis(widget.baby, _analysis);
     final uri = buildShortShareUri(params);
-    final text = '${_analysis.fullName} 이름은 몇 점짜리 이름일까? 👀 작명별에서 사주 기반으로 이름 점수를 알아보세요!\n$uri';
+    final text = '👉 \'${_analysis.fullName}\' 이름은 몇 점짜리 이름일까? 작명별에서 사주 기반으로 이름 점수를 확인하세요! ✨\n$uri';
     try {
       await SharePlus.instance.share(
         ShareParams(text: text),
