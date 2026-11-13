@@ -33,7 +33,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
           padding: EdgeInsets.fromLTRB(
               20, 20, 20, 20 + MediaQuery.paddingOf(context).bottom),
           children: [
-            appHeader,
+            // 헤더 — appHeader(부제목은 탭마다 다름)
+            appHeader('소중히 모아둔 이름과 앱 환경을 관리해요'),
             const SizedBox(height: 20),
             // 내 정보
             _sectionTitle('저장한 이름'),
