@@ -8,7 +8,7 @@
   body { margin: 0; background: #0C1226; color: #EEF1FA;
     font-family: -apple-system, "Malgun Gothic", "Noto Sans KR", sans-serif; }
   .wrap { max-width: 480px; margin: 0 auto; padding: 56px 24px 40px; text-align: center; }
-  .star { font-size: 56px; line-height: 1; }
+  .logo { width: 96px; height: 96px; border-radius: 24px; display: block; margin: 0 auto; }
   h1 { font-size: 22px; margin: 20px 0 8px; }
   .sub { color: #93A0BE; font-size: 15px; line-height: 1.7; margin: 0 0 28px; }
   .card { background: #151D38; border: 1px solid #27335A; border-radius: 24px;
@@ -25,7 +25,7 @@
 </head>
 <body>
 <div class="wrap">
-  <div class="star">⭐</div>
+  <img class="logo" src="app-icon.png" alt="작명별">
   <h1>작명별 이름 분석 결과</h1>
   <p class="sub">친구가 공유한 이름 분석 결과예요.<br>앱에서 바로 확인할 수 있어요.</p>
   <div class="card">
@@ -34,8 +34,7 @@
   </div>
   <a class="btn" id="openBtn" href="#">앱에서 결과 보기</a>
   <a class="install" id="installLink" href="https://play.google.com/store/apps/details?id=com.jakmyeongbyeol.app">Play 스토어에서 작명별 설치하기</a>
-  <p class="note">앱이 설치돼 있으면 위 버튼을 누르면 결과 화면이 바로 열려요.<br>
-  버튼이 동작하지 않으면 설치 링크로 앱을 먼저 설치해주세요.</p>
+  <p class="note">앱이 설치돼 있으면 위 버튼을 누르면 결과 화면이 바로 열려요. 버튼이 동작하지 않으면 설치 링크로 앱을 먼저 설치해주세요.</p>
 </div>
 <script>
 (function () {
