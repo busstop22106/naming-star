@@ -74,12 +74,14 @@ class _FamilyMapCardState extends State<FamilyMapCard>
                 final w = constraints.maxWidth;
                 // 지도 상단 빈 공간이 커 보여서 높이를 줄였다.
                 // (300 → 260, 아래쪽 노드가 박스 안에 들어가는 범위에서)
-                const h = 260.0;
+                // 구성원이 2명(엄마·아빠만)이면 둘 다 상단에 배치돼 지도 하단이
+                // 비어 보인다. 높이를 더 줄여 하단 여백을 덜어낸다 (2026-11-13).
+                final h = members.length == 2 ? 200.0 : 260.0;
                 final center = Offset(w / 2, h / 2);
                 // 노드를 카드 가장자리에서 조금 띄우되, 점수 글자가
                 // 가운데 별 원에 닿지 않게 가로 반경은 여유 있게 둔다.
                 final rx = w / 2 - 46;
-                const ry = h / 2 - 62;
+                final ry = h / 2 - 62;
                 final angles = _angles(members.length);
                 final points = <Offset>[
                   for (var i = 0; i < members.length; i++)
