@@ -23,7 +23,8 @@ import 'scoring.dart';
     final List<HanjaPick> list = (curated != null && curated.isNotEmpty)
         ? curated
         : orderedHanja(syllable).take(20).toList();
-    // 불용문자는 자동 추천에서 제외한다.
+    // 불용문자는 자동 추천에서 제외한다. curated에는 원래 없어서
+    // 사실상 전체 DB 경로(orderedHanja)에서만 의미가 있는 방어적 필터다.
     return list.where((h) => !forbiddenHanjaChars.contains(h.char)).toList();
   }
 

@@ -55,16 +55,42 @@ void main() {
           a.suri.details
               .any((d) => d.contains('수리오행: 원격 토 · 형격 금 · 이격 화 · 정격 화')),
           isTrue);
-      // 토는 금을 생하고, 화는 금을 극한다.
+      // 토는 금을 생하고, 화는 금을 극하고, 같은 오행은 비화다.
       expect(a.suri.details.any((d) => d.contains('원격(토)→형격(금): 상생')),
           isTrue);
-      expect(a.suri.details.any((d) => d.contains('형격(금)→정격(화): 상극')),
+      expect(a.suri.details.any((d) => d.contains('형격(금)→이격(화): 상극')),
+          isTrue);
+      expect(a.suri.details.any((d) => d.contains('이격(화)→정격(화): 비화')),
+          isTrue);
+    });
+
+    test('같은 오행이면 비화(같은 기운)로 표시된다', () {
+      // 김 8획 + 度 9획 + 旼 8획 → 원격 17·형격 17 (둘 다 금)
+      final a = analyzeName(
+        surname: '김',
+        surnameStrokes: 8,
+        saju: fakeSaju(),
+        gender: Gender.boy,
+        picks: const [
+          HanjaPick(
+              syllable: '도', char: '度', meaning: '헤아릴', strokes: 9, element: '토'),
+          HanjaPick(
+              syllable: '민', char: '旼', meaning: '화할', strokes: 8, element: '수'),
+        ],
+      );
+      expect(
+          a.suri.details
+              .any((d) => d.contains('수리오행: 원격 금 · 형격 금 · 이격 토 · 정격 토')),
+          isTrue);
+      expect(
+          a.suri.details
+              .any((d) => d.contains('원격(금)→형격(금): 비화(같은 기운)')),
           isTrue);
     });
 
     test('수리오행 표시는 점수를 바꾸지 않는다', () {
       // 같은 이름은 수리오행 표시 전후로 총점이 같아야 한다.
-      // (상세만 추가되고 채점 공식은 그대로다.)
+      // (상세만 추가되고 채점 공식은 그대로다. 아래 값은 실측 고정값이다.)
       final a = analyzeName(
         surname: '김',
         surnameStrokes: 8,
@@ -77,17 +103,19 @@ void main() {
               syllable: '윤', char: '潤', meaning: '윤택', strokes: 16, element: '수'),
         ],
       );
-      expect(a.total, greaterThan(0));
-      expect(a.suri.score, greaterThan(0));
+      expect(a.total, closeTo(77.64, 0.01));
+      expect(a.suri.score, 78.0);
     });
   });
 
   group('불용문자', () {
     test('불용문자 집합이 비어 있지 않고 흉한 한자를 포함한다', () {
-      expect(forbiddenHanjaChars.isNotEmpty, isTrue);
+      expect(forbiddenHanjaChars.length, 45);
       expect(forbiddenHanjaChars.contains('死'), isTrue);
       expect(forbiddenHanjaChars.contains('凶'), isTrue);
       expect(forbiddenHanjaChars.contains('墓'), isTrue);
+      expect(forbiddenHanjaChars.contains('亡'), isTrue);
+      expect(forbiddenHanjaChars.contains('破'), isTrue);
     });
 
     test('추천용 curated DB에는 불용문자가 없다', () {

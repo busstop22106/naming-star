@@ -87,8 +87,9 @@ NameAnalysis analyzeName({
         '$name ${strokesOf(name, strokes)}획 → $v수리 ${info.name}(${suriGradeLabel(info.grade)})');
   });
   final suriScore = suriSum / suriWeight;
-  // 수리오행 — 각 격 수의 끝자리 오행과 원격→형격→정격의 상생/상극.
-  // 상세에만 표시하고 점수에는 반영하지 않는다 (81수리 채점 체계 유지).
+  // 수리오행 — 각 격 수의 끝자리 오행과 시간순 흐름(원격 초년→형격 청년→
+  // 이격 중년→정격 말년)의 상생/상극. 상세에만 표시하고 점수에는 반영하지
+  // 않는다 (81수리 채점 체계 유지).
   final suriEls = {
     '원격': suriElement(won),
     '형격': suriElement(hyung),
@@ -97,7 +98,7 @@ NameAnalysis analyzeName({
   };
   suriDetails.add(
       '수리오행: 원격 ${suriEls['원격']} · 형격 ${suriEls['형격']} · 이격 ${suriEls['이격']} · 정격 ${suriEls['정격']}');
-  for (final pair in [('원격', '형격'), ('형격', '정격')]) {
+  for (final pair in [('원격', '형격'), ('형격', '이격'), ('이격', '정격')]) {
     final a = suriEls[pair.$1]!;
     final b = suriEls[pair.$2]!;
     final rel = a == b

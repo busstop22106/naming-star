@@ -362,7 +362,7 @@ class _AnalyzeScreenState extends State<AnalyzeScreen> {
     );
     if (best == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('이 음절의 한자 데이터가 없어요.')),
+        const SnackBar(content: Text('이 음절로 고를 수 있는 한자가 없어요.')),
       );
       return;
     }
