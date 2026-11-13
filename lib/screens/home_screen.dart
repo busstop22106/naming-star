@@ -158,7 +158,7 @@ class _HomeScreenState extends State<HomeScreen> {
           padding: const EdgeInsets.all(20),
           children: [
             // 헤더 — appHeader(부제목은 탭마다 다름, 상단 20으로 통일)
-            appHeader('사주에 꼭 맞는 반짝이는 아기 이름을 찾아요'),
+            appHeader('사주에 꼭 맞는 아기 이름을 찾아요'),
             const SizedBox(height: 20),
             // 성씨 선택
             Card(
