@@ -132,6 +132,7 @@ void main() {
 
       expect(find.text('애니메이션'), findsOneWidget);
       expect(find.text('결과'), findsNothing);
+      // 이름 짓기 시도는 카운터를 갉아먹지 않는다.
       expect(await InterstitialGate.readAttemptCount(), 1);
     });
   });
