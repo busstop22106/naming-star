@@ -798,360 +798,368 @@ class _AnalyzeScreenState extends State<AnalyzeScreen> {
     final syls = _syllables;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('이름 직접 분석하기')),
-      body: ListView(
-        padding: EdgeInsets.fromLTRB(
-            20, 20, 20, 20 + MediaQuery.of(context).padding.bottom),
-        children: [
-          // 모드 전환: 이름 분석 / 가족 궁합
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(14),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  SegmentedButton<bool>(
-                    segments: const [
-                      ButtonSegment(
-                          value: false,
-                          label: Text('이름 분석'),
-                          icon: Icon(Icons.analytics_outlined, size: 18)),
-                      ButtonSegment(
-                          value: true,
-                          label: Text('가족 궁합'),
-                          icon: Icon(Icons.family_restroom_outlined,
-                              size: 18)),
-                    ],
-                    selected: {_compatMode},
-                    onSelectionChanged: (s) =>
-                        setState(() => _compatMode = s.first),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    _compatMode
-                        ? '아빠·엄마의 사주와 아기 이름이 얼마나 잘 맞는지 봐요. 부모 정보는 한 번만 넣으면 이름만 바꿔 비교할 수 있어요.'
-                        : '이미 정한 이름을 5개 차원으로 분석해요.',
-                    style:
-                        const TextStyle(fontSize: 11, color: AppTheme.sub),
-                  ),
-                ],
-              ),
+      body: SafeArea(
+        child: ListView(
+          padding: EdgeInsets.fromLTRB(
+              20, 20, 20, 20 + MediaQuery.of(context).padding.bottom),
+          children: [
+            // 헤더 — 홈·설정 탭과 동일 (2026-11-13)
+            const StarHero(
+              title: '작명별',
+              subtitle: '사주와 성명학으로 짓는 아기 이름',
+              imageSize: 64,
             ),
-          ),
-          const SizedBox(height: 4),
-          if (_compatMode)
-            _sectionHeader(Icons.child_care_outlined, '아기 정보'),
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(18),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Wrap(
-                    alignment: WrapAlignment.spaceBetween,
-                    crossAxisAlignment: WrapCrossAlignment.center,
-                    children: [
-                      const Text('분석할 이름',
-                          style: TextStyle(
-                              fontSize: 15, fontWeight: FontWeight.w700)),
-                      TextButton.icon(
-                        onPressed: _loadFromFavorites,
-                        icon: const Icon(Icons.bookmark_outline, size: 16),
-                        label: const Text('보관함에서 불러오기'),
-                        style: TextButton.styleFrom(
-                          padding:
-                              const EdgeInsets.symmetric(horizontal: 8),
-                          textStyle: const TextStyle(
-                              fontSize: 12, fontWeight: FontWeight.w600),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  // 성씨 선택기
-                  InkWell(
-                    borderRadius: BorderRadius.circular(14),
-                    onTap: _chooseSurname,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 12),
-                      decoration: BoxDecoration(
-                        color: AppTheme.primarySoft,
-                        borderRadius:
-                            BorderRadius.circular(14),
-                      ),
-                      // 성씨 정보와 변경 버튼을 한 Row에 두고 Spacer로
-                      // 끝까지 밀어내 분리한다. 예전 Wrap(spaceBetween)은
-                      // 너비가 빠듯하면 두 그룹이 달라붙어 보였고,
-                      // 글자 크기가 달라 상하 중심도 어긋나 보였다.
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Text(
-                            _surnamePick.hanja.isEmpty
-                                ? _surnamePick.name
-                                : '${_surnamePick.name}(${_surnamePick.hanja})',
-                            style: const TextStyle(
-                                fontSize: 17,
-                                fontWeight: FontWeight.w800,
-                                color: AppTheme.primary),
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            '${_surnamePick.strokes}획',
-                            style: const TextStyle(
-                                fontSize: 13,
-                                color: AppTheme.sub,
-                                fontWeight: FontWeight.w600),
-                          ),
-                          const Spacer(),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 6),
-                            decoration: BoxDecoration(
-                              border: Border.all(
-                                  color: AppTheme.primary
-                                      .withValues(alpha: 0.35)),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: const Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text('성씨 변경',
-                                    style: TextStyle(
-                                        fontSize: 13,
-                                        color: AppTheme.primary,
-                                        fontWeight: FontWeight.w600)),
-                                Icon(Icons.chevron_right,
-                                    size: 18,
-                                    color: AppTheme.primary),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
+            const SizedBox(height: 20),
+            // 모드 전환: 이름 분석 / 가족 궁합
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(14),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    SegmentedButton<bool>(
+                      segments: const [
+                        ButtonSegment(
+                            value: false,
+                            label: Text('이름 분석'),
+                            icon: Icon(Icons.analytics_outlined, size: 18)),
+                        ButtonSegment(
+                            value: true,
+                            label: Text('가족 궁합'),
+                            icon: Icon(Icons.family_restroom_outlined,
+                                size: 18)),
+                      ],
+                      selected: {_compatMode},
+                      onSelectionChanged: (s) =>
+                          setState(() => _compatMode = s.first),
                     ),
-                  ),
-                  const SizedBox(height: 10),
-                  TextField(
-                    controller: _givenCtrl,
-                    maxLength: 2,
-                    decoration: InputDecoration(
-                        hintText: _isPureKorean
-                            ? '순우리말 이름 2자 (예: 하늘)'
-                            : '이름 2자 (예: 도윤)',
-                        counterText: ''),
-                    style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700),
-                    onChanged: (_) => setState(() {
-                          _hanjaIdx.clear();
-                          _extraHanja.clear();
-                        }),
-                  ),
-                  const SizedBox(height: 12),
-                  // 이름 종류 선택
-                  SegmentedButton<bool>(
-                    segments: const [
-                      ButtonSegment(
-                          value: false,
-                          label: Text('한자 이름'),
-                          icon: Icon(Icons.text_fields, size: 18)),
-                      ButtonSegment(
-                          value: true,
-                          label: Text('순우리말'),
-                          icon: Icon(Icons.grass_outlined, size: 18)),
-                    ],
-                    selected: {_isPureKorean},
-                    onSelectionChanged: (s) => setState(() {
-                      _isPureKorean = s.first;
-                      _hanjaIdx.clear();
-                      _extraHanja.clear();
-                    }),
-                  ),
-                  if (_isPureKorean) ...[
                     const SizedBox(height: 8),
-                    const Text(
-                      '순우리말 이름은 한자 획수 대신 한글 자모 획수로 수리를 계산하고, 초성의 발음오행으로 사주를 보완하는 간이 분석이에요.',
+                    Text(
+                      _compatMode
+                          ? '아빠·엄마의 사주와 아기 이름이 얼마나 잘 맞는지 봐요. 부모 정보는 한 번만 넣으면 이름만 바꿔 비교할 수 있어요.'
+                          : '이미 정한 이름을 5개 차원으로 분석해요.',
                       style:
-                          TextStyle(fontSize: 11, color: AppTheme.sub),
+                          const TextStyle(fontSize: 11, color: AppTheme.sub),
                     ),
                   ],
-                ],
+                ),
               ),
             ),
-          ),
-          const SizedBox(height: 4),
-          // 성별 (두 모드 공통 — 점수에는 쓰이지 않지만 폼 일관성을 위해 표시)
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(18),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('성별',
-                      style: TextStyle(
-                          fontSize: 15, fontWeight: FontWeight.w700)),
-                  const SizedBox(height: 10),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: GenderButton(
-                          label: '남아',
-                          icon: Icons.boy,
-                          color: AppTheme.boy,
-                          selected: _gender == Gender.boy,
-                          onTap: () {
-                            setState(() => _gender = Gender.boy);
-                            _syncShared();
-                          },
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: GenderButton(
-                          label: '여아',
-                          icon: Icons.girl,
-                          color: AppTheme.girl,
-                          selected: _gender == Gender.girl,
-                          onTap: () {
-                            setState(() => _gender = Gender.girl);
-                            _syncShared();
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-          // 한자 선택 (순우리말 모드에서는 숨김)
-          if (syls.length == 2 && !_isPureKorean)
+            const SizedBox(height: 4),
+            if (_compatMode)
+              _sectionHeader(Icons.child_care_outlined, '아기 정보'),
             Card(
               child: Padding(
                 padding: const EdgeInsets.all(18),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('한자 선택',
-                        style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w700)),
+                    Wrap(
+                      alignment: WrapAlignment.spaceBetween,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        const Text('분석할 이름',
+                            style: TextStyle(
+                                fontSize: 15, fontWeight: FontWeight.w700)),
+                        TextButton.icon(
+                          onPressed: _loadFromFavorites,
+                          icon: const Icon(Icons.bookmark_outline, size: 16),
+                          label: const Text('보관함에서 불러오기'),
+                          style: TextButton.styleFrom(
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 8),
+                            textStyle: const TextStyle(
+                                fontSize: 12, fontWeight: FontWeight.w600),
+                          ),
+                        ),
+                      ],
+                    ),
                     const SizedBox(height: 4),
-                    const Text('각 음절에 쓸 한자를 고르세요.',
-                        style: TextStyle(
-                            fontSize: 12, color: AppTheme.sub)),
-                    const SizedBox(height: 12),
-                    _hanjaSelectRow(0, syls[0]),
-                    const SizedBox(height: 8),
-                    _hanjaSelectRow(1, syls[1]),
-                    const SizedBox(height: 12),
-                    SizedBox(
-                      width: double.infinity,
-                      child: OutlinedButton.icon(
-                        onPressed: _autoPickHanja,
-                        icon: const Icon(Icons.auto_awesome, size: 18),
-                        label: const Text('사주에 맞는 한자 자동 선택'),
+                    // 성씨 선택기
+                    InkWell(
+                      borderRadius: BorderRadius.circular(14),
+                      onTap: _chooseSurname,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 12),
+                        decoration: BoxDecoration(
+                          color: AppTheme.primarySoft,
+                          borderRadius:
+                              BorderRadius.circular(14),
+                        ),
+                        // 성씨 정보와 변경 버튼을 한 Row에 두고 Spacer로
+                        // 끝까지 밀어내 분리한다. 예전 Wrap(spaceBetween)은
+                        // 너비가 빠듯하면 두 그룹이 달라붙어 보였고,
+                        // 글자 크기가 달라 상하 중심도 어긋나 보였다.
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Text(
+                              _surnamePick.hanja.isEmpty
+                                  ? _surnamePick.name
+                                  : '${_surnamePick.name}(${_surnamePick.hanja})',
+                              style: const TextStyle(
+                                  fontSize: 17,
+                                  fontWeight: FontWeight.w800,
+                                  color: AppTheme.primary),
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              '${_surnamePick.strokes}획',
+                              style: const TextStyle(
+                                  fontSize: 13,
+                                  color: AppTheme.sub,
+                                  fontWeight: FontWeight.w600),
+                            ),
+                            const Spacer(),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 6),
+                              decoration: BoxDecoration(
+                                border: Border.all(
+                                    color: AppTheme.primary
+                                        .withValues(alpha: 0.35)),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: const Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text('성씨 변경',
+                                      style: TextStyle(
+                                          fontSize: 13,
+                                          color: AppTheme.primary,
+                                          fontWeight: FontWeight.w600)),
+                                  Icon(Icons.chevron_right,
+                                      size: 18,
+                                      color: AppTheme.primary),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                    const Text(
-                      '한자를 일일이 고르기 어려우면, 사주 기준으로 점수가 가장 높은 조합을 골라줘요.',
-                      style:
-                          TextStyle(fontSize: 11, color: AppTheme.sub),
+                    const SizedBox(height: 10),
+                    TextField(
+                      controller: _givenCtrl,
+                      maxLength: 2,
+                      decoration: InputDecoration(
+                          hintText: _isPureKorean
+                              ? '순우리말 이름 2자 (예: 하늘)'
+                              : '이름 2자 (예: 도윤)',
+                          counterText: ''),
+                      style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700),
+                      onChanged: (_) => setState(() {
+                            _hanjaIdx.clear();
+                            _extraHanja.clear();
+                          }),
+                    ),
+                    const SizedBox(height: 12),
+                    // 이름 종류 선택
+                    SegmentedButton<bool>(
+                      segments: const [
+                        ButtonSegment(
+                            value: false,
+                            label: Text('한자 이름'),
+                            icon: Icon(Icons.text_fields, size: 18)),
+                        ButtonSegment(
+                            value: true,
+                            label: Text('순우리말'),
+                            icon: Icon(Icons.grass_outlined, size: 18)),
+                      ],
+                      selected: {_isPureKorean},
+                      onSelectionChanged: (s) => setState(() {
+                        _isPureKorean = s.first;
+                        _hanjaIdx.clear();
+                        _extraHanja.clear();
+                      }),
+                    ),
+                    if (_isPureKorean) ...[
+                      const SizedBox(height: 8),
+                      const Text(
+                        '순우리말 이름은 한자 획수 대신 한글 자모 획수로 수리를 계산하고, 초성의 발음오행으로 사주를 보완하는 간이 분석이에요.',
+                        style:
+                            TextStyle(fontSize: 11, color: AppTheme.sub),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 4),
+            // 성별 (두 모드 공통 — 점수에는 쓰이지 않지만 폼 일관성을 위해 표시)
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(18),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('성별',
+                        style: TextStyle(
+                            fontSize: 15, fontWeight: FontWeight.w700)),
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: GenderButton(
+                            label: '남아',
+                            icon: Icons.boy,
+                            color: AppTheme.boy,
+                            selected: _gender == Gender.boy,
+                            onTap: () {
+                              setState(() => _gender = Gender.boy);
+                              _syncShared();
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: GenderButton(
+                            label: '여아',
+                            icon: Icons.girl,
+                            color: AppTheme.girl,
+                            selected: _gender == Gender.girl,
+                            onTap: () {
+                              setState(() => _gender = Gender.girl);
+                              _syncShared();
+                            },
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
               ),
             ),
-          // 생년월일시
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(18),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(_compatMode ? '아기 생년월일시' : '생년월일시',
-                      style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w700)),
-                  const SizedBox(height: 10),
-                  ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    leading: const Icon(Icons.cake_outlined,
-                        color: AppTheme.primary),
-                    title: Text(
-                        '${_birth.year}년 ${_birth.month}월 ${_birth.day}일',
+            // 한자 선택 (순우리말 모드에서는 숨김)
+            if (syls.length == 2 && !_isPureKorean)
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(18),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('한자 선택',
+                          style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700)),
+                      const SizedBox(height: 4),
+                      const Text('각 음절에 쓸 한자를 고르세요.',
+                          style: TextStyle(
+                              fontSize: 12, color: AppTheme.sub)),
+                      const SizedBox(height: 12),
+                      _hanjaSelectRow(0, syls[0]),
+                      const SizedBox(height: 8),
+                      _hanjaSelectRow(1, syls[1]),
+                      const SizedBox(height: 12),
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton.icon(
+                          onPressed: _autoPickHanja,
+                          icon: const Icon(Icons.auto_awesome, size: 18),
+                          label: const Text('사주에 맞는 한자 자동 선택'),
+                        ),
+                      ),
+                      const Text(
+                        '한자를 일일이 고르기 어려우면, 사주 기준으로 점수가 가장 높은 조합을 골라줘요.',
+                        style:
+                            TextStyle(fontSize: 11, color: AppTheme.sub),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            // 생년월일시
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(18),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(_compatMode ? '아기 생년월일시' : '생년월일시',
                         style: const TextStyle(
-                            fontWeight: FontWeight.w600)),
-                    trailing: const Icon(Icons.chevron_right),
-                    onTap: _pickDate,
-                  ),
-                  const Divider(height: 1),
-                  ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    leading: const Icon(Icons.schedule,
-                        color: AppTheme.primary),
-                    title: Text(
-                        '태어난 시간 · ${_timeUnknown
-                            ? '모름'
-                            : (_birthTime == null
-                                ? '선택 안 함'
-                                : formatTimeOfDay(_birthTime!))}',
-                        style: const TextStyle(
-                            fontWeight: FontWeight.w600)),
-                    trailing: const Icon(Icons.chevron_right),
-                    onTap: _pickTime,
-                  ),
-                  CheckboxListTile(
-                    contentPadding: EdgeInsets.zero,
-                    controlAffinity:
-                        ListTileControlAffinity.leading,
-                    title: const Text(
-                        '태어난 시간을 몰라요',
-                        style: TextStyle(fontSize: 13)),
-                    value: _timeUnknown,
-                    onChanged: (v) {
-                      setState(() => _timeUnknown = v ?? false);
-                      _syncShared();
-                    },
-                  ),
-                  const Text(
-                      '사주 분석에 활용해요. 시간을 모르면 시주를 제외하고 분석합니다.',
-                      style:
-                          TextStyle(fontSize: 11, color: AppTheme.sub)),
-                ],
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700)),
+                    const SizedBox(height: 10),
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: const Icon(Icons.cake_outlined,
+                          color: AppTheme.primary),
+                      title: Text(
+                          '${_birth.year}년 ${_birth.month}월 ${_birth.day}일',
+                          style: const TextStyle(
+                              fontWeight: FontWeight.w600)),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: _pickDate,
+                    ),
+                    const Divider(height: 1),
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: const Icon(Icons.schedule,
+                          color: AppTheme.primary),
+                      title: Text(
+                          '태어난 시간 · ${_timeUnknown
+                              ? '모름'
+                              : (_birthTime == null
+                                  ? '선택 안 함'
+                                  : formatTimeOfDay(_birthTime!))}',
+                          style: const TextStyle(
+                              fontWeight: FontWeight.w600)),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: _pickTime,
+                    ),
+                    CheckboxListTile(
+                      contentPadding: EdgeInsets.zero,
+                      controlAffinity:
+                          ListTileControlAffinity.leading,
+                      title: const Text(
+                          '태어난 시간을 몰라요',
+                          style: TextStyle(fontSize: 13)),
+                      value: _timeUnknown,
+                      onChanged: (v) {
+                        setState(() => _timeUnknown = v ?? false);
+                        _syncShared();
+                      },
+                    ),
+                    const Text(
+                        '사주 분석에 활용해요. 시간을 모르면 시주를 제외하고 분석합니다.',
+                        style:
+                            TextStyle(fontSize: 11, color: AppTheme.sub)),
+                  ],
+                ),
               ),
             ),
-          ),
-          // 가족 구성 (궁합 모드) — 요약 카드 + 바텀시트 편집
-          if (_compatMode) ...[
-            _sectionHeader(Icons.family_restroom_outlined, '가족 구성',
-                badge: '${_members.length}명'),
-            _familyMembersCard(),
-            const SizedBox(height: 4),
+            // 가족 구성 (궁합 모드) — 요약 카드 + 바텀시트 편집
+            if (_compatMode) ...[
+              _sectionHeader(Icons.family_restroom_outlined, '가족 구성',
+                  badge: '${_members.length}명'),
+              _familyMembersCard(),
+              const SizedBox(height: 4),
+            ],
+            const SizedBox(height: 12),
+            ElevatedButton(
+              onPressed:
+                  _navigating ? null : (_compatMode ? _analyzeCompat : _analyze),
+              child: Text(_compatMode ? '가족 궁합 보기' : '이 이름으로 분석하기'),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              _compatMode
+                  ? '가족 구성원 사주의 오행 보완·용신 조화·띠 궁합으로 점수화해 드려요.'
+                  : '수리·음양·발음·사주 보완·사용성 5개 차원으로 점수화해 드려요.',
+              style: const TextStyle(fontSize: 11, color: AppTheme.sub),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 12),
+            // 하단 배너 광고 (AdService.bannerEnabled 플래그로 제어)
+            if (AdService.bannerEnabledFor(AdPlacement.analyze))
+              const Center(
+                  child: BannerAdWidget(placement: AdPlacement.analyze)),
+            const SizedBox(height: 12),
           ],
-          const SizedBox(height: 12),
-          ElevatedButton(
-            onPressed:
-                _navigating ? null : (_compatMode ? _analyzeCompat : _analyze),
-            child: Text(_compatMode ? '가족 궁합 보기' : '이 이름으로 분석하기'),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            _compatMode
-                ? '가족 구성원 사주의 오행 보완·용신 조화·띠 궁합으로 점수화해 드려요.'
-                : '수리·음양·발음·사주 보완·사용성 5개 차원으로 점수화해 드려요.',
-            style: const TextStyle(fontSize: 11, color: AppTheme.sub),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 12),
-          // 하단 배너 광고 (AdService.bannerEnabled 플래그로 제어)
-          if (AdService.bannerEnabledFor(AdPlacement.analyze))
-            const Center(
-                child: BannerAdWidget(placement: AdPlacement.analyze)),
-          const SizedBox(height: 12),
-        ],
+        ),
       ),
     );
   }

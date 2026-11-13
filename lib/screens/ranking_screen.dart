@@ -44,74 +44,77 @@ class _RankingScreenState extends State<RankingScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('아기 이름 랭킹'),
-        bottom: TabBar(
-          controller: _tab,
-          labelColor: AppTheme.primary,
-          unselectedLabelColor: AppTheme.sub,
-          indicatorColor: AppTheme.primary,
-          tabs: const [
-            Tab(text: '남아 TOP 20'),
-            Tab(text: '여아 TOP 20'),
+      body: SafeArea(
+        child: Column(
+          children: [
+            // 성별 탭 — AppBar bottom에서 여기로 이동 (2026-11-13, 네비바 제거)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+              child: TabBar(
+                controller: _tab,
+                labelColor: AppTheme.primary,
+                unselectedLabelColor: AppTheme.sub,
+                indicatorColor: AppTheme.primary,
+                tabs: const [
+                  Tab(text: '남아 TOP 20'),
+                  Tab(text: '여아 TOP 20'),
+                ],
+              ),
+            ),
+            // 연도 선택
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+              child: Row(
+                children: [
+                  const Text('연도별 순위',
+                      style: TextStyle(
+                          fontSize: 13,
+                          color: AppTheme.sub,
+                          fontWeight: FontWeight.w600)),
+                  const Spacer(),
+                  DropdownButton<int>(
+                    value: _year,
+                    underline: const SizedBox(),
+                    style: const TextStyle(
+                        fontSize: 14,
+                        color: AppTheme.ink,
+                        fontWeight: FontWeight.w700),
+                    items: rankingYears
+                        .map(
+                            (y) => DropdownMenuItem(value: y, child: Text('$y년')))
+                        .toList(),
+                    onChanged: (v) => setState(() => _year = v!),
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: TabBarView(
+                controller: _tab,
+                children: [
+                  _RankList(
+                      entries: rankingsByYear[_year]!.boy,
+                      isBoy: true,
+                      year: _year,
+                      showAd: _tabIndex == 0,
+                      onAnalyzeName: widget.onAnalyzeName == null
+                          ? null
+                          : (name) => widget.onAnalyzeName!(
+                              name, Gender.boy)),
+                  _RankList(
+                      entries: rankingsByYear[_year]!.girl,
+                      isBoy: false,
+                      year: _year,
+                      showAd: _tabIndex == 1,
+                      onAnalyzeName: widget.onAnalyzeName == null
+                          ? null
+                          : (name) => widget.onAnalyzeName!(
+                              name, Gender.girl)),
+                ],
+              ),
+            ),
           ],
         ),
-      ),
-      body: Column(
-        children: [
-          // 연도 선택
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
-            child: Row(
-              children: [
-                const Text('연도별 순위',
-                    style: TextStyle(
-                        fontSize: 13,
-                        color: AppTheme.sub,
-                        fontWeight: FontWeight.w600)),
-                const Spacer(),
-                DropdownButton<int>(
-                  value: _year,
-                  underline: const SizedBox(),
-                  style: const TextStyle(
-                      fontSize: 14,
-                      color: AppTheme.ink,
-                      fontWeight: FontWeight.w700),
-                  items: rankingYears
-                      .map(
-                          (y) => DropdownMenuItem(value: y, child: Text('$y년')))
-                      .toList(),
-                  onChanged: (v) => setState(() => _year = v!),
-                ),
-              ],
-            ),
-          ),
-          Expanded(
-            child: TabBarView(
-              controller: _tab,
-              children: [
-                _RankList(
-                    entries: rankingsByYear[_year]!.boy,
-                    isBoy: true,
-                    year: _year,
-                    showAd: _tabIndex == 0,
-                    onAnalyzeName: widget.onAnalyzeName == null
-                        ? null
-                        : (name) => widget.onAnalyzeName!(
-                            name, Gender.boy)),
-                _RankList(
-                    entries: rankingsByYear[_year]!.girl,
-                    isBoy: false,
-                    year: _year,
-                    showAd: _tabIndex == 1,
-                    onAnalyzeName: widget.onAnalyzeName == null
-                        ? null
-                        : (name) => widget.onAnalyzeName!(
-                            name, Gender.girl)),
-              ],
-            ),
-          ),
-        ],
       ),
     );
   }

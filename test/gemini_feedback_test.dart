@@ -208,7 +208,9 @@ void main() {
       final fields = tester.widgetList<TextField>(find.byType(TextField));
       expect(
           fields.any((f) => f.controller?.text == '도윤'), isTrue);
-      expect(find.text('이름 직접 분석하기'), findsOneWidget);
+      // 네비바 제목('이름 직접 분석하기')은 2026-11-13 전 탭에서 제거됨.
+      // 대신 이름 분석 탭 고유 섹션 제목으로 탭 이동을 확인한다.
+      expect(find.text('분석할 이름'), findsOneWidget);
     });
   });
 }
