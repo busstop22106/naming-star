@@ -20,12 +20,12 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  testWidgets('구매 전에는 광고 제거 섹션에 구매·복원 버튼이 보인다', (tester) async {
+  testWidgets('구매 전에는 광고 제거 섹션에 구매·이전 구매 불러오기 버튼이 보인다', (tester) async {
     await pumpSettings(tester);
 
     expect(find.text('광고 없이 사용하기'), findsOneWidget);
     expect(find.textContaining('평생 광고 없이 사용하기'), findsWidgets);
-    expect(find.text('구매 복원'), findsOneWidget);
+    expect(find.text('이전 구매 다시 불러오기'), findsOneWidget);
     expect(find.text('평생 광고 없이 사용 중'), findsNothing);
   });
 
@@ -35,6 +35,6 @@ void main() {
     await pumpSettings(tester);
 
     expect(find.text('평생 광고 없이 사용 중'), findsOneWidget);
-    expect(find.text('구매 복원'), findsNothing);
+    expect(find.text('이전 구매 다시 불러오기'), findsNothing);
   });
 }

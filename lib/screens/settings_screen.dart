@@ -235,7 +235,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 }
 
 /// 평생 광고 제거(₩4,900) 구매 섹션.
-/// - 구매 전: 설명 + 구매 버튼(스토어 가격) + 구매 복원 버튼.
+/// - 구매 전: 설명 + 구매 버튼(스토어 가격) + 이전 구매 불러오기 버튼.
 /// - 구매 후: "평생 광고 없이 사용 중" 표시.
 /// 구매·복원은 버튼을 눌렀을 때만 시작한다.
 class _AdFreeSection extends StatefulWidget {
@@ -360,7 +360,7 @@ class _AdFreeSectionState extends State<_AdFreeSection> {
                 width: double.infinity,
                 child: OutlinedButton(
                   onPressed: busy ? null : _restore,
-                  child: const Text('구매 복원'),
+                  child: const Text('이전 구매 다시 불러오기'),
                 ),
               ),
               if (productsChecked && !productsAvailable)
