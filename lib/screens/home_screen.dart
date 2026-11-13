@@ -160,8 +160,7 @@ class _HomeScreenState extends State<HomeScreen> {
             child: ListView(
               padding: const EdgeInsets.all(20),
               children: [
-            const SizedBox(height: 8),
-            // 헤더 — 공통 상수 appHeader (홈·이름 분석·설정 동일)
+            // 헤더 — 공통 상수 appHeader (홈·이름 분석·설정 동일, 상단 20으로 통일)
             appHeader,
             const SizedBox(height: 20),
             // 성씨 선택
