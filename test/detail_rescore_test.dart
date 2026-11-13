@@ -128,7 +128,11 @@ void main() {
     await tester.pumpAndSettle();
     expect(currentScoreText(tester), isNot(initialText));
 
-    await tester.tap(find.text('추천 한자로 되돌리기'));
+    // 되돌리기 버튼이 화면 아래로 밀릴 수 있어 보이게 한 뒤 누른다.
+    final revertFinder = find.text('추천 한자로 되돌리기');
+    await tester.ensureVisible(revertFinder);
+    await tester.pumpAndSettle();
+    await tester.tap(revertFinder);
     await tester.pumpAndSettle();
     expect(currentScoreText(tester), initialText);
     expect(find.text('추천 한자로 되돌리기'), findsNothing);

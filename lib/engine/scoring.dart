@@ -23,6 +23,16 @@ String choElement(String cho) {
   return '수'; // ㅁㅂㅃㅍ
 }
 
+/// 수리오행 — 격 수의 끝자리 오행 (1·2 목, 3·4 화, 5·6 토, 7·8 금, 9·0 수)
+String suriElement(int value) {
+  final d = value % 10;
+  if (d == 1 || d == 2) return '목';
+  if (d == 3 || d == 4) return '화';
+  if (d == 5 || d == 6) return '토';
+  if (d == 7 || d == 8) return '금';
+  return '수'; // 9, 0
+}
+
 /// 이중모음 중성 인덱스 (Unicode 중성 순서 기준)
 /// ㅑ(2) ㅒ(3) ㅕ(6) ㅖ(7) ㅘ(9) ㅙ(10) ㅚ(11) ㅛ(12) ㅝ(14) ㅞ(15) ㅟ(16)
 /// ㅠ(17) ㅢ(19). 단모음 ㅔ(5)·ㅗ(8)·ㅜ(13)·ㅡ(18)는 들어가지 않는다.
@@ -77,6 +87,24 @@ NameAnalysis analyzeName({
         '$name ${strokesOf(name, strokes)}획 → $v수리 ${info.name}(${suriGradeLabel(info.grade)})');
   });
   final suriScore = suriSum / suriWeight;
+  // 수리오행 — 각 격 수의 끝자리 오행과 원격→형격→정격의 상생/상극.
+  // 상세에만 표시하고 점수에는 반영하지 않는다 (81수리 채점 체계 유지).
+  final suriEls = {
+    '원격': suriElement(won),
+    '형격': suriElement(hyung),
+    '이격': suriElement(yi),
+    '정격': suriElement(jung),
+  };
+  suriDetails.add(
+      '수리오행: 원격 ${suriEls['원격']} · 형격 ${suriEls['형격']} · 이격 ${suriEls['이격']} · 정격 ${suriEls['정격']}');
+  for (final pair in [('원격', '형격'), ('형격', '정격')]) {
+    final a = suriEls[pair.$1]!;
+    final b = suriEls[pair.$2]!;
+    final rel = a == b
+        ? '비화(같은 기운)'
+        : (generatesTo(a, b) || generatesTo(b, a) ? '상생' : '상극');
+    suriDetails.add('${pair.$1}($a)→${pair.$2}($b): $rel');
+  }
   final suriGrade = hasHyung
       ? const DimensionGrade(code: 'hyung', label: '흉수 포함')
       : hasMixed
@@ -167,6 +195,17 @@ NameAnalysis analyzeName({
   }
   if (badHit != null) {
     warnings.add('\'$badHit\'(이)라는 부정적 연상이 들 수 있어요. 다시 생각해보세요.');
+  }
+
+  // 불용문자 체크 — 전통적으로 이름에 쓰지 않는 흉한 뜻의 한자.
+  // 순우리말 이름은 char이 비어 있어 해당하지 않는다.
+  for (final p in picks) {
+    if (forbiddenHanjaChars.contains(p.char)) {
+      final label =
+          p.meaning.isEmpty ? p.char : '${p.char}(${p.meaning})';
+      warnings.add(
+          '\'$label\'은 전통적으로 이름에 쓰지 않는 불용문자예요. 다른 한자를 고려해보세요.');
+    }
   }
 
   // ══════════ 4. 사주 보완 — 자원오행 (25%) ══════════

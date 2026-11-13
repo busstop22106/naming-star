@@ -20,8 +20,11 @@ import 'scoring.dart';
 
   List<HanjaPick> candidates(String syllable) {
     final curated = hanjaBySyllable[syllable];
-    if (curated != null && curated.isNotEmpty) return curated;
-    return orderedHanja(syllable).take(20).toList();
+    final List<HanjaPick> list = (curated != null && curated.isNotEmpty)
+        ? curated
+        : orderedHanja(syllable).take(20).toList();
+    // 불용문자는 자동 추천에서 제외한다.
+    return list.where((h) => !forbiddenHanjaChars.contains(h.char)).toList();
   }
 
   final first = candidates(syllables[0]);
