@@ -168,6 +168,7 @@ class _MainNavState extends State<MainNav> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Stack(
+        fit: StackFit.expand, // Starfield와 IndexedStack 모두 body 영역을 채움 (2026-11-13 리뷰 반영)
         children: [
           // 밤하늘 별빛 배경 — 4개 탭 공용 (2026-11-13, 별빛 단일화)
           const Starfield(),
