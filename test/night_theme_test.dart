@@ -51,6 +51,22 @@ void main() {
       );
     });
 
+    test('세그먼트 버튼 선택 상태는 금빛 채움 + 남색 글자 (CTA 버튼과 동일)', () {
+      final style = AppTheme.theme.segmentedButtonTheme.style!;
+      expect(
+        style.backgroundColor!.resolve({WidgetState.selected}),
+        AppTheme.primary,
+      );
+      expect(
+        style.foregroundColor!.resolve({WidgetState.selected}),
+        AppTheme.onGold,
+      );
+      expect(
+        style.iconColor!.resolve({WidgetState.selected}),
+        AppTheme.onGold,
+      );
+    });
+
     test('흰 글자는 네이비 헤더 위에서 AA를 만족한다', () {
       expect(
         _contrast(Colors.white, AppTheme.deepNavy),

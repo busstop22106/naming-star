@@ -118,6 +118,21 @@ class AppTheme {
         selectedColor: primarySoft,
         labelStyle: const TextStyle(fontWeight: FontWeight.w700),
       ),
+      // 세그먼트 버튼 선택 상태 — 하단 CTA 버튼과 같은 금빛 채움 + 남색 글자.
+      // 기본값(secondaryContainer)은 금빛 시드에서 파생된 올리브빛이라
+      // 밤하늘 테마와 안 맞아 실기기에서 어색하게 보인다 (2026-11-13 지적).
+      // 미선택 상태는 기본값(어두운 배경·밝은 글자·테두리) 그대로 둔다.
+      // styleFrom에는 선택 아이콘 색상 파라미터가 없어 ButtonStyle을 직접 만든다.
+      segmentedButtonTheme: SegmentedButtonThemeData(
+        style: ButtonStyle(
+          backgroundColor: WidgetStateProperty.resolveWith((states) =>
+              states.contains(WidgetState.selected) ? primary : null),
+          foregroundColor: WidgetStateProperty.resolveWith((states) =>
+              states.contains(WidgetState.selected) ? onGold : null),
+          iconColor: WidgetStateProperty.resolveWith((states) =>
+              states.contains(WidgetState.selected) ? onGold : null),
+        ),
+      ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: surface,
