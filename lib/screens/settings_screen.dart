@@ -57,16 +57,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           const SizedBox(height: 16),
 
-          // 앱 설정
-          _sectionTitle('앱 설정'),
-          _menuTile(
-            icon: Icons.language_outlined,
-            title: '언어',
-            subtitle: '한국어',
-            onTap: _showLanguageInfo,
-          ),
-          const SizedBox(height: 16),
-
           // 광고 없이 사용하기
           _sectionTitle('광고 없이 사용하기'),
           const _AdFreeSection(),
@@ -152,27 +142,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Future<void> _shareApp() async {
     final ok = await AppLinks.shareText(
-      '사주와 전통 성명학으로 아기 이름을 추천해주는 앱, 작명별\n${AppLinks.playStoreUrl}',
+      '사주와 전통 성명학으로 아기 이름을 지어줘요, 작명별 ⭐\n${AppLinks.playStoreUrl}',
     );
     if (!ok && mounted) {
       _showFallback('공유하기를 열 수 없어요', AppLinks.playStoreUrl);
     }
-  }
-
-  void _showLanguageInfo() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('언어'),
-        content: const Text('작명별은 현재 한국어만 지원해요.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('확인'),
-          ),
-        ],
-      ),
-    );
   }
 
   void _showFallback(String message, String value) {
