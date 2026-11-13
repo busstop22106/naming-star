@@ -39,7 +39,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
 
   Future<void> _load() async {
     try {
-      // 저장소 응답이 멈춰도 스피너가 영원히 돌지 않게 5초 제한을 둔다.
+      // 기기 저장소 읽기가 멈춰도 스피너가 영원히 돌지 않게 5초 제한을 둔다.
       final items =
           await loadFavorites().timeout(const Duration(seconds: 5));
       if (!mounted) return;
@@ -90,7 +90,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
           : _loadError
               ? EmptyState(
                   title: '보관함을 불러오지 못했어요.',
-                  subtitle: '저장소 응답이 늦어지고 있어요. 다시 시도해 주세요.',
+                  subtitle: '저장된 목록을 읽는 데 문제가 생겼어요. 다시 시도해 주세요.',
                   action: ElevatedButton(
                     onPressed: () {
                       setState(() {
