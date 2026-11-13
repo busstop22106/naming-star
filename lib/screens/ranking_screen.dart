@@ -3,7 +3,6 @@ import '../data/rankings.dart';
 import '../models.dart';
 import '../services/ad_service.dart';
 import '../theme.dart';
-import '../widgets/night_sky.dart';
 
 /// 아기 이름 랭킹
 /// [onAnalyzeName]이 있으면 이름을 눌렀을 때 내 아기 성씨·사주로 분석하는
@@ -45,89 +44,85 @@ class _RankingScreenState extends State<RankingScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Stack(
-        children: [
-          // 밤하늘 별빛 배경 — 홈 탭과 동일 (2026-11-13)
-          const Starfield(),
-          SafeArea(
-            // 하단 inset은 TabBarView 안 리스트 패딩이 처리한다 (2026-11-13 리뷰 반영).
-            bottom: false,
-            child: Column(
-              children: [
-                // 성별 탭 — AppBar bottom에서 여기로 이동 (2026-11-13, 네비바 제거)
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-                  child: TabBar(
-                    controller: _tab,
-                    labelColor: AppTheme.primary,
-                    unselectedLabelColor: AppTheme.sub,
-                    indicatorColor: AppTheme.primary,
-                    // 구분선은 본문 여백에 맞춰 안쪽으로 들어가므로 없앤다.
-                    // 인디케이터는 탭 전체 너비(기본값 tab)를 명시한다.
-                    dividerColor: Colors.transparent,
-                    indicatorSize: TabBarIndicatorSize.tab,
-                    tabs: const [
-                      Tab(text: '남아 TOP 20'),
-                      Tab(text: '여아 TOP 20'),
-                    ],
-                  ),
-                ),
-                // 연도 선택
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
-                  child: Row(
-                    children: [
-                      const Text('연도별 순위',
-                          style: TextStyle(
-                              fontSize: 13,
-                              color: AppTheme.sub,
-                              fontWeight: FontWeight.w600)),
-                      const Spacer(),
-                      DropdownButton<int>(
-                        value: _year,
-                        underline: const SizedBox(),
-                        style: const TextStyle(
-                            fontSize: 14,
-                            color: AppTheme.ink,
-                            fontWeight: FontWeight.w700),
-                        items: rankingYears
-                            .map(
-                                (y) => DropdownMenuItem(value: y, child: Text('$y년')))
-                            .toList(),
-                        onChanged: (v) => setState(() => _year = v!),
-                      ),
-                    ],
-                  ),
-                ),
-                Expanded(
-                  child: TabBarView(
-                    controller: _tab,
-                    children: [
-                      _RankList(
-                          entries: rankingsByYear[_year]!.boy,
-                          isBoy: true,
-                          year: _year,
-                          showAd: _tabIndex == 0,
-                          onAnalyzeName: widget.onAnalyzeName == null
-                              ? null
-                              : (name) => widget.onAnalyzeName!(
-                                  name, Gender.boy)),
-                      _RankList(
-                          entries: rankingsByYear[_year]!.girl,
-                          isBoy: false,
-                          year: _year,
-                          showAd: _tabIndex == 1,
-                          onAnalyzeName: widget.onAnalyzeName == null
-                              ? null
-                              : (name) => widget.onAnalyzeName!(
-                                  name, Gender.girl)),
-                    ],
-                  ),
-                ),
-              ],
+      // 배경은 MainNav의 Starfield가 담당한다 (2026-11-13, 별빛 단일화).
+      backgroundColor: Colors.transparent,
+      body: SafeArea(
+        // 하단 inset은 TabBarView 안 리스트 패딩이 처리한다 (2026-11-13 리뷰 반영).
+        bottom: false,
+        child: Column(
+          children: [
+            // 성별 탭 — AppBar bottom에서 여기로 이동 (2026-11-13, 네비바 제거)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+              child: TabBar(
+                controller: _tab,
+                labelColor: AppTheme.primary,
+                unselectedLabelColor: AppTheme.sub,
+                indicatorColor: AppTheme.primary,
+                // 구분선은 본문 여백에 맞춰 안쪽으로 들어가므로 없앤다.
+                // 인디케이터는 탭 전체 너비(기본값 tab)를 명시한다.
+                dividerColor: Colors.transparent,
+                indicatorSize: TabBarIndicatorSize.tab,
+                tabs: const [
+                  Tab(text: '남아 TOP 20'),
+                  Tab(text: '여아 TOP 20'),
+                ],
+              ),
             ),
-          ),
-        ],
+            // 연도 선택
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+              child: Row(
+                children: [
+                  const Text('연도별 순위',
+                      style: TextStyle(
+                          fontSize: 13,
+                          color: AppTheme.sub,
+                          fontWeight: FontWeight.w600)),
+                  const Spacer(),
+                  DropdownButton<int>(
+                    value: _year,
+                    underline: const SizedBox(),
+                    style: const TextStyle(
+                        fontSize: 14,
+                        color: AppTheme.ink,
+                        fontWeight: FontWeight.w700),
+                    items: rankingYears
+                        .map(
+                            (y) => DropdownMenuItem(value: y, child: Text('$y년')))
+                        .toList(),
+                    onChanged: (v) => setState(() => _year = v!),
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: TabBarView(
+                controller: _tab,
+                children: [
+                  _RankList(
+                      entries: rankingsByYear[_year]!.boy,
+                      isBoy: true,
+                      year: _year,
+                      showAd: _tabIndex == 0,
+                      onAnalyzeName: widget.onAnalyzeName == null
+                          ? null
+                          : (name) => widget.onAnalyzeName!(
+                              name, Gender.boy)),
+                  _RankList(
+                      entries: rankingsByYear[_year]!.girl,
+                      isBoy: false,
+                      year: _year,
+                      showAd: _tabIndex == 1,
+                      onAnalyzeName: widget.onAnalyzeName == null
+                          ? null
+                          : (name) => widget.onAnalyzeName!(
+                              name, Gender.girl)),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

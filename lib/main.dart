@@ -14,6 +14,7 @@ import 'services/baby_info_store.dart';
 import 'services/purchase_service.dart';
 import 'services/share_link.dart';
 import 'theme.dart';
+import 'widgets/night_sky.dart';
 
 /// 공유 딥링크로 들어올 때 DetailScreen을 띄우는 네비게이터 키.
 /// 링크는 MainNav의 initState보다 먼저 도착할 수 있어, context 대신
@@ -166,31 +167,37 @@ class _MainNavState extends State<MainNav> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: IndexedStack(index: _index, children: [
-        HomeScreen(
-          baby: _baby,
-          onBabyChanged: _onBabyChanged,
-        ),
-        AnalyzeScreen(
-          baby: _baby,
-          onBabyChanged: _onBabyChanged,
-          analyzeNameRequest: _analyzeName,
-          analyzeGenderRequest: _analyzeGender,
-          onAnalyzeNameConsumed: () => setState(() {
-            _analyzeName = null;
-            _analyzeGender = null;
-          }),
-        ),
-        RankingScreen(
-          onAnalyzeName: (name, gender) => setState(() {
-            _index = 1;
-            _analyzeName = name;
-            _analyzeGender = gender;
-          }),
-        ),
-        SettingsScreen(
-            onGoToNaming: () => setState(() => _index = 0)),
-      ]),
+      body: Stack(
+        children: [
+          // 밤하늘 별빛 배경 — 4개 탭 공용 (2026-11-13, 별빛 단일화)
+          const Starfield(),
+          IndexedStack(index: _index, children: [
+            HomeScreen(
+              baby: _baby,
+              onBabyChanged: _onBabyChanged,
+            ),
+            AnalyzeScreen(
+              baby: _baby,
+              onBabyChanged: _onBabyChanged,
+              analyzeNameRequest: _analyzeName,
+              analyzeGenderRequest: _analyzeGender,
+              onAnalyzeNameConsumed: () => setState(() {
+                _analyzeName = null;
+                _analyzeGender = null;
+              }),
+            ),
+            RankingScreen(
+              onAnalyzeName: (name, gender) => setState(() {
+                _index = 1;
+                _analyzeName = name;
+                _analyzeGender = gender;
+              }),
+            ),
+            SettingsScreen(
+                onGoToNaming: () => setState(() => _index = 0)),
+          ]),
+        ],
+      ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _index,
         onDestinationSelected: (i) => setState(() => _index = i),

@@ -6,7 +6,6 @@ import '../services/app_links.dart';
 import '../services/purchase_service.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
-import '../widgets/night_sky.dart';
 import 'faq_screen.dart';
 import 'favorites_screen.dart';
 import 'terms_screen.dart';
@@ -25,102 +24,98 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Stack(
-        children: [
-          // 밤하늘 별빛 배경 — 홈 탭과 동일 (2026-11-13)
-          const Starfield(),
-          SafeArea(
-            // 하단 inset은 ListView 패딩이 처리한다 (2026-11-13 리뷰 반영).
-            bottom: false,
-            child: ListView(
-              padding: EdgeInsets.fromLTRB(
-                  20, 20, 20, 20 + MediaQuery.paddingOf(context).bottom),
-              children: [
-                appHeader,
-                const SizedBox(height: 20),
-                // 내 정보
-                _sectionTitle('저장한 이름'),
-                _menuTile(
-                  icon: Icons.bookmark_border,
-                  title: '보관함',
-                  subtitle: '저장한 이름 목록',
-                  onTap: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (_) => FavoritesScreen(
-                            onGoToNaming: widget.onGoToNaming)),
-                  ),
-                ),
-                const Padding(
-                  padding: EdgeInsets.only(left: 4, top: 4),
-                  child: Text(
-                    '기기를 바꾸거나 앱을 다시 설치하면 보관함이 사라져요.',
-                    style: TextStyle(fontSize: 12, color: AppTheme.sub),
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                // 광고 없이 사용하기
-                _sectionTitle('광고 없이 사용하기'),
-                const _AdFreeSection(),
-                const SizedBox(height: 16),
-
-                // 지원
-                _sectionTitle('지원'),
-                _menuTile(
-                  icon: Icons.help_outline,
-                  title: '자주 묻는 질문',
-                  onTap: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (_) => const FaqScreen()),
-                  ),
-                ),
-                _menuTile(
-                  icon: Icons.mail_outline,
-                  title: '문의하기',
-                  subtitle: AppLinks.contactEmail,
-                  onTap: _openEmail,
-                ),
-                _menuTile(
-                  icon: Icons.star_outline,
-                  title: '앱 평가하기',
-                  subtitle: 'Play 스토어에서 별점 남기기',
-                  onTap: _openStore,
-                ),
-                _menuTile(
-                  icon: Icons.share_outlined,
-                  title: '친구에게 공유하기',
-                  onTap: _shareApp,
-                ),
-                const SizedBox(height: 16),
-
-                // 정보
-                _sectionTitle('정보'),
-                _menuTile(
-                  icon: Icons.description_outlined,
-                  title: '이용약관',
-                  onTap: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (_) => const TermsScreen()),
-                  ),
-                ),
-                _menuTile(
-                  icon: Icons.privacy_tip_outlined,
-                  title: '개인정보처리방침',
-                  onTap: _openPrivacyPolicy,
-                ),
-                _menuTile(
-                  icon: Icons.info_outline,
-                  title: '앱 버전',
-                  subtitle: '1.0.0',
-                  onTap: null,
-                ),
-              ],
+      // 배경은 MainNav의 Starfield가 담당한다 (2026-11-13, 별빛 단일화).
+      backgroundColor: Colors.transparent,
+      body: SafeArea(
+        // 하단 inset은 ListView 패딩이 처리한다 (2026-11-13 리뷰 반영).
+        bottom: false,
+        child: ListView(
+          padding: EdgeInsets.fromLTRB(
+              20, 20, 20, 20 + MediaQuery.paddingOf(context).bottom),
+          children: [
+            appHeader,
+            const SizedBox(height: 20),
+            // 내 정보
+            _sectionTitle('저장한 이름'),
+            _menuTile(
+              icon: Icons.bookmark_border,
+              title: '보관함',
+              subtitle: '저장한 이름 목록',
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (_) => FavoritesScreen(
+                        onGoToNaming: widget.onGoToNaming)),
+              ),
             ),
-          ),
-        ],
+            const Padding(
+              padding: EdgeInsets.only(left: 4, top: 4),
+              child: Text(
+                '기기를 바꾸거나 앱을 다시 설치하면 보관함이 사라져요.',
+                style: TextStyle(fontSize: 12, color: AppTheme.sub),
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // 광고 없이 사용하기
+            _sectionTitle('광고 없이 사용하기'),
+            const _AdFreeSection(),
+            const SizedBox(height: 16),
+
+            // 지원
+            _sectionTitle('지원'),
+            _menuTile(
+              icon: Icons.help_outline,
+              title: '자주 묻는 질문',
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (_) => const FaqScreen()),
+              ),
+            ),
+            _menuTile(
+              icon: Icons.mail_outline,
+              title: '문의하기',
+              subtitle: AppLinks.contactEmail,
+              onTap: _openEmail,
+            ),
+            _menuTile(
+              icon: Icons.star_outline,
+              title: '앱 평가하기',
+              subtitle: 'Play 스토어에서 별점 남기기',
+              onTap: _openStore,
+            ),
+            _menuTile(
+              icon: Icons.share_outlined,
+              title: '친구에게 공유하기',
+              onTap: _shareApp,
+            ),
+            const SizedBox(height: 16),
+
+            // 정보
+            _sectionTitle('정보'),
+            _menuTile(
+              icon: Icons.description_outlined,
+              title: '이용약관',
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (_) => const TermsScreen()),
+              ),
+            ),
+            _menuTile(
+              icon: Icons.privacy_tip_outlined,
+              title: '개인정보처리방침',
+              onTap: _openPrivacyPolicy,
+            ),
+            _menuTile(
+              icon: Icons.info_outline,
+              title: '앱 버전',
+              subtitle: '1.0.0',
+              onTap: null,
+            ),
+          ],
+        ),
       ),
     );
   }

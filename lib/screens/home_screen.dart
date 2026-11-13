@@ -5,7 +5,6 @@ import '../services/ad_service.dart';
 import '../services/interstitial_gate.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
-import '../widgets/night_sky.dart';
 import '../widgets/surname_picker.dart';
 import 'recommend_screen.dart';
 import 'reveal_screen.dart';
@@ -152,14 +151,12 @@ class _HomeScreenState extends State<HomeScreen> {
             : formatTimeOfDay(_birthTime!));
 
     return Scaffold(
-      body: Stack(
-        children: [
-          // 밤하늘 별빛 배경 — 스크롤해도 그대로 있다
-          const Starfield(),
-          SafeArea(
-            child: ListView(
-              padding: const EdgeInsets.all(20),
-              children: [
+      // 배경은 MainNav의 Starfield가 담당한다 (2026-11-13, 별빛 단일화).
+      backgroundColor: Colors.transparent,
+      body: SafeArea(
+        child: ListView(
+          padding: const EdgeInsets.all(20),
+          children: [
             // 헤더 — 공통 상수 appHeader (홈·이름 분석·설정 동일, 상단 20으로 통일)
             appHeader,
             const SizedBox(height: 20),
@@ -399,8 +396,6 @@ class _HomeScreenState extends State<HomeScreen> {
             const SizedBox(height: 12),
           ],
         ),
-          ),
-        ],
       ),
     );
   }
