@@ -45,6 +45,8 @@ class _RankingScreenState extends State<RankingScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
+        // 하단 inset은 TabBarView 안 리스트 패딩이 처리한다 (2026-11-13 리뷰 반영).
+        bottom: false,
         child: Column(
           children: [
             // 성별 탭 — AppBar bottom에서 여기로 이동 (2026-11-13, 네비바 제거)
@@ -55,6 +57,10 @@ class _RankingScreenState extends State<RankingScreen>
                 labelColor: AppTheme.primary,
                 unselectedLabelColor: AppTheme.sub,
                 indicatorColor: AppTheme.primary,
+                // 구분선은 본문 여백에 맞춰 안쪽으로 들어가므로 없앤다.
+                // 인디케이터는 탭 전체 너비(기본값 tab)를 명시한다.
+                dividerColor: Colors.transparent,
+                indicatorSize: TabBarIndicatorSize.tab,
                 tabs: const [
                   Tab(text: '남아 TOP 20'),
                   Tab(text: '여아 TOP 20'),
@@ -261,7 +267,7 @@ class _RankList extends StatelessWidget {
         ),
         SliverPadding(
           padding: EdgeInsets.fromLTRB(
-              20, 16, 20, 20 + MediaQuery.of(context).padding.bottom),
+              20, 16, 20, 20 + MediaQuery.paddingOf(context).bottom),
           sliver: SliverToBoxAdapter(
             child: Column(
               children: [

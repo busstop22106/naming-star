@@ -799,16 +799,16 @@ class _AnalyzeScreenState extends State<AnalyzeScreen> {
 
     return Scaffold(
       body: SafeArea(
+        // 하단 inset은 ListView 패딩이 처리한다 (2026-11-13 리뷰 반영).
+        // SafeArea bottom을 켜 두면 하단 여백이 두 번 잡힐 수 있다.
+        bottom: false,
         child: ListView(
+          key: const Key('analyze_tab_body'),
           padding: EdgeInsets.fromLTRB(
-              20, 20, 20, 20 + MediaQuery.of(context).padding.bottom),
+              20, 20, 20, 20 + MediaQuery.paddingOf(context).bottom),
           children: [
-            // 헤더 — 홈·설정 탭과 동일 (2026-11-13)
-            const StarHero(
-              title: '작명별',
-              subtitle: '사주와 성명학으로 짓는 아기 이름',
-              imageSize: 64,
-            ),
+            // 헤더 — 공통 상수 kAppHeader (홈·이름 분석·설정 동일)
+            kAppHeader,
             const SizedBox(height: 20),
             // 모드 전환: 이름 분석 / 가족 궁합
             Card(

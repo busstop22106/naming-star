@@ -161,12 +161,8 @@ class _HomeScreenState extends State<HomeScreen> {
               padding: const EdgeInsets.all(20),
               children: [
             const SizedBox(height: 8),
-            // 헤더 — 설정 탭과 같은 크기(imageSize 64)로 통일 (2026-11-13)
-            const StarHero(
-              title: '작명별',
-              subtitle: '사주와 성명학으로 짓는 아기 이름',
-              imageSize: 64,
-            ),
+            // 헤더 — 공통 상수 kAppHeader (홈·이름 분석·설정 동일)
+            kAppHeader,
             const SizedBox(height: 20),
             // 성씨 선택
             Card(

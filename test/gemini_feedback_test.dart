@@ -209,8 +209,8 @@ void main() {
       expect(
           fields.any((f) => f.controller?.text == '도윤'), isTrue);
       // 네비바 제목('이름 직접 분석하기')은 2026-11-13 전 탭에서 제거됨.
-      // 대신 이름 분석 탭 고유 섹션 제목으로 탭 이동을 확인한다.
-      expect(find.text('분석할 이름'), findsOneWidget);
+      // 문구 변경에 흔들리지 않게 Key로 탭 이동을 확인한다 (2026-11-13 리뷰 반영).
+      expect(find.byKey(const Key('analyze_tab_body')), findsOneWidget);
     });
   });
 }

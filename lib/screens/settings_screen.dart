@@ -25,15 +25,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
+        // 하단 inset은 ListView 패딩이 처리한다 (2026-11-13 리뷰 반영).
+        bottom: false,
         child: ListView(
           padding: EdgeInsets.fromLTRB(
-              20, 20, 20, 24 + MediaQuery.of(context).padding.bottom),
+              20, 20, 20, 20 + MediaQuery.paddingOf(context).bottom),
           children: [
-            const StarHero(
-              title: '작명별',
-              subtitle: '사주와 성명학으로 짓는 아기 이름',
-              imageSize: 64,
-            ),
+            kAppHeader,
             const SizedBox(height: 20),
             // 내 정보
             _sectionTitle('저장한 이름'),
