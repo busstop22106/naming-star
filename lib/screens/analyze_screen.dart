@@ -807,8 +807,8 @@ class _AnalyzeScreenState extends State<AnalyzeScreen> {
           padding: EdgeInsets.fromLTRB(
               20, 20, 20, 20 + MediaQuery.paddingOf(context).bottom),
           children: [
-            // 헤더 — 공통 상수 kAppHeader (홈·이름 분석·설정 동일)
-            kAppHeader,
+            // 헤더 — 공통 상수 appHeader (홈·이름 분석·설정 동일)
+            appHeader,
             const SizedBox(height: 20),
             // 모드 전환: 이름 분석 / 가족 궁합
             Card(

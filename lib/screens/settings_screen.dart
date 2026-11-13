@@ -31,7 +31,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           padding: EdgeInsets.fromLTRB(
               20, 20, 20, 20 + MediaQuery.paddingOf(context).bottom),
           children: [
-            kAppHeader,
+            appHeader,
             const SizedBox(height: 20),
             // 내 정보
             _sectionTitle('저장한 이름'),

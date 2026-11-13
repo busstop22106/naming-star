@@ -335,7 +335,7 @@ class StarHero extends StatelessWidget {
 
 /// 앱 공통 헤더 — 홈·이름 분석·설정 탭 상단에 동일하게 쓴다 (2026-11-13 리뷰 반영).
 /// 타이틀·부제목·이미지 크기를 바꾸면 여기서 한 번만 바꾸면 된다.
-const StarHero kAppHeader = StarHero(
+const StarHero appHeader = StarHero(
   title: '작명별',
   subtitle: '사주와 성명학으로 짓는 아기 이름',
   imageSize: 64,
