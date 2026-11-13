@@ -142,7 +142,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Future<void> _shareApp() async {
     final ok = await AppLinks.shareText(
-      '사주와 전통 성명학으로 아기 이름을 지어줘요, 작명별 ⭐\n${AppLinks.playStoreUrl}',
+      '👶 철학관 안 가고 끝내는 정통 사주 아기 작명! 우리 아이 사주에 부족한 오행을 채워줄 이름을 작명별로 찾아보세요. ✨\n${AppLinks.playStoreUrl}',
     );
     if (!ok && mounted) {
       _showFallback('공유하기를 열 수 없어요', AppLinks.playStoreUrl);
