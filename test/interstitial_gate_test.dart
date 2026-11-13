@@ -65,7 +65,8 @@ void main() {
 
   group('InterstitialGate.goToResult', () {
     Future<void> pumpGateApp(
-        WidgetTester tester, Map<String, Object> mockValues) async {
+        WidgetTester tester, Map<String, Object> mockValues,
+        {bool showInterstitial = true}) async {
       SharedPreferences.setMockInitialValues(mockValues);
       tester.view.physicalSize = const Size(390, 844);
       tester.view.devicePixelRatio = 1.0;
@@ -76,6 +77,7 @@ void main() {
             builder: (context) => ElevatedButton(
               onPressed: () => InterstitialGate.goToResult(
                 context,
+                showInterstitial: showInterstitial,
                 resultBuilder: (_) => const Text('결과'),
                 revealBuilder: (_) => const Text('애니메이션'),
               ),
@@ -106,6 +108,19 @@ void main() {
 
       expect(find.text('애니메이션'), findsOneWidget);
       expect(find.text('결과'), findsNothing);
+    });
+
+    testWidgets('showInterstitial이 false면 광고 차례에도 애니메이션 경로로 가고 카운터가 안 오른다',
+        (tester) async {
+      await pumpGateApp(tester, {InterstitialGate.countKey: 3},
+          showInterstitial: false);
+      await tester.tap(find.text('결과 보기'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('애니메이션'), findsOneWidget);
+      expect(find.text('결과'), findsNothing);
+      // 이름 짓기 시도는 카운터를 갉아먹지 않는다.
+      expect(await InterstitialGate.readAttemptCount(), 3);
     });
   });
 }

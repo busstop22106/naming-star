@@ -4,8 +4,9 @@ import 'ad_service.dart';
 import 'adfree_service.dart';
 
 /// 결과 직전 전면 광고 게이트.
-/// 이름 짓기·이름 분석·가족 궁합 세 흐름이 공유하는 단일 카운터로,
+/// 이름 분석·가족 궁합 두 흐름이 공유하는 단일 카운터로,
 /// 결과 시도마다 1씩 올리고 4의 배수(4·8·12…)면 광고 차례다.
+/// 이름 짓기는 전면 광고를 띄우지 않는다 (1위 확인은 보상형 광고로만 한다).
 /// 평생 광고 제거를 구매했으면 광고를 안 보여주고 Reveal 경로로 바로 간다.
 class InterstitialGate {
   static const String countKey = 'jakmyeongbyeol_result_attempt_count';
@@ -35,10 +36,21 @@ class InterstitialGate {
     BuildContext context, {
     required WidgetBuilder resultBuilder,
     required WidgetBuilder revealBuilder,
+    // false면 전면 광고를 띄우지 않고 카운터도 올리지 않는다.
+    // (이름 짓기: 전면 광고 없이 항상 Reveal 경로로 간다.)
+    bool showInterstitial = true,
   }) async {
     // 평생 광고 제거 상태면 광고 없이 Reveal 경로로 바로 간다.
     // 카운터도 올리지 않는다 (광고 차례 계산이 의미가 없어진다).
     if (AdFreeService.instance.isAdFree) {
+      await Navigator.push(
+        context,
+        MaterialPageRoute(builder: revealBuilder),
+      );
+      return;
+    }
+    // 전면 광고를 안 띄우는 흐름은 카운터도 올리지 않고 Reveal 경로로 간다.
+    if (!showInterstitial) {
       await Navigator.push(
         context,
         MaterialPageRoute(builder: revealBuilder),

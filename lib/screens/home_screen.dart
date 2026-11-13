@@ -126,10 +126,11 @@ class _HomeScreenState extends State<HomeScreen> {
       birthMinute: _timeUnknown ? null : _birthTime?.minute,
     );
     final saju = computeSaju(baby);
-    // 4번째 시도마다 전면 광고가 애니메이션 대신 뜨고,
-    // 나머지 3번은 별 애니메이션을 보여준 뒤 공개한다.
+    // 이름 짓기는 전면 광고를 띄우지 않는다.
+    // 항상 별 애니메이션을 보여준 뒤 공개하고, 1위 확인은 보상형 광고로만 한다.
     await InterstitialGate.goToResult(
       context,
+      showInterstitial: false,
       resultBuilder: (_) => RecommendScreen(
           baby: baby, saju: saju, isPureKorean: _isPureKorean),
       revealBuilder: (_) => RevealScreen(
