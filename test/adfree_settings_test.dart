@@ -26,15 +26,15 @@ void main() {
     expect(find.text('광고 없이 사용하기'), findsOneWidget);
     expect(find.textContaining('평생 광고 없이 사용하기'), findsWidgets);
     expect(find.text('이미 구입하셨나요? 구매 복원하기'), findsOneWidget);
-    expect(find.text('평생 광고 없이 사용 중'), findsNothing);
+    expect(find.text('평생 유료 멤버쉽 적용됐어요'), findsNothing);
   });
 
-  testWidgets('구매 후에는 "평생 광고 없이 사용 중"이 보이고 버튼이 사라진다',
+  testWidgets('구매 후에는 "평생 유료 멤버쉽 적용됐어요"가 보이고 버튼이 사라진다',
       (tester) async {
     AdFreeService.instance.setForTest(true);
     await pumpSettings(tester);
 
-    expect(find.text('평생 광고 없이 사용 중'), findsOneWidget);
+    expect(find.text('평생 유료 멤버쉽 적용됐어요'), findsOneWidget);
     expect(find.text('이미 구입하셨나요? 구매 복원하기'), findsNothing);
   });
 }

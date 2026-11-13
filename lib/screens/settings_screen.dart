@@ -236,7 +236,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
 /// 평생 광고 제거(₩4,900) 구매 섹션.
 /// - 구매 전: 설명 + 구매 버튼(스토어 가격) + 구매 복원하기 버튼.
-/// - 구매 후: "평생 광고 없이 사용 중" 표시.
+/// - 구매 후: "평생 유료 멤버쉽 적용됐어요" 표시 (버튼 아님, 그냥 문구).
 /// 구매·복원은 버튼을 눌렀을 때만 시작한다.
 class _AdFreeSection extends StatefulWidget {
   const _AdFreeSection();
@@ -324,7 +324,7 @@ class _AdFreeSectionState extends State<_AdFreeSection> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    isAdFree ? '평생 광고 없이 사용 중' : '평생 광고 없이 사용하기',
+                    isAdFree ? '평생 유료 멤버쉽 적용됐어요' : '평생 광고 없이 사용하기',
                     style: const TextStyle(
                         fontSize: 15, fontWeight: FontWeight.w600),
                   ),
