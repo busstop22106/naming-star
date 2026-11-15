@@ -10,6 +10,7 @@ import '../services/ad_service.dart';
 import '../services/adfree_service.dart';
 import '../services/purchase_service.dart';
 import '../theme.dart';
+import '../widgets/adfree_price_label.dart';
 import '../widgets/common.dart';
 import 'detail_screen.dart';
 
@@ -125,8 +126,7 @@ class _RecommendScreenState extends State<RecommendScreen> {
               // 다이얼로그를 닫는다. 취소·실패는 스낵바로 안내한다.
               await PurchaseService.instance.buyAdFree();
             },
-            child: Text(
-                '평생 광고 없이 보기 ${PurchaseService.instance.price}'),
+            child: const AdFreePriceLabel(prefix: '평생 광고 없이 보기 '),
           ),
           FilledButton(
             onPressed: _rewardedBusy

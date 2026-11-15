@@ -5,6 +5,7 @@ import '../services/adfree_service.dart';
 import '../services/app_links.dart';
 import '../services/purchase_service.dart';
 import '../theme.dart';
+import '../widgets/adfree_price_label.dart';
 import '../widgets/common.dart';
 import 'faq_screen.dart';
 import 'favorites_screen.dart';
@@ -273,7 +274,6 @@ class _AdFreeSectionState extends State<_AdFreeSection> {
     final productsAvailable = PurchaseService.instance.productsAvailable;
     final productsChecked =
         PurchaseService.instance.productsCheckedNotifier.value;
-    final price = PurchaseService.instance.price;
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
       child: Padding(
@@ -328,7 +328,8 @@ class _AdFreeSectionState extends State<_AdFreeSection> {
                           height: 18,
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
-                      : Text('평생 광고 없이 사용하기 · $price'),
+                      : const AdFreePriceLabel(
+                          prefix: '평생 광고 없이 사용하기 · '),
                 ),
               ),
               const SizedBox(height: 8),

@@ -23,6 +23,14 @@ class PurchaseService {
   /// 스토어 가격을 못 받았을 때 보여주는 문구.
   static const String fallbackPrice = '₩4,900';
 
+  /// 정가(출시 특가 기준가). 스토어 가격이 이보다 낮으면 할인 표시를 한다.
+  /// Play 결제창 자체에는 취소선이 안 뜨고(플러그인 한계),
+  /// 앱 다이얼로그·설정 화면에서만 정가 취소선을 보여준다.
+  static const int regularPriceAmount = 4900;
+
+  /// 정가 표시 문구.
+  static const String regularPriceText = '₩4,900';
+
   /// 스토어에서 받은 가격 (못 받으면 fallbackPrice).
   final ValueNotifier<String> priceNotifier =
       ValueNotifier<String>(fallbackPrice);
@@ -44,6 +52,25 @@ class PurchaseService {
   String get price => priceNotifier.value;
   bool get isBusy => busyNotifier.value;
   bool get productsAvailable => productsAvailableNotifier.value;
+
+  /// 스토어 가격 문자열에서 숫자만 뽑은 금액(원). 못 읽으면 null.
+  /// 한국 스토어 가격(₩2,450 형태) 기준이다.
+  int? get priceAmount {
+    final digits = price.replaceAll(RegExp(r'[^0-9]'), '');
+    if (digits.isEmpty) return null;
+    return int.tryParse(digits);
+  }
+
+  /// 스토어 가격이 정가보다 낮으면 true (출시 특가 등).
+  bool get isDiscounted =>
+      priceAmount != null && priceAmount! < regularPriceAmount;
+
+  /// 할인율(정수 %). 할인 중이 아니면 null.
+  int? get discountPercent {
+    final amount = priceAmount;
+    if (amount == null || amount >= regularPriceAmount) return null;
+    return ((regularPriceAmount - amount) * 100 / regularPriceAmount).round();
+  }
 
   StreamSubscription<List<PurchaseDetails>>? _subscription;
   ProductDetails? _product;
