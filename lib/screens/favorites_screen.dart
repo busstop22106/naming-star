@@ -39,12 +39,22 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
 
   Future<void> _load() async {
     try {
-      // 기기 저장소 읽기가 멈춰도 스피너가 영원히 돌지 않게 5초 제한을 둔다.
-      final items =
-          await loadFavorites().timeout(const Duration(seconds: 5));
+      // 기기 저장소 읽기가 멈춰도 스피너가 영원히 돌지 않게 제한을 둔다.
+      // 첫 시도가 느려 타임아웃돼도 한 번 더 시도한다 — 느린 기기에서
+      // 빈 보관함을 오류 화면으로 오인하는 일이 있었다 (2026-11-15).
+      List<FavoriteItem>? items;
+      for (var attempt = 0; attempt < 2; attempt++) {
+        try {
+          items =
+              await loadFavorites().timeout(const Duration(seconds: 10));
+          break;
+        } catch (_) {
+          if (attempt == 1) rethrow;
+        }
+      }
       if (!mounted) return;
       setState(() {
-        _items = items;
+        _items = items ?? [];
         _loading = false;
         _loadError = false;
       });
