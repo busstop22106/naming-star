@@ -113,9 +113,8 @@ NameAnalysis analyzeName({
           : (suriScore >= 90
               ? const DimensionGrade(code: 'daegil', label: '사격 대길')
               : const DimensionGrade(code: 'gil', label: '사격 길'));
-  if (hasMixed) {
-    warnings.add('수리에 학파별 평가가 갈리는 반길반흉 수가 있어요. 보수적으로 보길 권해요.');
-  }
+  // 반길반흉 안내는 warnings(상단 노란 배너)에 넣지 않고, 상세 화면의
+  // '수리 상세' 안에서 보여준다 (2026-11-15). 판정은 suri.grade.code == 'mixed'로 본다.
 
   // ══════════ 2. 음양 (10%) ══════════
   final yy = strokes.map((s) => s.isOdd ? '양' : '음').toList();

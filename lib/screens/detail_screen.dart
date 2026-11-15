@@ -482,20 +482,40 @@ class _DetailScreenState extends State<DetailScreen> {
             icon: Icons.calculate,
             subtitle: '한자 획수(원획) → 사격 → 81수리',
             child: Column(
-              children: a.suri.details
-                  .map((d) => Padding(
-                        padding:
-                            const EdgeInsets.symmetric(vertical: 4),
-                        child: Row(
-                          children: [
-                            Expanded(
-                                child: Text(d,
-                                    style: const TextStyle(
-                                        fontSize: 13))),
-                          ],
+              children: [
+                // 반길반흉 수는 상단 노란 배너가 아니라 수리 상세 안에서
+                // 경고로 보여준다 (2026-11-15).
+                if (a.suri.grade.code == 'mixed')
+                  const Padding(
+                    padding: EdgeInsets.only(bottom: 8),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('⚠️', style: TextStyle(fontSize: 13)),
+                        SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            '학파별 평가가 갈리는 반길반흉 수가 있어요. 보수적으로 보길 권해요.',
+                            style: TextStyle(fontSize: 13),
+                          ),
                         ),
-                      ))
-                  .toList(),
+                      ],
+                    ),
+                  ),
+                ...a.suri.details
+                    .map((d) => Padding(
+                          padding:
+                              const EdgeInsets.symmetric(vertical: 4),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                  child: Text(d,
+                                      style: const TextStyle(
+                                          fontSize: 13))),
+                            ],
+                          ),
+                        )),
+              ],
             ),
           ),
 
