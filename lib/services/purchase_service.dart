@@ -52,17 +52,20 @@ class PurchaseService {
 
   /// 앱 시작 시 1회: 권한 저장값을 읽고, 스토어 구매 내역을 복원한다.
   /// 스토어에 닿지 못해도 앱 진입을 막지 않는다 (예외는 삼킨다).
+  /// 구매 스트림 리스너는 스토어 연결 여부와 무관하게 가장 먼저 단다.
+  /// isAvailable()이 느리거나 실패하면 리스너가 안 달려 구매 업데이트를
+  /// 놓치는 문제가 있었다 (2026-11-15 테스트 결제 미반영 원인).
   Future<void> init() async {
     if (_initialized) return;
     _initialized = true;
     try {
       await AdFreeService.instance.ensureLoaded();
-      final available = await InAppPurchase.instance.isAvailable();
-      if (!available) return;
-      _subscription = InAppPurchase.instance.purchaseStream.listen(
+      _subscription ??= InAppPurchase.instance.purchaseStream.listen(
         _onPurchaseUpdate,
         onError: (_) {},
       );
+      final available = await InAppPurchase.instance.isAvailable();
+      if (!available) return;
       await refreshProducts();
       // 재설치·기기 변경 후에도 스토어 계정 기준으로 권한을 되살린다.
       await InAppPurchase.instance.restorePurchases();
