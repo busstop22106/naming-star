@@ -93,20 +93,21 @@ void main() {
     expect(find.textContaining('할인'), findsNothing);
   });
 
-  testWidgets('할인가일 때는 정가 취소선·할인가·할인율이 보인다',
+  testWidgets('할인가일 때는 정가 취소선·화살표·할인가가 보인다',
       (tester) async {
     await pumpLabel(
       tester,
       price: '₩2,450',
       prefix: '평생 광고 없이 사용하기 · ',
     );
-    expect(find.textContaining('50% 할인'), findsOneWidget);
-    // '50% 할인'을 포함한 RichText가 딱 하나이고, 그 두 번째 span이
+    expect(find.textContaining('→'), findsOneWidget);
+    expect(find.textContaining('할인'), findsNothing);
+    // '→'를 포함한 RichText가 딱 하나이고, 그 두 번째 span이
     // 정가 취소선이다. (Text 위젯도 내부적으로 RichText라 직접 찾는다.)
     final richTexts = tester
         .widgetList<RichText>(find.byType(RichText))
         .where(
-          (r) => (r.text as TextSpan).toPlainText().contains('50% 할인'),
+          (r) => (r.text as TextSpan).toPlainText().contains('→'),
         )
         .toList();
     expect(richTexts.length, 1);
@@ -117,10 +118,10 @@ void main() {
     final struck = inner.children![1] as TextSpan;
     expect(struck.text, '₩4,900');
     expect(struck.style?.decoration, TextDecoration.lineThrough);
-    expect(span.toPlainText(), '평생 광고 없이 사용하기 · ₩4,900 ₩2,450 · 50% 할인');
+    expect(span.toPlainText(), '평생 광고 없이 사용하기 · ₩4,900 → ₩2,450');
   });
 
-  testWidgets('설정 화면에서도 할인가일 때 50% 할인이 보인다',
+  testWidgets('설정 화면에서도 할인가일 때 화살표 할인가가 보인다',
       (tester) async {
     SharedPreferences.setMockInitialValues({});
     PurchaseService.instance.setPriceForTest(
@@ -134,6 +135,7 @@ void main() {
     await tester.pumpWidget(const MaterialApp(home: SettingsScreen()));
     await tester.pumpAndSettle();
 
-    expect(find.textContaining('50% 할인'), findsOneWidget);
+    expect(find.textContaining('→'), findsOneWidget);
+    expect(find.textContaining('할인'), findsNothing);
   });
 }
