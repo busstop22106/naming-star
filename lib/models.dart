@@ -54,11 +54,16 @@ class SharedBaby {
     this.timeUnknown = false,
   });
 
-  factory SharedBaby.initial() => SharedBaby(
-        surname: const SurnamePick(name: '김', hanja: '金', strokes: 8),
-        gender: Gender.boy,
-        birth: DateTime(2026, 10, 19),
-      );
+  factory SharedBaby.initial() {
+    // 기본 생일은 '오늘'로 둔다. 고정 날짜(예전 2026-10-19)를 쓰면
+    // 시간이 지날수록 엉뚱한 기본값이 된다 (2026-11-16).
+    final now = DateTime.now();
+    return SharedBaby(
+      surname: const SurnamePick(name: '김', hanja: '金', strokes: 8),
+      gender: Gender.boy,
+      birth: DateTime(now.year, now.month, now.day),
+    );
+  }
 
   SharedBaby copyWith({
     SurnamePick? surname,
@@ -269,10 +274,19 @@ class HanjaPick {
   }
 }
 
+/// 81수리 등급 코드. 문자열 리터럴로 비교하면 오타·변경 시 컴파일러가
+/// 못 잡으므로 상수로 둔다 (2026-11-16).
+/// 수리 코드는 81수리 등급 코드와 같은 값이다(daegil/gil/mixed/hyung).
+abstract final class SuriGradeCode {
+  static const String daegil = 'daegil';
+  static const String gil = 'gil';
+  static const String mixed = 'mixed';
+  static const String hyung = 'hyung';
+}
+
 /// 차원 등급 — 판정용 코드와 화면 표시 문구를 함께 가진다.
 /// 코드는 로직(근거 한 줄의 수리 라벨 등)에서 쓰고, label은 화면 표시용이다.
 /// 등급 문구(String)만으로 판정하던 역매핑을 없애기 위해 도입했다.
-/// 수리 코드는 81수리 등급 코드와 같은 값이다(daegil/gil/mixed/hyung).
 class DimensionGrade {
   final String code; // 판정용 코드 (예: 'daegil')
   final String label; // 화면 표시 문구 (예: '사격 대길')

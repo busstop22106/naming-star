@@ -314,8 +314,11 @@ SharedNameParams? _parseQueryParams(Map<String, String> q) {
 ///   첫 번째 후보(기본값). 호환 한자 등 목록에 없는 한자도 기본값으로 떨어진다.
 /// - 한자가 없는 음절이 있으면 순우리말 분석으로 바꾼다.
 /// - 성씨가 DB에 없거나 이름 형태가 맞지 않으면 null (링크를 무시한다).
-({BabyInfo baby, NameAnalysis analysis})? resolveSharedAnalysis(
-    SharedNameParams params) {
+/// - 공유된 한자를 찾지 못해 기본값으로 대체했으면 [notice]에 안내를 담아
+///   돌려준다 — 받는 쪽에서 조용히 다른 한자로 분석했음을 알려야 한다
+///   (2026-11-16).
+({BabyInfo baby, NameAnalysis analysis, String? notice})?
+    resolveSharedAnalysis(SharedNameParams params) {
   final name = params.name;
   String? surname;
   String? given;
@@ -331,11 +334,15 @@ SharedNameParams? _parseQueryParams(Map<String, String> q) {
 
   final entries = surnamesByName[surname];
   if (entries == null || entries.isEmpty) return null;
+  var substituted = false;
   final entry = params.surnameHanja == null
       ? entries.first
       : entries.firstWhere(
           (e) => e.hanja == params.surnameHanja,
-          orElse: () => entries.first,
+          orElse: () {
+            substituted = true;
+            return entries.first;
+          },
         );
 
   final baby = BabyInfo(
@@ -356,7 +363,10 @@ SharedNameParams? _parseQueryParams(Map<String, String> q) {
       if (shared == null) return opts.first;
       return opts.firstWhere(
         (o) => o.char == shared,
-        orElse: () => opts.first,
+        orElse: () {
+          substituted = true;
+          return opts.first;
+        },
       );
     }
 
@@ -367,7 +377,11 @@ SharedNameParams? _parseQueryParams(Map<String, String> q) {
       saju: saju,
       gender: params.gender,
     );
-    return (baby: baby, analysis: analysis);
+    return (
+      baby: baby,
+      analysis: analysis,
+      notice: substituted ? _substitutedNotice : null,
+    );
   }
   if (RegExp(r'^[가-힣]{2}$').hasMatch(given)) {
     final analysis = analyzePureKoreanName(
@@ -377,7 +391,15 @@ SharedNameParams? _parseQueryParams(Map<String, String> q) {
       saju: saju,
       gender: params.gender,
     );
-    return (baby: baby, analysis: analysis);
+    return (
+      baby: baby,
+      analysis: analysis,
+      notice: substituted ? _substitutedNotice : null,
+    );
   }
   return null;
 }
+
+/// 공유된 한자를 찾지 못해 기본 한자로 대체했을 때의 안내 문구.
+const String _substitutedNotice =
+    '공유된 한자를 찾을 수 없어 비슷한 한자로 분석했어요.';

@@ -174,6 +174,15 @@ class _RevealScreenState extends State<RevealScreen>
                           style: const TextStyle(
                               fontSize: 13, color: AppTheme.sub),
                         ),
+                        // 화면을 탭하면 바로 결과로 넘어간다는 안내.
+                        // 연출을 기다리지 않고 넘어갈 수 있다는 걸 모르는
+                        // 사용자가 있다 (2026-11-16).
+                        const SizedBox(height: 16),
+                        const Text(
+                          '탭하면 바로 볼 수 있어요',
+                          style: TextStyle(
+                              fontSize: 12, color: AppTheme.sub),
+                        ),
                       ],
                     ),
                   ),

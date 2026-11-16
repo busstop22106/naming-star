@@ -89,6 +89,15 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
 
+    // 구성원 생일이 기본값이면 확인 다이얼로그가 먼저 뜬다.
+    // '그대로 보기'를 눌러 궁합을 진행한다.
+    final proceed = find.text('그대로 보기');
+    if (proceed.evaluate().isNotEmpty) {
+      await tester.tap(proceed);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
+    }
+
     expect(find.byType(RevealScreen), findsOneWidget);
     expect(find.text('가족 구성원 간 궁합을 알아보고 있어요'), findsOneWidget);
     expect(find.byType(CompatScreen), findsNothing);

@@ -24,12 +24,15 @@ import 'reveal_screen.dart';
 /// 직접 이름 분석 — 이미 정한 이름을 입력해 평가
 /// [baby]·[onBabyChanged]가 있으면 아기 기본 정보를 이름 짓기 탭과 공유한다.
 /// [analyzeNameRequest]는 랭킹 탭에서 넘어온 이름(성별 포함)으로, 오면 입력 폼에 채운다.
+/// [onGoToNaming]은 선택 모드 보관함의 빈 화면 '이름 지으러 가기'를 눌렀을 때
+/// 이름 짓기 탭으로 보내는 콜백이다.
 class AnalyzeScreen extends StatefulWidget {
   final SharedBaby? baby;
   final ValueChanged<SharedBaby>? onBabyChanged;
   final String? analyzeNameRequest;
   final Gender? analyzeGenderRequest;
   final VoidCallback? onAnalyzeNameConsumed;
+  final VoidCallback? onGoToNaming;
   const AnalyzeScreen({
     super.key,
     this.baby,
@@ -37,6 +40,7 @@ class AnalyzeScreen extends StatefulWidget {
     this.analyzeNameRequest,
     this.analyzeGenderRequest,
     this.onAnalyzeNameConsumed,
+    this.onGoToNaming,
   });
 
   @override
@@ -65,6 +69,10 @@ class _AnalyzeScreenState extends State<AnalyzeScreen> {
   bool _navigating = false;
   // 저장된 구성원이 있으면 불러오고, 없으면 기본값(아빠·엄마)을 쓴다.
   final List<FamilyMemberInput> _members = defaultFamilyMembers();
+  // 구성원 생일을 사용자가 한 번이라도 확인·저장했는지.
+  // 기본값(아빠 1990-05-05·엄마 1992-07-07) 그대로 궁합을 실행하면
+  // 잘못된 결과가 나오므로, 첫 실행 전에 확인을 유도한다 (2026-11-16).
+  bool _membersConfirmed = false;
 
   @override
   void initState() {
@@ -82,6 +90,8 @@ class _AnalyzeScreenState extends State<AnalyzeScreen> {
       _members
         ..clear()
         ..addAll(saved);
+      // 저장된 구성원이 있다는 건 사용자가 생일을 입력한 적이 있다는 뜻이다.
+      _membersConfirmed = true;
     });
   }
 
@@ -171,7 +181,10 @@ class _AnalyzeScreenState extends State<AnalyzeScreen> {
   Future<void> _loadFromFavorites() async {
     final picked = await Navigator.of(context).push<FavoriteItem>(
       MaterialPageRoute(
-        builder: (_) => const FavoritesScreen(selectMode: true),
+        builder: (_) => FavoritesScreen(
+          selectMode: true,
+          onGoToNaming: widget.onGoToNaming,
+        ),
       ),
     );
     if (picked == null || !mounted) return;
@@ -544,6 +557,35 @@ class _AnalyzeScreenState extends State<AnalyzeScreen> {
 
   Future<void> _analyzeCompat() async {
     if (_navigating) return;
+    // 구성원 생일이 기본값 그대로면 첫 실행 전에 확인을 유도한다.
+    // 기본 생일(아빠 1990-05-05·엄마 1992-07-07)로 궁합을 보면
+    // 잘못된 결과가 나온다 (2026-11-16).
+    if (!_membersConfirmed) {
+      final proceed = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('생일을 확인해 주세요', style: TextStyle(fontSize: 16)),
+          content: const Text(
+            '아빠·엄마 생일이 기본값으로 되어 있어요. 정확한 가족 궁합을 보려면 각 구성원의 생일을 입력해 주세요.',
+            style: TextStyle(fontSize: 14),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('생일 확인하기'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('그대로 보기'),
+            ),
+          ],
+        ),
+      );
+      if (proceed != true) return;
+      if (mounted) setState(() => _membersConfirmed = true);
+    }
+    // 다이얼로그를 기다리는 동안 화면이 닫혔으면 중단한다.
+    if (!mounted) return;
     final picks = _buildPicks();
     if (picks == null) return;
     final baby = BabyInfo(
@@ -666,6 +708,8 @@ class _AnalyzeScreenState extends State<AnalyzeScreen> {
             ..timeUnknown = result.timeUnknown);
         }
       }
+      // 구성원을 직접 건드렸으니 생일을 확인한 것으로 본다.
+      _membersConfirmed = true;
     });
     unawaited(_saveMembers());
   }

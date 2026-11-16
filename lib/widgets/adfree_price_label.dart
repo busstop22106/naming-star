@@ -22,23 +22,31 @@ class AdFreePriceLabel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final service = PurchaseService.instance;
-    if (!service.isDiscounted) {
-      return Text('$prefix${service.price}');
-    }
-    return Text.rich(
-      TextSpan(
-        children: [
-          TextSpan(text: prefix),
-          const TextSpan(
-            text: PurchaseService.regularPriceText,
-            style: TextStyle(decoration: TextDecoration.lineThrough),
-          ),
+    // 가격을 구독한다 — 상품 정보가 늦게 도착해도 라벨이 다시 그려진다.
+    // (할인 여부는 rawPrice 기준으로 보되, priceNotifier가 같은 시점에
+    // 갱신되므로 이 구독만으로 충분하다.) (2026-11-16)
+    return ValueListenableBuilder<String>(
+      valueListenable: service.priceNotifier,
+      builder: (_, __, ___) {
+        if (!service.isDiscounted) {
+          return Text('$prefix${service.price}');
+        }
+        return Text.rich(
           TextSpan(
-            text:
-                ' ${service.price} · ${service.discountPercent}% 할인',
+            children: [
+              TextSpan(text: prefix),
+              const TextSpan(
+                text: PurchaseService.regularPriceText,
+                style: TextStyle(decoration: TextDecoration.lineThrough),
+              ),
+              TextSpan(
+                text:
+                    ' ${service.price} · ${service.discountPercent}% 할인',
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }

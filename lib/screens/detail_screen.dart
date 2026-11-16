@@ -14,8 +14,14 @@ import '../widgets/common.dart';
 class DetailScreen extends StatefulWidget {
   final BabyInfo baby;
   final NameAnalysis analysis;
-  const DetailScreen(
-      {super.key, required this.baby, required this.analysis});
+  /// 공유 링크로 들어왔을 때 한자 대체 등 안내할 내용이 있으면 표시한다.
+  final String? notice;
+  const DetailScreen({
+    super.key,
+    required this.baby,
+    required this.analysis,
+    this.notice,
+  });
 
   @override
   State<DetailScreen> createState() => _DetailScreenState();
@@ -230,6 +236,30 @@ class _DetailScreenState extends State<DetailScreen> {
               ),
             ),
           ),
+
+          // 공유 링크 안내 (공유된 한자를 찾지 못해 대체했을 때).
+          if (widget.notice != null)
+            Container(
+              margin: const EdgeInsets.only(top: 12),
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: AppTheme.primarySoft,
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(
+                    color: AppTheme.primary.withValues(alpha: 0.4)),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(Icons.info_outline,
+                      size: 20, color: AppTheme.primary),
+                  const SizedBox(width: 8),
+                  Expanded(
+                      child: Text(widget.notice!,
+                          style: const TextStyle(fontSize: 13))),
+                ],
+              ),
+            ),
 
           // 경고
           if (a.warnings.isNotEmpty) ...[
@@ -485,7 +515,7 @@ class _DetailScreenState extends State<DetailScreen> {
               children: [
                 // 반길반흉 수는 상단 노란 배너가 아니라 수리 상세 안에서
                 // 경고로 보여준다 (2026-11-15).
-                if (a.suri.grade.code == 'mixed')
+                if (a.suri.grade.code == SuriGradeCode.mixed)
                   const Padding(
                     padding: EdgeInsets.only(bottom: 8),
                     child: Row(

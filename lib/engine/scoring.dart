@@ -81,8 +81,8 @@ NameAnalysis analyzeName({
     final w = name == '형격' ? 2.0 : 1.0; // 형격(사회운) 가중
     suriSum += suriGradeScore(info.grade) * w;
     suriWeight += w;
-    if (info.grade == 'mixed') hasMixed = true;
-    if (info.grade == 'hyung') hasHyung = true;
+    if (info.grade == SuriGradeCode.mixed) hasMixed = true;
+    if (info.grade == SuriGradeCode.hyung) hasHyung = true;
     suriDetails.add(
         '$name ${strokesOf(name, strokes)}획 → $v수리 ${info.name}(${suriGradeLabel(info.grade)})');
   });
@@ -107,14 +107,17 @@ NameAnalysis analyzeName({
     suriDetails.add('${pair.$1}($a)→${pair.$2}($b): $rel');
   }
   final suriGrade = hasHyung
-      ? const DimensionGrade(code: 'hyung', label: '흉수 포함')
+      ? const DimensionGrade(code: SuriGradeCode.hyung, label: '흉수 포함')
       : hasMixed
-          ? const DimensionGrade(code: 'mixed', label: '반길반흉 포함')
+          ? const DimensionGrade(
+              code: SuriGradeCode.mixed, label: '반길반흉 포함')
           : (suriScore >= 90
-              ? const DimensionGrade(code: 'daegil', label: '사격 대길')
-              : const DimensionGrade(code: 'gil', label: '사격 길'));
+              ? const DimensionGrade(
+                  code: SuriGradeCode.daegil, label: '사격 대길')
+              : const DimensionGrade(
+                  code: SuriGradeCode.gil, label: '사격 길'));
   // 반길반흉 안내는 warnings(상단 노란 배너)에 넣지 않고, 상세 화면의
-  // '수리 상세' 안에서 보여준다 (2026-11-15). 판정은 suri.grade.code == 'mixed'로 본다.
+  // '수리 상세' 안에서 보여준다 (2026-11-15). 판정은 suri.grade.code == SuriGradeCode.mixed로 본다.
 
   // ══════════ 2. 음양 (10%) ══════════
   final yy = strokes.map((s) => s.isOdd ? '양' : '음').toList();

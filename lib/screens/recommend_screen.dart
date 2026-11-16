@@ -303,8 +303,11 @@ class _RecommendScreenState extends State<RecommendScreen> {
               itemCount: sorted.length,
               itemBuilder: (_, i) {
                 final a = sorted[i];
-                // 1위(정렬 첫 항목)만 가린다. 공개한 이름·광고 제거 상태는 제외.
-                final masked = i == 0 && _isTopMasked(a);
+                // 1위 가리기는 종합점수순일 때만 적용한다. 수리순·사주순·발음순으로
+                // 바꾸면 첫 항목이 그 기준 1위라 '1위 이름' 다이얼로그와
+                // 안 맞는다 (2026-11-16).
+                final masked =
+                    _sort == 'total' && i == 0 && _isTopMasked(a);
                 return _NameCard(
                   rank: i + 1,
                   analysis: a,

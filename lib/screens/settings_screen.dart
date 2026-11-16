@@ -259,11 +259,17 @@ class _AdFreeSectionState extends State<_AdFreeSection> {
   }
 
   Future<void> _restore() async {
-    final ok = await PurchaseService.instance.restore();
+    final result = await PurchaseService.instance.restore();
     if (!mounted) return;
+    // 복원할 구매가 없을 때와 스토어 연결·타임아웃으로 실패했을 때를
+    // 구분해 안내한다 (2026-11-16).
     showSingleSnackBar(
       ScaffoldMessenger.of(context),
-      ok ? '구매를 복원했어요.' : '복원할 구매가 없어요.',
+      switch (result) {
+        RestoreResult.restored => '구매를 복원했어요.',
+        RestoreResult.none => '복원할 구매가 없어요.',
+        RestoreResult.failed => '스토어 연결이 느려요. 다시 시도해 주세요.',
+      },
     );
   }
 
@@ -344,7 +350,7 @@ class _AdFreeSectionState extends State<_AdFreeSection> {
                 const Padding(
                   padding: EdgeInsets.only(top: 8),
                   child: Text(
-                      '상품 정보를 불러오지 못했어요. 스토어에 상품을 등록한 뒤 다시 시도해 주세요.',
+                      '상품 정보를 불러오지 못했어요. 네트워크를 확인하고 다시 시도해 주세요.',
                       style: TextStyle(fontSize: 12, color: AppTheme.sub)),
                 ),
             ],

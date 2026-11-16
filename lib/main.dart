@@ -135,6 +135,7 @@ class _MainNavState extends State<MainNav> {
           builder: (_) => DetailScreen(
             baby: resolved.baby,
             analysis: resolved.analysis,
+            notice: resolved.notice,
           ),
         ),
       );
@@ -186,6 +187,7 @@ class _MainNavState extends State<MainNav> {
                 _analyzeName = null;
                 _analyzeGender = null;
               }),
+              onGoToNaming: () => setState(() => _index = 0),
             ),
             RankingScreen(
               onAnalyzeName: (name, gender) => setState(() {

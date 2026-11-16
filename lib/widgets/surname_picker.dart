@@ -369,6 +369,7 @@ class _SurnameSheetState extends State<_SurnameSheet> {
           ElevatedButton(
             onPressed: () {
               final name = nameCtrl.text.trim();
+              final hanja = hanjaCtrl.text.trim();
               final strokes =
                   int.tryParse(strokesCtrl.text.trim());
               if (name.isEmpty ||
@@ -381,11 +382,22 @@ class _SurnameSheetState extends State<_SurnameSheet> {
                 );
                 return;
               }
+              // 한자는 선택이지만, 입력했으면 CJK 한자여야 한다.
+              // 한글·영문·숫자가 들어가면 수리 계산이 틀어진다 (2026-11-16).
+              if (hanja.isNotEmpty &&
+                  !RegExp(r'^[\u4E00-\u9FFF\uf900-\ufaff]{1,2}$')
+                      .hasMatch(hanja)) {
+                ScaffoldMessenger.of(ctx).showSnackBar(
+                  const SnackBar(
+                      content: Text('한자는 한자로 입력해주세요. (예: 金)')),
+                );
+                return;
+              }
               Navigator.pop(
                   ctx,
                   SurnamePick(
                       name: name,
-                      hanja: hanjaCtrl.text.trim(),
+                      hanja: hanja,
                       strokes: strokes,
                       manual: true));
             },

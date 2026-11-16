@@ -30,6 +30,9 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
   List<FavoriteItem> _items = [];
   bool _loading = true;
   bool _loadError = false;
+  // 첫 시도가 타임아웃돼 다시 읽는 중인지. 최대 20초까지 스피너만
+  // 도는 것처럼 보이지 않게 상태를 보여준다 (2026-11-16).
+  bool _retrying = false;
 
   @override
   void initState() {
@@ -50,6 +53,11 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
           break;
         } catch (_) {
           if (attempt == 1) rethrow;
+          if (!mounted) return;
+          // 재시도 전 짧게 쉬었다가, 재시도 중임을 화면에 알린다.
+          if (mounted) setState(() => _retrying = true);
+          await Future.delayed(const Duration(milliseconds: 500));
+          if (!mounted) return;
         }
       }
       if (!mounted) return;
@@ -57,12 +65,14 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
         _items = items ?? [];
         _loading = false;
         _loadError = false;
+        _retrying = false;
       });
     } catch (_) {
       if (!mounted) return;
       setState(() {
         _loading = false;
         _loadError = true;
+        _retrying = false;
       });
     }
   }
@@ -96,7 +106,19 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
     return Scaffold(
       appBar: AppBar(title: const Text('보관함')),
       body: _loading
-          ? const Center(child: CircularProgressIndicator())
+          ? Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const CircularProgressIndicator(),
+                  if (_retrying) ...[
+                    const SizedBox(height: 12),
+                    const Text('다시 시도 중이에요',
+                        style: TextStyle(fontSize: 13, color: AppTheme.sub)),
+                  ],
+                ],
+              ),
+            )
           : _loadError
               ? EmptyState(
                   title: '보관함을 불러오지 못했어요.',
