@@ -6,7 +6,7 @@ import '../services/purchase_service.dart';
 ///
 /// - 정가(₩4,900)일 때: 기존 문구 그대로
 ///   ('평생 광고 없이 사용하기 · ₩4,900').
-/// - 스토어 가격이 정가보다 낮을 때(출시 특가 등): 정가에 취소선을 긋고
+/// - 스토어 가격이 정가보다 낮을 때(출시 특가 등): 정가에 두 줄 취소선을 긋고
 ///   화살표 뒤에 할인가를 보여준다. 할인율은 표시하지 않는다.
 ///   ('평생 광고 없이 사용하기 · ₩4,900 → ₩1,900').
 /// Play 결제창 자체에는 취소선이 안 뜨고(플러그인 한계),
@@ -31,25 +31,57 @@ class AdFreePriceLabel extends StatelessWidget {
         if (!service.isDiscounted) {
           return Text('$prefix${service.price}');
         }
-        // 정가는 살짝 흐리게 + 취소선, 화살표 뒤에 할인가.
+        // 정가는 살짝 흐리게 + 두 줄 취소선, 화살표 뒤에 할인가.
         // 할인율은 표시하지 않는다 (2026-11-17).
-        final baseColor = DefaultTextStyle.of(context).style.color;
         return Text.rich(
           TextSpan(
             children: [
               TextSpan(text: prefix),
-              TextSpan(
-                text: PurchaseService.regularPriceText,
-                style: TextStyle(
-                  decoration: TextDecoration.lineThrough,
-                  color: baseColor?.withValues(alpha: 0.65),
-                ),
+              const WidgetSpan(
+                alignment: PlaceholderAlignment.middle,
+                child: DoubleStrikeText(PurchaseService.regularPriceText),
               ),
               TextSpan(text: ' → ${service.price}'),
             ],
           ),
         );
       },
+    );
+  }
+}
+
+/// 텍스트 위에 두 줄 취소선을 긋는 인라인 위젯.
+///
+/// Flutter의 TextDecoration.lineThrough은 한 줄만 그려서,
+/// 두 줄은 텍스트 위에 1px 선 두 개를 겹쳐 그린다. (2026-11-17)
+/// 정가처럼 '할인 전 가격'임을 보여줄 때 쓰며, 글자·선 모두
+/// 주변 글자보다 살짝 흐리게(65%) 표시한다.
+class DoubleStrikeText extends StatelessWidget {
+  const DoubleStrikeText(this.text, {super.key});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final baseColor = DefaultTextStyle.of(context).style.color;
+    final muted = baseColor?.withValues(alpha: 0.65);
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        Text(text, style: TextStyle(color: muted)),
+        Positioned(
+          left: 0,
+          right: 0,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(height: 1, color: muted),
+              const SizedBox(height: 2),
+              Container(height: 1, color: muted),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }
