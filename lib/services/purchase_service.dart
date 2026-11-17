@@ -255,6 +255,27 @@ class PurchaseService {
 
   void _onPurchaseUpdate(List<PurchaseDetails> purchases) {
     for (final purchase in purchases) {
+      // Play가 결제 실패·취소를 알릴 때 구매 목록이 비어 있으면 플러그인이
+      // productID ''인 합성 이벤트를 만든다
+      // (in_app_purchase_android 0.5.5 _getPurchaseDetailsFromResult).
+      // 상품 ID가 안 맞는다고 걸러버리면 busy가 영원히 안 풀려
+      // 설정 버튼이 무한 뺑뺑이가 된다 (2026-11-17 실기기 재현:
+      // 1위 다이얼로그에서 결제 시도 뒤 Play가 '구입하려는 항목을
+      // 찾을 수 없습니다'를 띄우고 돌아왔는데도 busy가 그대로였다).
+      // 구매 중(busy)인 합성 이벤트는 우리 구매 시도로 보고 busy를 푼다.
+      // 단, 합성 이벤트로는 광고 제거 권한을 켜지 않는다
+      // (실제 구매 객체가 없어서 검증이 안 된다).
+      if (purchase.productID.isEmpty) {
+        if (!isBusy) continue;
+        if (purchase.status == PurchaseStatus.error) {
+          errorNotifier.value = '구매에 실패했어요. 다시 시도해 주세요.';
+        } else if (purchase.status == PurchaseStatus.canceled) {
+          errorNotifier.value = '구매를 취소했어요.';
+        }
+        _completeRestore(false);
+        busyNotifier.value = false;
+        continue;
+      }
       if (purchase.productID != adFreeProductId) continue;
       switch (purchase.status) {
         case PurchaseStatus.purchased:
@@ -313,6 +334,13 @@ class PurchaseService {
     }
     debugPrint('구매 확인 최종 실패 — 다음 앱 시작 시 복원으로 재시도: '
         '${purchase.productID}');
+  }
+
+  /// 테스트용 — 구매 스트림 이벤트를 직접 주입한다.
+  /// (실기기에서는 purchaseStream 리스너가 _onPurchaseUpdate를 부른다.)
+  @visibleForTesting
+  void handlePurchaseUpdateForTest(List<PurchaseDetails> purchases) {
+    _onPurchaseUpdate(purchases);
   }
 
   @visibleForTesting
