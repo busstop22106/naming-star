@@ -47,15 +47,30 @@ class AdFreePriceLabel extends StatelessWidget {
     // 갱신되므로 이 구독만으로 충분하다.) (2026-11-16)
     final fontSize =
         DefaultTextStyle.of(context).style.fontSize ?? 14.0;
+    // Icon 크기도 텍스트 스케일을 반영한다 — 큰 글씨 설정에서
+    // Text는 커지는데 Icon만 원래 크기로 남으면 비례가 깨진다.
+    // (오푸스 리뷰, 2026-11-17)
+    final scaledFontSize = MediaQuery.textScalerOf(context).scale(fontSize);
+    // Icon 색상은 텍스트 색과 명시적으로 맞춘다 — IconTheme 상속만으로는
+    // 커스텀 테마에서 색이 어긋날 수 있다. (오푸스 리뷰, 2026-11-17)
+    // null이면 Icon이 IconTheme을 쓰므로 그대로 둔다.
+    final textColor = DefaultTextStyle.of(context).style.color;
     return ValueListenableBuilder<String>(
       valueListenable: service.priceNotifier,
       builder: (_, __, ___) {
         // 비할인·할인 모두 Wrap을 반환한다 — 위젯 타입이 바뀌면
         // 상품 정보 도착 시 버튼 크기가 점프할 수 있다 (오푸스 리뷰, 2026-11-17).
         if (!service.isDiscounted) {
-          return Wrap(
-            crossAxisAlignment: WrapCrossAlignment.center,
-            children: [Text('$prefix${service.price}')],
+          // 할인 분기와 마찬가지로 스크린 리더용 레이블을 단다 —
+          // '·'가 TalkBack/VoiceOver에서 어떻게 읽힐지 모르니
+          // 쉼표로 풀어서 읽어준다. (오푸스 리뷰, 2026-11-17)
+          return Semantics(
+            label: '평생 광고 없이 사용, ${service.price}',
+            excludeSemantics: true,
+            child: Wrap(
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [Text('$prefix${service.price}')],
+            ),
           );
         }
         // 정가는 살짝 흐리게 + 취소선 두 줄, 화살표 뒤에 할인가.
@@ -77,7 +92,11 @@ class AdFreePriceLabel extends StatelessWidget {
               // 화살표는 Icon으로 — 텍스트 '→'는 폴백 폰트 탓에
               // 줄 상자가 커져서 아래로 처진다. (2026-11-17)
               // Icon은 고정 크기라 Wrap 정중앙 정렬이 맞는다.
-              Icon(Icons.arrow_forward, size: fontSize),
+              Icon(
+                Icons.arrow_forward,
+                size: scaledFontSize,
+                color: textColor,
+              ),
               Text(service.price),
             ],
           ),
