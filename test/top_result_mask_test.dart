@@ -94,7 +94,7 @@ void main() {
     expect(find.text('닫기'), findsOneWidget);
     expect(find.byType(AdFreePriceLabel), findsOneWidget);
     expect(find.byType(DoubleStrikeText), findsOneWidget);
-    expect(find.text(' → ₩1,900'), findsOneWidget);
+    expect(find.text('→ ₩1,900'), findsOneWidget);
   });
 
   testWidgets('광고가 준비되지 않으면 안내가 뜨고 계속 가려진다', (tester) async {

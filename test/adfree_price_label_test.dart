@@ -101,7 +101,7 @@ void main() {
       prefix: '평생 광고 없이 사용 · ',
     );
     expect(find.text('평생 광고 없이 사용 · '), findsOneWidget);
-    expect(find.text(' → ₩2,450'), findsOneWidget);
+    expect(find.text('→ ₩2,450'), findsOneWidget);
     expect(find.textContaining('기간 할인 중'), findsNothing);
     expect(find.textContaining('% 할인'), findsNothing);
     // WidgetSpan을 쓰지 않는다 — Wrap 안에 독립 위젯으로 둔다.
