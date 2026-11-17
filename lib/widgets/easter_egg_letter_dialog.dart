@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 /// 설정 > 앱 버전 10회 연속 탭 이스터에그 — 우주 아빠가 가족에게 보내는 편지.
-/// 편지지처럼 크림색 종이에 손글씨(나눔펜)로 보여준다 (2026-11-17).
+/// 편지지처럼 크림색 종이에 손글씨(동글)로 보여준다 (2026-11-17).
 /// 글꼴은 google_fonts가 런타임에 내려받아 캐시한다 — 네트워크가 안 되면
 /// 시스템 폰트로 그려진다.
+/// 동글은 같은 크기에서 작게 그려져서 나눔펜보다 크게 잡는다 (본문 28·제목 26).
 Future<void> showEasterEggLetterDialog(BuildContext context) {
   return showDialog<void>(
     context: context,
@@ -59,8 +60,8 @@ class _EasterEggLetterDialog extends StatelessWidget {
                       Text(
                         '숨겨둔 편지',
                         textAlign: TextAlign.center,
-                        style: GoogleFonts.nanumPenScript(
-                          fontSize: 20,
+                        style: GoogleFonts.dongle(
+                          fontSize: 26,
                           color: _gold,
                         ),
                       ),
@@ -73,20 +74,20 @@ class _EasterEggLetterDialog extends StatelessWidget {
                       const SizedBox(height: 20),
                       Text(
                         _letterBody,
-                        style: GoogleFonts.nanumPenScript(
-                          fontSize: 22,
+                        style: GoogleFonts.dongle(
+                          fontSize: 28,
                           color: _ink,
-                          height: 1.7,
+                          height: 1.55,
                         ),
                       ),
                       const SizedBox(height: 20),
                       Text(
                         _letterSignature,
                         textAlign: TextAlign.right,
-                        style: GoogleFonts.nanumPenScript(
-                          fontSize: 22,
+                        style: GoogleFonts.dongle(
+                          fontSize: 28,
                           color: _ink,
-                          height: 1.7,
+                          height: 1.55,
                         ),
                       ),
                       const SizedBox(height: 12),
@@ -104,8 +105,8 @@ class _EasterEggLetterDialog extends StatelessWidget {
                 onPressed: () => Navigator.pop(context),
                 child: Text(
                   '편지를 접어요',
-                  style: GoogleFonts.nanumPenScript(
-                    fontSize: 20,
+                  style: GoogleFonts.dongle(
+                    fontSize: 26,
                     color: _gold,
                   ),
                 ),

@@ -32,10 +32,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   void initState() {
     super.initState();
-    // 편지 손글씨(나눔펜)를 미리 내려받는다 — 팝업이 뜰 때 기본 폰트에서
+    // 편지 손글씨(동글)를 미리 내려받는다 — 팝업이 뜰 때 기본 폰트에서
     // 손글씨로 바뀌는 깜빡임을 막는다 (2026-11-17).
     // 호출 자체가 다운로드를 시작한다 (이미 받아져 있으면 아무 일도 안 한다).
-    GoogleFonts.nanumPenScript();
+    GoogleFonts.dongle();
   }
 
   /// 편지 손글씨 폰트가 준비될 때까지 기다린다.
@@ -60,7 +60,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     _versionTapCount++;
     // 첫 탭에서 손글씨 다운로드를 한 번 더 시작한다 — initState 때
     // 네트워크가 안 돼서 실패했다면 여기서 다시 시도한다 (2026-11-17).
-    if (_versionTapCount == 1) GoogleFonts.nanumPenScript();
+    if (_versionTapCount == 1) GoogleFonts.dongle();
     // 1~5회 탭은 조용히 센다.
     if (_versionTapCount < 6) return;
     if (_versionTapCount < 10) {
