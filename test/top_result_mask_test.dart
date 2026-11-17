@@ -71,7 +71,7 @@ void main() {
 
     expect(find.text('광고 보고 바로 확인하기'), findsOneWidget);
     // 구매 버튼 라벨(AdFreePriceLabel)이 있고, 다이얼로그 본문에도
-    // '평생 광고 없이 사용을 구매하면'이 들어가 있어 textContaining으로는
+    // '평생 광고 없이 사용'을 구매하면'이 들어가 있어 textContaining으로는
     // 구분이 안 돼 버튼 위젯으로 직접 찾는다.
     expect(find.byType(AdFreePriceLabel), findsOneWidget);
     expect(find.text('닫기'), findsOneWidget);

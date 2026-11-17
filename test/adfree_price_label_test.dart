@@ -131,7 +131,7 @@ void main() {
     ).toList();
     expect(lines.length, 1);
     expect(lines.first.constraints?.maxHeight, 2);
-    expect(lines.first.color, const Color(0xFFFF5252));
+    expect(lines.first.color, const Color(0xFFD32F2F));
   });
 
   testWidgets('설정 화면에서도 할인가일 때 빨간 취소선·화살표·기간 할인 중이 보인다',

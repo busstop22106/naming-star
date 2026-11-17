@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 import '../services/purchase_service.dart';
@@ -29,21 +31,29 @@ class AdFreePriceLabel extends StatelessWidget {
       valueListenable: service.priceNotifier,
       builder: (_, __, ___) {
         if (!service.isDiscounted) {
-          return Text('$prefix${service.price}');
+          return Text(
+            '$prefix${service.price}',
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          );
         }
         // 정가는 살짝 흐리게 + 빨간 취소선 한 줄, 화살표 뒤에
         // 할인가와 '(기간 할인 중)'. 할인율은 표시하지 않는다 (2026-11-17).
+        // 라벨이 길어 좁은 화면·큰 글씨에서 3줄로 늘어나는 것을 막는다.
         return Text.rich(
           TextSpan(
             children: [
               TextSpan(text: prefix),
               const WidgetSpan(
-                alignment: PlaceholderAlignment.middle,
+                alignment: PlaceholderAlignment.baseline,
+                baseline: TextBaseline.alphabetic,
                 child: RedStrikeText(PurchaseService.regularPriceText),
               ),
               TextSpan(text: ' → ${service.price} (기간 할인 중)'),
             ],
           ),
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
         );
       },
     );
@@ -56,7 +66,10 @@ class AdFreePriceLabel extends StatelessWidget {
 /// 정중앙보다 살짝 아래에 그려지고 색상도 글자색을 따라가서,
 /// 글자 정중앙에 빨간 선을 직접 그린다. (2026-11-17)
 /// 정가처럼 '할인 전 가격'임을 보여줄 때 쓰며, 글자는
-/// 주변 글자보다 살짝 흐리게(65%) 표시한다.
+/// 주변 글자보다 살짝 흐리게(75%) 표시한다.
+/// 빨간 선은 진한 빨강(#D32F2F)으로, 금색 버튼·어두운 다이얼로그
+/// 둘 다에서 보이게 한다. 밝은 빨강(#FF5252)은 금색 위에서
+/// 거의 안 보인다 (오푸스 리뷰, 2026-11-17).
 class RedStrikeText extends StatelessWidget {
   const RedStrikeText(this.text, {super.key});
 
@@ -66,23 +79,35 @@ class RedStrikeText extends StatelessWidget {
   Widget build(BuildContext context) {
     final style = DefaultTextStyle.of(context).style;
     final fontSize = style.fontSize ?? 14.0;
-    final muted = style.color?.withValues(alpha: 0.65);
+    // 큰 글씨 접근성 설정에서도 취소선 위치·두께가 따라가게
+    // 텍스트 스케일을 반영한다. (오푸스 리뷰, 2026-11-17)
+    final scaledFontSize = MediaQuery.textScalerOf(context).scale(fontSize);
+    final baseColor =
+        style.color ?? Theme.of(context).colorScheme.onSurface;
+    final muted = baseColor.withValues(alpha: 0.75);
     // 줄 높이 정중앙은 숫자(캡 높이) 정중앙보다 살짝 아래라,
-    // 글자 정중앙에 오게 위로 살짝 올린다.
-    const red = Color(0xFFFF5252);
-    return Stack(
-      alignment: Alignment.center,
-      children: [
-        Text(text, style: TextStyle(color: muted)),
-        Positioned(
-          left: 0,
-          right: 0,
-          child: Transform.translate(
-            offset: Offset(0, -fontSize * 0.12),
-            child: Container(height: 2, color: red),
+    // 글자 정중앙에 오게 위로 살짝 올린다. '₩4,900'은 숫자와
+    // ₩ 기호라 로보토 기준 0.10이 적절하다 (오푸스 리뷰, 2026-11-17).
+    const red = Color(0xFFD32F2F);
+    final lineThickness = math.max(2.0, scaledFontSize * 0.14);
+    return Semantics(
+      // 스크린 리더에 취소된 가격임을 전달한다. (오푸스 리뷰, 2026-11-17)
+      label: '정가 $text, 할인 전 가격',
+      excludeSemantics: true,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          Text(text, style: TextStyle(color: muted)),
+          Positioned(
+            left: 0,
+            right: 0,
+            child: Transform.translate(
+              offset: Offset(0, -scaledFontSize * 0.10),
+              child: Container(height: lineThickness, color: red),
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
