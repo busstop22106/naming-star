@@ -93,48 +93,46 @@ void main() {
     expect(find.textContaining('할인'), findsNothing);
   });
 
-  testWidgets('할인가일 때는 정가 빨간 취소선·화살표·할인가·기간 할인 중이 보인다',
+  testWidgets('할인가일 때는 정가 두 줄 취소선·화살표·할인가가 보인다',
       (tester) async {
     await pumpLabel(
       tester,
       price: '₩2,450',
       prefix: '평생 광고 없이 사용 · ',
     );
-    expect(find.textContaining('→'), findsOneWidget);
-    expect(find.textContaining('(기간 할인 중)'), findsOneWidget);
+    expect(find.text('평생 광고 없이 사용 · '), findsOneWidget);
+    expect(find.text(' → ₩2,450'), findsOneWidget);
+    expect(find.textContaining('기간 할인 중'), findsNothing);
     expect(find.textContaining('% 할인'), findsNothing);
-    // '→'를 포함한 RichText가 딱 하나이고, 그 두 번째 span이
-    // 빨간 취소선 위젯이다. (Text 위젯도 내부적으로 RichText라 직접 찾는다.)
-    final richTexts = tester
-        .widgetList<RichText>(find.byType(RichText))
-        .where(
-          (r) => (r.text as TextSpan).toPlainText().contains('→'),
-        )
-        .toList();
-    expect(richTexts.length, 1);
-    final span = richTexts.first.text as TextSpan;
-    // Text.rich는 넘긴 span을 기본 스타일 적용용으로 한 겹 더 감싸서,
-    // 실제 3개 span은 children[0] 안에 있다.
-    final inner = span.children![0] as TextSpan;
-    expect((inner.children![0] as TextSpan).text, '평생 광고 없이 사용 · ');
-    final struckSpan = inner.children![1] as WidgetSpan;
-    final strike = struckSpan.child as RedStrikeText;
+    // WidgetSpan을 쓰지 않는다 — Wrap 안에 독립 위젯으로 둔다.
+    expect(find.byType(Wrap), findsOneWidget);
+    expect(find.byType(DoubleStrikeText), findsOneWidget);
+    final strike =
+        tester.widget<DoubleStrikeText>(find.byType(DoubleStrikeText));
     expect(strike.text, '₩4,900');
-    expect((inner.children![2] as TextSpan).text, ' → ₩2,450 (기간 할인 중)');
-    // 빨간 취소선: RedStrikeText 안에 높이 2의 빨간 Container가 1개.
-    expect(find.byType(RedStrikeText), findsOneWidget);
+    // 두 줄 취소선: 1px 높이 Container가 2개이고, 선 색은
+    // ₩4,900 텍스트 색(흐림 포함)과 동일하다.
     final lines = tester.widgetList<Container>(
       find.descendant(
-        of: find.byType(RedStrikeText),
+        of: find.byType(DoubleStrikeText),
         matching: find.byType(Container),
       ),
     ).toList();
-    expect(lines.length, 1);
-    expect(lines.first.constraints?.maxHeight, 2);
-    expect(lines.first.color, const Color(0xFFD32F2F));
+    expect(lines.length, 2);
+    for (final line in lines) {
+      expect(line.constraints?.maxHeight, 1);
+    }
+    final priceText = tester.widget<Text>(
+      find.descendant(
+        of: find.byType(DoubleStrikeText),
+        matching: find.byType(Text),
+      ),
+    );
+    expect(lines.first.color, priceText.style?.color);
+    expect(lines.last.color, priceText.style?.color);
   });
 
-  testWidgets('설정 화면에서도 할인가일 때 빨간 취소선·화살표·기간 할인 중이 보인다',
+  testWidgets('설정 화면에서도 할인가일 때 두 줄 취소선·화살표가 보인다',
       (tester) async {
     SharedPreferences.setMockInitialValues({});
     PurchaseService.instance.setPriceForTest(
@@ -149,8 +147,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.textContaining('→'), findsOneWidget);
-    expect(find.textContaining('(기간 할인 중)'), findsOneWidget);
+    expect(find.textContaining('기간 할인 중'), findsNothing);
     expect(find.textContaining('% 할인'), findsNothing);
-    expect(find.byType(RedStrikeText), findsOneWidget);
+    expect(find.byType(DoubleStrikeText), findsOneWidget);
   });
 }

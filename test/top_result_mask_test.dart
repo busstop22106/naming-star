@@ -77,6 +77,26 @@ void main() {
     expect(find.text('닫기'), findsOneWidget);
   });
 
+  testWidgets('할인가일 때 다이얼로그에 두 줄 취소선 가격이 보인다', (tester) async {
+    // 1위 다이얼로그가 열리고 내용(제목·구매 버튼·두 줄 취소선)이
+    // 실제로 렌더링되는지 확인한다. WidgetSpan이 들어가면 실기기에서
+    // 팝업이 안 뜨고 배경만 딤 처리되는 버그가 있었다 (2026-11-17).
+    PurchaseService.instance.setPriceForTest(
+      rawPrice: 1900,
+      currencyCode: 'KRW',
+      displayPrice: '₩1,900',
+    );
+    await pumpRecommend(tester);
+    await openTopDialog(tester);
+
+    expect(find.text('1위 이름 확인하기'), findsOneWidget);
+    expect(find.text('광고 보고 바로 확인하기'), findsOneWidget);
+    expect(find.text('닫기'), findsOneWidget);
+    expect(find.byType(AdFreePriceLabel), findsOneWidget);
+    expect(find.byType(DoubleStrikeText), findsOneWidget);
+    expect(find.text(' → ₩1,900'), findsOneWidget);
+  });
+
   testWidgets('광고가 준비되지 않으면 안내가 뜨고 계속 가려진다', (tester) async {
     await pumpRecommend(tester);
     await openTopDialog(tester);
