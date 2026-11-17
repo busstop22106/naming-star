@@ -84,11 +84,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
       duration: const Duration(milliseconds: 800),
       persist: false,
     );
-    // 토스트를 볼 시간(800ms)과 손글씨 준비를 함께 기다린다 —
+    // 토스트를 볼 시간과 손글씨 준비를 함께 기다린다 —
     // 폰트가 안 된 채로 팝업을 띄우면 기본 폰트에서 손글씨로
     // 바뀌는 깜빡임이 생긴다 (2026-11-17).
+    // 지연은 1000ms: 토스트 표시 800ms + 사라지는 애니메이션(~200ms)이
+    // 끝난 뒤 팝업을 띄워 토스트와 팝업이 겹치지 않게 한다 (오푸스 리뷰 5차).
     await Future.wait([
-      Future<void>.delayed(const Duration(milliseconds: 800)),
+      Future<void>.delayed(const Duration(milliseconds: 1000)),
       _waitForLetterFont(),
     ]);
     if (!mounted) return;
