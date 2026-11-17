@@ -183,11 +183,22 @@ class PurchaseService {
   Future<bool> buyAdFree() async {
     if (isBusy) return false;
     busyNotifier.value = true;
+    // 결제 시트가 뜬 뒤 스트림 이벤트가 아예 안 오면 busy가 영원히
+    // 안 풀린다. 30초 안에 응답이 없으면 busy를 강제로 푼다.
+    // (오푸스 리뷰, 2026-11-17)
+    _cancelBuyTimeout();
+    _buyTimeoutTimer = Timer(const Duration(seconds: 30), () {
+      if (isBusy) {
+        errorNotifier.value = '응답이 없어요. 잠시 후 다시 시도해 주세요.';
+        busyNotifier.value = false;
+      }
+    });
     try {
       await refreshProducts(force: true);
       final product = _product;
       if (product == null) {
         errorNotifier.value = '상품 정보를 불러오지 못했어요. 잠시 후 다시 시도해 주세요.';
+        _cancelBuyTimeout();
         busyNotifier.value = false;
         return false;
       }
@@ -196,6 +207,7 @@ class PurchaseService {
       );
       if (!launched) {
         errorNotifier.value = '결제를 시작하지 못했어요. 잠시 후 다시 시도해 주세요.';
+        _cancelBuyTimeout();
         busyNotifier.value = false;
         return false;
       }
@@ -203,6 +215,7 @@ class PurchaseService {
     } catch (e) {
       debugPrint('결제 시작 실패: $e');
       errorNotifier.value = '결제를 시작하지 못했어요. 잠시 후 다시 시도해 주세요.';
+      _cancelBuyTimeout();
       busyNotifier.value = false;
       return false;
     }
@@ -253,6 +266,17 @@ class PurchaseService {
 
   Completer<bool>? _restoreCompleter;
 
+  /// 구매 시트 대기 타임아웃. buyNonConsumable이 true를 반환한 뒤
+  /// 스트림 이벤트가 아예 안 오면(Play 크래시·네트워크 단절 등)
+  /// busy가 영원히 안 풀린다. 30초 안에 응답이 없으면 busy를
+  /// 강제로 푼다 (오푸스 리뷰, 2026-11-17).
+  Timer? _buyTimeoutTimer;
+
+  void _cancelBuyTimeout() {
+    _buyTimeoutTimer?.cancel();
+    _buyTimeoutTimer = null;
+  }
+
   void _onPurchaseUpdate(List<PurchaseDetails> purchases) {
     for (final purchase in purchases) {
       // Play가 결제 실패·취소를 알릴 때 구매 목록이 비어 있으면 플러그인이
@@ -267,12 +291,30 @@ class PurchaseService {
       // (실제 구매 객체가 없어서 검증이 안 된다).
       if (purchase.productID.isEmpty) {
         if (!isBusy) continue;
+        // pending은 아직 진행 중이라 busy를 풀지 않는다 — 최종 결과가
+        // 뒤이어 스트림으로 온다. (플러그인은 합성 pending을 만들지
+        // 않지만 방어적으로 둔다. 오푸스 리뷰, 2026-11-17)
+        if (purchase.status == PurchaseStatus.pending) continue;
+        // 복원 중이면 복원 맥락의 문구를, 구매 중이면 구매 문구를 쓴다.
+        // (복원 중에 '구매에 실패했어요'가 뜨면 헷갈린다. 오푸스 리뷰, 2026-11-17)
+        final isRestoring = _restoreCompleter != null;
         if (purchase.status == PurchaseStatus.error) {
-          errorNotifier.value = '구매에 실패했어요. 다시 시도해 주세요.';
+          errorNotifier.value = isRestoring
+              ? '복원에 실패했어요. 다시 시도해 주세요.'
+              : '구매에 실패했어요. 다시 시도해 주세요.';
         } else if (purchase.status == PurchaseStatus.canceled) {
-          errorNotifier.value = '구매를 취소했어요.';
+          errorNotifier.value =
+              isRestoring ? '복원을 취소했어요.' : '구매를 취소했어요.';
+        } else if (purchase.status == PurchaseStatus.purchased &&
+            !isRestoring) {
+          // 구매 중인데 구매 객체 없이 완료만 왔다 — 돈은 빠졌을 수 있으나
+          // 확인할 수 없으니 앱 재시작 시 복원으로 반영되게 안내한다.
+          // (복원 중에는 구매 내역이 없는 정상 경우라 메시지를 안 띄운다.
+          // 오푸스 리뷰, 2026-11-17)
+          errorNotifier.value = '처리 중 문제가 생겼어요. 앱을 다시 시작해 주세요.';
         }
         _completeRestore(false);
+        _cancelBuyTimeout();
         busyNotifier.value = false;
         continue;
       }
@@ -280,12 +322,17 @@ class PurchaseService {
       switch (purchase.status) {
         case PurchaseStatus.purchased:
         case PurchaseStatus.restored:
+          // 이전 오류 메시지가 남아 있으면 지운다 — 합성 오류 뒤에
+          // 실제 구매 완료가 오면 성공인데도 에러 스낵바가 뜬다.
+          // (오푸스 리뷰, 2026-11-17)
+          errorNotifier.value = null;
           _ownedPurchaseSeen = true;
           unawaited(AdFreeService.instance.setAdFree(true));
           if (_restoreCompleter != null && !_restoreCompleter!.isCompleted) {
             _restoreCompleter!.complete(true);
           }
           // 구매가 끝났으니 버튼 busy를 푼다.
+          _cancelBuyTimeout();
           busyNotifier.value = false;
           break;
         case PurchaseStatus.pending:
@@ -294,12 +341,14 @@ class PurchaseService {
         case PurchaseStatus.canceled:
           errorNotifier.value = '구매를 취소했어요.';
           _completeRestore(false);
+          _cancelBuyTimeout();
           busyNotifier.value = false;
           break;
         case PurchaseStatus.error:
           // 스토어 원문(영문·코드)을 그대로 보여주지 않고 고정 문구로 안내한다.
           errorNotifier.value = '구매에 실패했어요. 다시 시도해 주세요.';
           _completeRestore(false);
+          _cancelBuyTimeout();
           busyNotifier.value = false;
           break;
       }
@@ -347,6 +396,7 @@ class PurchaseService {
   void resetForTest() {
     _subscription?.cancel();
     _subscription = null;
+    _cancelBuyTimeout();
     _product = null;
     _rawPrice = null;
     _currencyCode = null;

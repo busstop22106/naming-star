@@ -1,6 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
+import 'package:jakmyeongbyeol/services/adfree_service.dart';
 import 'package:jakmyeongbyeol/services/purchase_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 /// 구매 스트림 합성 이벤트로 busy가 풀리는지 검증한다.
 /// 배경: Play가 결제 실패·취소를 알릴 때 구매 목록이 비어 있으면
@@ -12,6 +14,7 @@ import 'package:jakmyeongbyeol/services/purchase_service.dart';
 void main() {
   tearDown(() {
     PurchaseService.instance.resetForTest();
+    AdFreeService.instance.resetForTest();
   });
 
   /// 플러그인이 만드는 합성 이벤트: 구매 목록이 비어 있을 때
@@ -22,6 +25,21 @@ void main() {
       productID: '',
       status: status,
       transactionDate: null,
+      verificationData: PurchaseVerificationData(
+        localVerificationData: '',
+        serverVerificationData: '',
+        source: 'google_play',
+      ),
+    );
+  }
+
+  /// 실제 상품의 구매 이벤트.
+  PurchaseDetails realPurchase(PurchaseStatus status) {
+    return PurchaseDetails(
+      purchaseID: 'test-purchase-id',
+      productID: PurchaseService.adFreeProductId,
+      status: status,
+      transactionDate: '1700000000000',
       verificationData: PurchaseVerificationData(
         localVerificationData: '',
         serverVerificationData: '',
@@ -58,7 +76,33 @@ void main() {
     service.busyNotifier.value = true; // 구매 진행 중
     service.handlePurchaseUpdateForTest([synthetic(PurchaseStatus.purchased)]);
     // 합성 완료는 실제 구매 객체가 없어 권한을 켤 수 없으니 busy만 푼다.
+    // 대신 앱 재시작 안내를 띄운다 (돈이 빠졌을 수 있으니 복원으로 반영).
     expect(service.isBusy, isFalse);
+    expect(service.errorNotifier.value, contains('다시 시작'));
+  });
+
+  test('합성 pending은 busy를 풀지 않는다 (아직 진행 중)', () {
+    final service = PurchaseService.instance;
+    service.busyNotifier.value = true; // 구매 진행 중
+    service.handlePurchaseUpdateForTest([synthetic(PurchaseStatus.pending)]);
+    // pending은 최종 결과가 아니니 busy를 유지한다.
+    expect(service.isBusy, isTrue);
     expect(service.errorNotifier.value, isNull);
+  });
+
+  test('실제 구매 완료가 오면 이전 오류 메시지가 지워진다', () async {
+    SharedPreferences.setMockInitialValues({});
+    final service = PurchaseService.instance;
+    service.busyNotifier.value = true; // 구매 진행 중
+    // 합성 오류가 먼저 와서 에러가 세팅된 뒤, 실제 구매 완료가 온다.
+    service.handlePurchaseUpdateForTest([synthetic(PurchaseStatus.error)]);
+    expect(service.errorNotifier.value, isNotNull);
+    service.handlePurchaseUpdateForTest(
+        [realPurchase(PurchaseStatus.purchased)]);
+    expect(service.errorNotifier.value, isNull);
+    expect(service.isBusy, isFalse);
+    // 권한은 실제 구매로 켜진다 (비동기 저장이라 한 프레임 기다린다).
+    await Future<void>.delayed(Duration.zero);
+    expect(AdFreeService.instance.isAdFree, isTrue);
   });
 }
