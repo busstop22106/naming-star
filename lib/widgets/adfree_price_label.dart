@@ -21,7 +21,16 @@ import '../services/purchase_service.dart';
 /// 내부에서 IntrinsicWidth를 쓰는데 WidgetSpan이 들어가면
 /// RenderParagraph의 intrinsic 크기 계산이 실패해 다이얼로그가
 /// 크기 0으로 레이아웃되는 것(알려진 Flutter 이슈 계열)이다.
-/// 대신 Wrap으로 각 부분을 나란히 배치한다.
+///
+/// 화살표는 텍스트 '→'가 아니라 Icon으로 그린다. '→'는 폰트에 따라
+/// 폴백 폰트로 그려져 줄 상자가 커지고, Wrap의 상자 정중앙 정렬로는
+/// 화살표+할인가가 살짝 아래로 처진다 (2026-11-17 실기기 피드백).
+/// Icon은 고정 크기 상자라 줄 높이에 영향을 안 주고, Wrap이
+/// 정중앙에 두면 글자 정중앙에 맞는다.
+/// (주의: Row의 기준선 정렬은 쓰지 않는다 — AlertDialog의
+/// IntrinsicWidth 계산에서 기준선을 구할 때 RenderLimitedBox가
+/// computeDryBaseline을 구현하지 않아 다이얼로그가 깨진다.
+/// 2026-11-17 확인.)
 class AdFreePriceLabel extends StatelessWidget {
   const AdFreePriceLabel({super.key, required this.prefix});
 
@@ -36,6 +45,8 @@ class AdFreePriceLabel extends StatelessWidget {
     // 가격을 구독한다 — 상품 정보가 늦게 도착해도 라벨이 다시 그려진다.
     // (할인 여부는 rawPrice 기준으로 보되, priceNotifier가 같은 시점에
     // 갱신되므로 이 구독만으로 충분하다.) (2026-11-16)
+    final fontSize =
+        DefaultTextStyle.of(context).style.fontSize ?? 14.0;
     return ValueListenableBuilder<String>(
       valueListenable: service.priceNotifier,
       builder: (_, __, ___) {
@@ -50,7 +61,7 @@ class AdFreePriceLabel extends StatelessWidget {
         // 정가는 살짝 흐리게 + 취소선 두 줄, 화살표 뒤에 할인가.
         // 할인율은 표시하지 않는다. '(기간 할인 중)'은 버튼이
         // 2줄로 줄바꿈돼서 뺐다 (2026-11-17).
-        // 스크린 리더에는 '→'를 풀어서 한 문장으로 읽어준다.
+        // 스크린 리더에는 화살표를 풀어서 한 문장으로 읽어준다.
         return Semantics(
           label:
               '평생 광고 없이 사용, 정가 ${PurchaseService.regularPriceText}에서 ${service.price}로 할인',
@@ -63,9 +74,11 @@ class AdFreePriceLabel extends StatelessWidget {
             children: [
               Text(prefix),
               const DoubleStrikeText(PurchaseService.regularPriceText),
-              // 선행 공백을 두면 줄바꿈 시 둘째 줄 머리에 공백이 보인다.
-              // 간격은 Wrap.spacing으로 준다. (오푸스 리뷰, 2026-11-17)
-              Text('→ ${service.price}'),
+              // 화살표는 Icon으로 — 텍스트 '→'는 폴백 폰트 탓에
+              // 줄 상자가 커져서 아래로 처진다. (2026-11-17)
+              // Icon은 고정 크기라 Wrap 정중앙 정렬이 맞는다.
+              Icon(Icons.arrow_forward, size: fontSize),
+              Text(service.price),
             ],
           ),
         );

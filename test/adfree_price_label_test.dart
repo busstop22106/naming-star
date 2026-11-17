@@ -101,7 +101,8 @@ void main() {
       prefix: '평생 광고 없이 사용 · ',
     );
     expect(find.text('평생 광고 없이 사용 · '), findsOneWidget);
-    expect(find.text('→ ₩2,450'), findsOneWidget);
+    expect(find.byIcon(Icons.arrow_forward), findsOneWidget);
+    expect(find.text('₩2,450'), findsOneWidget);
     expect(find.textContaining('기간 할인 중'), findsNothing);
     expect(find.textContaining('% 할인'), findsNothing);
     // WidgetSpan을 쓰지 않는다 — Wrap 안에 독립 위젯으로 둔다.
@@ -165,6 +166,24 @@ void main() {
     expect(above, moreOrLessEquals(below, epsilon: 1.0));
   });
 
+  testWidgets('할인가일 때는 화살표가 Icon이고 할인가 텍스트가 따로 있다',
+      (tester) async {
+    await pumpLabel(
+      tester,
+      price: '₩2,450',
+      prefix: '평생 광고 없이 사용 · ',
+    );
+    // 화살표는 텍스트 '→'가 아니라 Icon이다 — 텍스트 '→'는
+    // 폴백 폰트 탓에 줄 상자가 커져서 아래로 처졌다.
+    // (2026-11-17 실기기 피드백.)
+    // Icon은 고정 크기라 Wrap 정중앙 정렬이 맞는다.
+    expect(find.byIcon(Icons.arrow_forward), findsOneWidget);
+    expect(find.text('₩2,450'), findsOneWidget);
+    expect(find.textContaining('→'), findsNothing);
+    expect(find.byType(DoubleStrikeText), findsOneWidget);
+    expect(find.byType(Wrap), findsOneWidget);
+  });
+
   testWidgets('설정 화면에서도 할인가일 때 두 줄 취소선·화살표가 보인다',
       (tester) async {
     SharedPreferences.setMockInitialValues({});
@@ -179,7 +198,8 @@ void main() {
     await tester.pumpWidget(const MaterialApp(home: SettingsScreen()));
     await tester.pumpAndSettle();
 
-    expect(find.textContaining('→'), findsOneWidget);
+    expect(find.byIcon(Icons.arrow_forward), findsOneWidget);
+    expect(find.text('₩2,450'), findsOneWidget);
     expect(find.textContaining('기간 할인 중'), findsNothing);
     expect(find.textContaining('% 할인'), findsNothing);
     expect(find.byType(DoubleStrikeText), findsOneWidget);
