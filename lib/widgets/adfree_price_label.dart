@@ -109,22 +109,23 @@ class DoubleStrikeText extends StatelessWidget {
         alignment: Alignment.center,
         children: [
           Text(text, style: TextStyle(color: muted)),
+          // 두 줄은 텍스트 정중앙을 기준으로 상하 대칭으로 긋는다.
+          // Column을 Stack 정중앙에 두면 윗줄은 정중앙보다 살짝 위,
+          // 아랫줄은 정중앙보다 살짝 아래에 온다.
+          // (주의: Column 전체를 위로 올리면 안 된다 — 예전에는
+          // 한 줄 취소선을 글자 정중앙에 맞추려고 -0.10만큼 올렸는데,
+          // 두 줄에서는 아랫줄이 정중앙에 걸리고 윗줄만 너무 위로
+          // 가서 대칭이 깨졌다. 2026-11-17 실기기 피드백.)
           Positioned(
             left: 0,
             right: 0,
-            child: Transform.translate(
-              // 줄 높이 정중앙은 숫자(캡 높이) 정중앙보다 살짝 아래라,
-              // 글자 정중앙에 오게 위로 살짝 올린다. 0.10은 로보토 기준
-              // 근사값이라 폰트에 따라 살짝 어긋날 수 있다.
-              offset: Offset(0, -scaledFontSize * 0.10),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(height: lineThickness, color: muted),
-                  SizedBox(height: lineGap),
-                  Container(height: lineThickness, color: muted),
-                ],
-              ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(height: lineThickness, color: muted),
+                SizedBox(height: lineGap),
+                Container(height: lineThickness, color: muted),
+              ],
             ),
           ),
         ],

@@ -132,6 +132,39 @@ void main() {
     expect(lines.last.color, priceText.style?.color);
   });
 
+  testWidgets('두 취소선은 텍스트 정중앙을 기준으로 상하 대칭이다', (tester) async {
+    await pumpLabel(
+      tester,
+      price: '₩2,450',
+      prefix: '평생 광고 없이 사용 · ',
+    );
+    // 텍스트(₩4,900) 정중앙.
+    final textCenter = tester.getCenter(
+      find.descendant(
+        of: find.byType(DoubleStrikeText),
+        matching: find.byType(Text),
+      ),
+    );
+    // 두 취소선의 정중앙 (dy 순으로 정렬).
+    final lineFinder = find.descendant(
+      of: find.byType(DoubleStrikeText),
+      matching: find.byType(Container),
+    );
+    expect(lineFinder, findsNWidgets(2));
+    final centers = [
+      tester.getCenter(lineFinder.at(0)),
+      tester.getCenter(lineFinder.at(1)),
+    ]..sort((a, b) => a.dy.compareTo(b.dy));
+    final above = textCenter.dy - centers.first.dy;
+    final below = centers.last.dy - textCenter.dy;
+    // 윗줄은 정중앙보다 위, 아랫줄은 정중앙보다 아래, 같은 거리.
+    // (예전에는 Column 전체를 위로 올려서 아랫줄이 정중앙에 걸리고
+    // 윗줄만 너무 위에 가는 대칭 깨짐이 있었다. 2026-11-17 실기기 피드백.)
+    expect(above, greaterThan(0));
+    expect(below, greaterThan(0));
+    expect(above, moreOrLessEquals(below, epsilon: 1.0));
+  });
+
   testWidgets('설정 화면에서도 할인가일 때 두 줄 취소선·화살표가 보인다',
       (tester) async {
     SharedPreferences.setMockInitialValues({});
