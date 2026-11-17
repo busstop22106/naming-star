@@ -31,6 +31,22 @@ void main() {
     await tester.pump();
   }
 
+  testWidgets('앱 버전 타일에는 chevron이 없다 (라벨처럼 보인다)', (tester) async {
+    await pumpSettings(tester);
+    final versionTile = find.ancestor(
+      of: find.text('앱 버전'),
+      matching: find.byType(ListTile),
+    );
+    expect(versionTile, findsOneWidget);
+    expect(
+      find.descendant(
+        of: versionTile,
+        matching: find.byIcon(Icons.chevron_right),
+      ),
+      findsNothing,
+    );
+  });
+
   testWidgets('앱 버전 5회 탭까지는 토스트가 안 뜬다', (tester) async {
     await pumpSettings(tester);
     for (var i = 0; i < 5; i++) {

@@ -188,6 +188,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
               title: '앱 버전',
               subtitle: '1.0.0',
               onTap: _onVersionTap,
+              // 정보만 보여주는 라벨처럼 보이게: chevron도, 터치 물결 효과도 없다.
+              // (탭은 이스터에그 10회 연속 탭용으로 그대로 동작한다, 2026-11-17)
+              isLabel: true,
             ),
           ],
         ),
@@ -253,32 +256,43 @@ class _SettingsScreenState extends State<SettingsScreen> {
     required String title,
     String? subtitle,
     VoidCallback? onTap,
+    // true면 정보 라벨처럼 보인다 — chevron을 안 붙이고 터치 물결 효과도
+    // 제거한다. onTap은 그대로 동작한다 (이스터에그용, 2026-11-17).
+    bool isLabel = false,
   }) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 8),
-      child: ListTile(
-        leading: Container(
-          width: 36,
-          height: 36,
-          decoration: const BoxDecoration(
-            color: AppTheme.primarySoft,
-            shape: BoxShape.circle,
-          ),
-          child: Icon(icon, size: 20, color: AppTheme.primary),
+    final tile = ListTile(
+      leading: Container(
+        width: 36,
+        height: 36,
+        decoration: const BoxDecoration(
+          color: AppTheme.primarySoft,
+          shape: BoxShape.circle,
         ),
-        title: Text(title,
-            style: const TextStyle(
-                fontSize: 15, fontWeight: FontWeight.w600)),
-        subtitle: subtitle != null
-            ? Text(subtitle,
-                style: const TextStyle(fontSize: 12))
-            : null,
-        trailing: onTap != null
-            ? const Icon(Icons.chevron_right,
-                color: AppTheme.sub)
-            : null,
-        onTap: onTap,
+        child: Icon(icon, size: 20, color: AppTheme.primary),
       ),
+      title: Text(title,
+          style:
+              const TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+      subtitle: subtitle != null
+          ? Text(subtitle, style: const TextStyle(fontSize: 12))
+          : null,
+      trailing: (onTap != null && !isLabel)
+          ? const Icon(Icons.chevron_right, color: AppTheme.sub)
+          : null,
+      onTap: onTap,
+    );
+    final card = Card(
+      margin: const EdgeInsets.only(bottom: 8),
+      child: tile,
+    );
+    if (!isLabel) return card;
+    // 터치 물결(ripple)·눌림 하이라이트를 투명하게 해 라벨처럼 보이게 한다.
+    return Theme(
+      data: Theme.of(context).copyWith(
+        splashColor: Colors.transparent,
+        highlightColor: Colors.transparent,
+      ),
+      child: card,
     );
   }
 
