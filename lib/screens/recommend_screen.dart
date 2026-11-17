@@ -111,7 +111,7 @@ class _RecommendScreenState extends State<RecommendScreen> {
       builder: (dialogContext) => AlertDialog(
         title: const Text('1위 이름 확인하기'),
         content: const Text(
-            '광고를 끝까지 보면 1위 이름을 바로 확인할 수 있어요.\n평생 광고 없이 사용하기를 구매하면 1위 결과가 항상 공개돼요.'),
+            '광고를 끝까지 보면 1위 이름을 바로 확인할 수 있어요.\n평생 광고 없이 사용을 구매하면 1위 결과가 항상 공개돼요.'),
         actions: [
           TextButton(
             onPressed: () {
@@ -126,7 +126,7 @@ class _RecommendScreenState extends State<RecommendScreen> {
               // 다이얼로그를 닫는다. 취소·실패는 스낵바로 안내한다.
               await PurchaseService.instance.buyAdFree();
             },
-            child: const AdFreePriceLabel(prefix: '평생 광고 없이 보기 '),
+            child: const AdFreePriceLabel(prefix: '평생 광고 없이 사용 '),
           ),
           FilledButton(
             onPressed: _rewardedBusy

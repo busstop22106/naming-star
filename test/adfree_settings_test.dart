@@ -23,8 +23,8 @@ void main() {
   testWidgets('구매 전에는 광고 제거 섹션에 구매·구매 복원하기 버튼이 보인다', (tester) async {
     await pumpSettings(tester);
 
-    expect(find.text('광고 없이 사용하기'), findsOneWidget);
-    expect(find.textContaining('평생 광고 없이 사용하기'), findsWidgets);
+    expect(find.text('광고 없이 사용'), findsOneWidget);
+    expect(find.textContaining('평생 광고 없이 사용'), findsWidgets);
     expect(find.text('이미 구입하셨나요? 구매 복원하기'), findsOneWidget);
     expect(find.text('평생 유료 멤버쉽 적용됐어요'), findsNothing);
   });

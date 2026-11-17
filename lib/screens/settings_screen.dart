@@ -59,8 +59,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             const SizedBox(height: 16),
 
-            // 광고 없이 사용하기
-            _sectionTitle('광고 없이 사용하기'),
+            // 광고 없이 사용
+            _sectionTitle('광고 없이 사용'),
             const _AdFreeSection(),
             const SizedBox(height: 16),
 
@@ -306,7 +306,7 @@ class _AdFreeSectionState extends State<_AdFreeSection> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    isAdFree ? '평생 유료 멤버쉽 적용됐어요' : '평생 광고 없이 사용하기',
+                    isAdFree ? '평생 유료 멤버쉽 적용됐어요' : '평생 광고 없이 사용',
                     style: const TextStyle(
                         fontSize: 15, fontWeight: FontWeight.w600),
                   ),
@@ -335,7 +335,7 @@ class _AdFreeSectionState extends State<_AdFreeSection> {
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
                       : const AdFreePriceLabel(
-                          prefix: '평생 광고 없이 사용하기 · '),
+                          prefix: '평생 광고 없이 사용 · '),
                 ),
               ),
               const SizedBox(height: 8),
