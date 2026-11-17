@@ -80,12 +80,17 @@ const _maxFavorites = 100;
 /// - corrupt: 최상위 JSON 자체가 깨져 항목을 하나도 신뢰할 수 없음.
 ///   이 경우 저장 함수는 원본을 백업 키에 옮기고 새로 시작한다
 ///   (깨진 채로 두면 저장이 영원히 안 되는 교착에 빠진다, 2026-11-17).
+/// - readFailed: 저장소를 아예 못 읽음(일시적 I/O 오류 등).
+///   데이터가 깨진 게 아니라 읽기에 실패한 것이므로, 저장 함수는
+///   덮지 않고 false를 돌려준다 — 정상 데이터를 빈 목록으로
+///   덮어버리는 데이터 손실을 막기 위함 (오푸스 리뷰, 2026-11-17).
 /// - unparseable: 항목별 파싱에 실패한 원본 JSON 조각. 저장할 때
 ///   그대로 되돌려 넣어, 깨진 항목 하나 때문에 나머지를 잃지 않는다.
 class _StoredFavorites {
   final List<FavoriteItem> items;
   final List<dynamic> unparseable;
   final bool corrupt;
+  final bool readFailed;
   // 손상된 원본 JSON 문자열 (백업용). 깨지지 않았으면 null.
   final String? raw;
 
@@ -95,6 +100,7 @@ class _StoredFavorites {
     required this.items,
     required this.unparseable,
     required this.corrupt,
+    this.readFailed = false,
     this.raw,
   });
 }
@@ -121,7 +127,9 @@ Future<_StoredFavorites> _loadStored() async {
     final prefs = await SharedPreferences.getInstance();
     raw = prefs.getString(_key);
   } catch (_) {
-    return _StoredFavorites(items: [], unparseable: [], corrupt: true);
+    // 저장소를 못 읽음 — 데이터 손상과 다르니 덮지 않게 readFailed로 구분한다.
+    return _StoredFavorites(
+        items: [], unparseable: [], corrupt: false, readFailed: true);
   }
   if (raw == null) {
     return _StoredFavorites(items: [], unparseable: [], corrupt: false);
@@ -189,9 +197,12 @@ Future<List<FavoriteItem>> loadFavorites() async {
 
 /// 저장 성공 여부를 반환한다. 저장값이 깨져 있으면 원본을 백업하고
 /// 새로 시작한다 — 깨진 채로 두면 저장이 영원히 안 된다 (2026-11-17).
+/// 저장소를 못 읽었으면(readFailed) 덮지 않고 false를 돌려준다
+/// (정상 데이터를 날릴 수 있다. 오푸스 리뷰, 2026-11-17).
 /// 쓰기 자체가 실패하면 false.
 Future<bool> saveFavorite(FavoriteItem item) async {
   final stored = await _loadStored();
+  if (stored.readFailed) return false;
   if (stored.corrupt) await _backupCorruptRaw(stored.raw);
   final items = stored.corrupt ? <FavoriteItem>[] : stored.items;
   final unparseable = stored.corrupt ? <dynamic>[] : stored.unparseable;
@@ -208,6 +219,7 @@ Future<bool> saveFavorite(FavoriteItem item) async {
 
 Future<bool> removeFavorite(FavoriteItem item) async {
   final stored = await _loadStored();
+  if (stored.readFailed) return false;
   if (stored.corrupt) await _backupCorruptRaw(stored.raw);
   final items = stored.corrupt ? <FavoriteItem>[] : stored.items;
   final unparseable = stored.corrupt ? <dynamic>[] : stored.unparseable;
@@ -224,8 +236,10 @@ Future<bool> isFavorite(String fullName, String hanjaName) async {
 
 /// 보관함 전체를 교체한다 — 삭제 실행 취소 때 원래 순서 그대로 되돌리기 위함.
 /// 저장값이 깨져 있으면 원본을 백업하고 주어진 목록으로 새로 쓴다.
+/// 저장소를 못 읽었으면 덮지 않고 false를 돌려준다.
 Future<bool> replaceFavorites(List<FavoriteItem> items) async {
   final stored = await _loadStored();
+  if (stored.readFailed) return false;
   if (stored.corrupt) await _backupCorruptRaw(stored.raw);
   final unparseable = stored.corrupt ? <dynamic>[] : stored.unparseable;
   return _writeStored(items, unparseable);

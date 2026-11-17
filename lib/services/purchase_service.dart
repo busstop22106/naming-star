@@ -443,6 +443,11 @@ class PurchaseService with WidgetsBindingObserver {
   void resetForTest() {
     _subscription?.cancel();
     _subscription = null;
+    // removeObserver는 넣지 않는다 — PurchaseService는 앱 수명
+    // 싱글턴이라 옵서버를 뗄 일이 없고, 순수 unit test(testWidgets가
+    // 아닌 test)에서는 WidgetsBinding이 초기화되지 않아
+    // WidgetsBinding.instance 접근 자체가 던진다.
+    // (오푸스 리뷰의 대칭성 제안을 되돌림, 2026-11-17)
     _cancelBuyTimeout();
     _cancelResumeTimer();
     _product = null;
