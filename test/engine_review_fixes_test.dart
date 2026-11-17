@@ -20,7 +20,6 @@ SajuResult fakeSaju({String? yongsin}) => SajuResult(
       strongBody: false,
       yongsin: yongsin,
       huishin: null,
-      johu: null,
       notes: const [],
     );
 
@@ -218,7 +217,6 @@ void main() {
           strongBody: false,
           yongsin: '화',
           huishin: null,
-          johu: null,
           notes: const [],
         );
 

@@ -195,7 +195,6 @@ class SajuResult {
   final bool strongBody; // 신강 여부
   final String? yongsin; // 용신 오행
   final String? huishin; // 희신 오행
-  final String? johu; // 조후 필요 오행
   final List<String> notes; // 간이 분석 한계 안내
 
   const SajuResult({
@@ -209,7 +208,6 @@ class SajuResult {
     required this.strongBody,
     required this.yongsin,
     required this.huishin,
-    required this.johu,
     required this.notes,
   });
 }

@@ -244,7 +244,6 @@ SajuResult computeSaju(BabyInfo baby) {
     strongBody: strongBody,
     yongsin: yongsin,
     huishin: huishin,
-    johu: johu,
     notes: notes,
   );
 }
@@ -270,11 +269,3 @@ List<String> lackingElements(Map<String, int> counts) {
   }
   return order.where((e) => (counts[e] ?? 0) == min).toList();
 }
-
-const Map<String, String> elementColors = {
-  '목': '초록',
-  '화': '빨강',
-  '토': '노랑',
-  '금': '흰색',
-  '수': '검정',
-};

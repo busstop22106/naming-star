@@ -203,6 +203,61 @@ class DimensionBar extends StatelessWidget {
 }
 
 /// 섹션 카드 — 아이콘은 둥근 칩 안에 넣어 귀엽게
+/// 밤하늘 그라데이션 카드 — 헤더·요약 카드가 공유하는 장식.
+/// deepNavy→deepNavyDark 그라데이션 + radius 24 + deepBorder 테두리.
+/// StarHero·상세 헤더·추천 사주 요약의 동일 장식을 한 곳으로 모았다
+/// (2026-11-17). 그림자는 StarHero만 쓴다.
+class NightCard extends StatelessWidget {
+  final Widget child;
+  final EdgeInsetsGeometry padding;
+  final bool shadow;
+  const NightCard({
+    super.key,
+    required this.child,
+    this.padding = const EdgeInsets.all(20),
+    this.shadow = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: padding,
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [AppTheme.deepNavy, AppTheme.deepNavyDark],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: AppTheme.deepBorder),
+        boxShadow: shadow ? AppTheme.softShadow : null,
+      ),
+      child: child,
+    );
+  }
+}
+
+/// 36×36 원형 아이콘 칩 — SectionCard 헤더·설정 메뉴·광고 제거 섹션이
+/// 공유하는 작은 아이콘 배지 (2026-11-17).
+class CircleIcon extends StatelessWidget {
+  final IconData icon;
+  final double size;
+  const CircleIcon({super.key, required this.icon, this.size = 36});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: const BoxDecoration(
+        color: AppTheme.primarySoft,
+        shape: BoxShape.circle,
+      ),
+      child: Icon(icon, size: 20, color: AppTheme.primary),
+    );
+  }
+}
+
 class SectionCard extends StatelessWidget {
   final String title;
   final String? subtitle;
@@ -230,15 +285,7 @@ class SectionCard extends StatelessWidget {
               Row(
                 children: [
                   if (icon != null) ...[
-                    Container(
-                      width: 36,
-                      height: 36,
-                      decoration: const BoxDecoration(
-                        color: AppTheme.primarySoft,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(icon, size: 20, color: AppTheme.primary),
-                    ),
+                    CircleIcon(icon: icon!),
                     const SizedBox(width: 10),
                   ],
                   Expanded(
@@ -278,18 +325,8 @@ class StarHero extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [AppTheme.deepNavy, AppTheme.deepNavyDark],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: AppTheme.deepBorder),
-        boxShadow: AppTheme.softShadow,
-      ),
+    return NightCard(
+      shadow: true,
       child: Stack(
         children: [
           Row(

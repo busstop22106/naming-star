@@ -169,19 +169,8 @@ class _DetailScreenState extends State<DetailScreen> {
             20, 8, 20, 24 + MediaQuery.of(context).padding.bottom),
         children: [
           // 이름 헤더 — 밤하늘 그라데이션 카드 (흰 글자는 네이비 위 13.95:1)
-          Container(
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [AppTheme.deepNavy, AppTheme.deepNavyDark],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: AppTheme.deepBorder),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Row(
+          NightCard(
+            child: Row(
                 children: [
                   Expanded(
                     child: Column(
@@ -234,7 +223,6 @@ class _DetailScreenState extends State<DetailScreen> {
                       score: a.total, size: 110, darkBackground: true),
                 ],
               ),
-            ),
           ),
 
           // 공유 링크 안내 (공유된 한자를 찾지 못해 대체했을 때).

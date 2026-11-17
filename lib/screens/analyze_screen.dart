@@ -122,11 +122,8 @@ class _AnalyzeScreenState extends State<AnalyzeScreen> {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         widget.onAnalyzeNameConsumed?.call();
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-                content: Text(
-                    '랭킹에서 ‘$request’을(를) 가져왔어요. 한자를 골라 분석해보세요.')),
-          );
+          showSingleSnackBar(ScaffoldMessenger.of(context),
+              '랭킹에서 ‘$request’을(를) 가져왔어요. 한자를 골라 분석해보세요.');
         }
       });
     }
@@ -239,9 +236,8 @@ class _AnalyzeScreenState extends State<AnalyzeScreen> {
               hour: baby.birthHour!, minute: baby.birthMinute ?? 0);
     });
     _syncShared();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('보관함에서 ${item.fullName}을(를) 불러왔어요.')),
-    );
+    showSingleSnackBar(ScaffoldMessenger.of(context),
+        '보관함에서 ${item.fullName}을(를) 불러왔어요.');
   }
 
   List<String> get _syllables =>
@@ -249,26 +245,12 @@ class _AnalyzeScreenState extends State<AnalyzeScreen> {
 
   Future<void> _analyze() async {
     if (_navigating) return;
-    final syls = _syllables;
-    if (syls.length != 2) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-            content: Text(_isPureKorean
-                ? '순우리말 이름 2자를 입력해주세요. (예: 하늘)'
-                : '이름 2자를 입력해주세요. (예: 도윤)')),
-      );
-      return;
-    }
-    // 한글 음절 확인 (순우리말 모드)
-    if (_isPureKorean) {
-      final hangul = RegExp(r'^[가-힣]{2}$');
-      if (!hangul.hasMatch(syls.join())) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('한글 2자로 입력해주세요.')),
-        );
-        return;
-      }
-    }
+    // 입력 검증 + picks 생성은 _buildPicks()로 일원화한다 (가족 궁합과 동일).
+    // 순우리말도 _buildPicks()가 pureKoreanPicks를 반환하므로 analyzeName에
+    // isPureKorean만 넘기면 analyzePureKoreanName과 같은 결과가 나온다
+    // (2026-11-17).
+    final picks = _buildPicks();
+    if (picks == null) return;
     final baby = BabyInfo(
       surname: _surnamePick.name,
       surnameHanja: _surnamePick.hanja,
@@ -279,36 +261,14 @@ class _AnalyzeScreenState extends State<AnalyzeScreen> {
       birthMinute: _timeUnknown ? null : _birthTime?.minute,
     );
     final saju = computeSaju(baby);
-    final NameAnalysis analysis;
-    if (_isPureKorean) {
-      analysis = analyzePureKoreanName(
-        surname: _surnamePick.name,
-        surnameStrokes: _surnamePick.strokes,
-        givenName: syls.join(),
-        saju: saju,
-        gender: _gender,
-      );
-    } else {
-      final picks = <HanjaPick>[];
-      for (var i = 0; i < 2; i++) {
-        final opts = _hanjaOptions(i, syls[i]);
-        if (opts.isEmpty) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('\'${syls[i]}\' 음절의 한자 데이터가 없어요.')),
-          );
-          return;
-        }
-        final idx = (_hanjaIdx[i] ?? 0).clamp(0, opts.length - 1);
-        picks.add(opts[idx]);
-      }
-      analysis = analyzeName(
-        surname: _surnamePick.name,
-        surnameStrokes: _surnamePick.strokes,
-        picks: picks,
-        saju: saju,
-        gender: _gender,
-      );
-    }
+    final analysis = analyzeName(
+      surname: _surnamePick.name,
+      surnameStrokes: _surnamePick.strokes,
+      picks: picks,
+      saju: saju,
+      gender: _gender,
+      isPureKorean: _isPureKorean,
+    );
     // 4번째 시도마다 전면 광고가 애니메이션 대신 뜨고,
     // 나머지 3번은 별 애니메이션을 보여준 뒤 상세 화면으로 넘어간다.
     setState(() => _navigating = true);
@@ -374,9 +334,8 @@ class _AnalyzeScreenState extends State<AnalyzeScreen> {
       gender: _gender,
     );
     if (best == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('이 음절로 고를 수 있는 한자가 없어요.')),
-      );
+      showSingleSnackBar(
+          ScaffoldMessenger.of(context), '이 음절로 고를 수 있는 한자가 없어요.');
       return;
     }
     setState(() {
@@ -386,11 +345,8 @@ class _AnalyzeScreenState extends State<AnalyzeScreen> {
         if (idx >= 0) _hanjaIdx[i] = idx;
       }
     });
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-          content: Text(
-              '사주에 가장 잘 맞는 한자로 골랐어요. (${best.picks.map((p) => p.char).join()} · 예상 ${best.total.toStringAsFixed(0)}점)')),
-    );
+    showSingleSnackBar(ScaffoldMessenger.of(context),
+        '사주에 가장 잘 맞는 한자로 골랐어요. (${best.picks.map((p) => p.char).join()} · 예상 ${best.total.toStringAsFixed(0)}점)');
   }
 
   // ── 한자 선택 (음절별 모달) ──
@@ -524,19 +480,17 @@ class _AnalyzeScreenState extends State<AnalyzeScreen> {
   List<HanjaPick>? _buildPicks() {
     final syls = _syllables;
     if (syls.length != 2) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-            content: Text(_isPureKorean
-                ? '순우리말 이름 2자를 입력해주세요. (예: 하늘)'
-                : '이름 2자를 입력해주세요. (예: 도윤)')),
-      );
+      showSingleSnackBar(
+          ScaffoldMessenger.of(context),
+          _isPureKorean
+              ? '순우리말 이름 2자를 입력해주세요. (예: 하늘)'
+              : '이름 2자를 입력해주세요. (예: 도윤)');
       return null;
     }
     if (_isPureKorean) {
       if (!RegExp(r'^[가-힣]{2}$').hasMatch(syls.join())) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('한글 2자로 입력해주세요.')),
-        );
+        showSingleSnackBar(
+            ScaffoldMessenger.of(context), '한글 2자로 입력해주세요.');
         return null;
       }
       return pureKoreanPicks(syls.join());
@@ -545,9 +499,8 @@ class _AnalyzeScreenState extends State<AnalyzeScreen> {
     for (var i = 0; i < 2; i++) {
       final opts = _hanjaOptions(i, syls[i]);
       if (opts.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('\'${syls[i]}\' 음절의 한자 데이터가 없어요.')),
-        );
+        showSingleSnackBar(ScaffoldMessenger.of(context),
+            '\'${syls[i]}\' 음절의 한자 데이터가 없어요.');
         return null;
       }
       picks.add(opts[(_hanjaIdx[i] ?? 0).clamp(0, opts.length - 1)]);

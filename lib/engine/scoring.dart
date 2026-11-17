@@ -51,6 +51,15 @@ const Set<int> _doubleVowels = {2, 3, 6, 7, 9, 10, 11, 12, 14, 15, 16, 17, 19};
 /// 환산한다 (부정 연상 30% 감점은 환산 전에 원점수에 적용).
 const double _theoreticalMaxTotal = 35.0 + 22.5 + 18.2 + 9.5 + 8.5; // = 93.7
 
+/// 5차원 채점 가중치. 종합 점수 계산에서 쓴다 (2026-11-17).
+/// 위 `_theoreticalMaxTotal`의 각 항은 차원별 이론 만점 × 아래 가중치로
+/// 산출된다 (예: 수리 100 × 0.35 = 35).
+const double _weightSuri = 0.35;
+const double _weightResource = 0.25;
+const double _weightSound = 0.20;
+const double _weightYinYang = 0.10;
+const double _weightUsability = 0.10;
+
 double _clamp(double v, [double min = 0, double max = 100]) =>
     v < min ? min : (v > max ? max : v);
 
@@ -67,7 +76,81 @@ NameAnalysis analyzeName({
   final warnings = <String>[];
   final strokes = [surnameStrokes, picks[0].strokes, picks[1].strokes];
 
-  // ══════════ 1. 수리 (35%) ══════════
+  // 음절 분해 — 발음·사용성이 공유하는 받침·중성 (2026-11-17, 오푸스 리뷰 반영).
+  // 성씨 + 이름 2자라 인덱스 1·2가 이름 음절이다.
+  final syls = [surname, picks[0].syllable, picks[1].syllable];
+  final jongs = syls.map((s) => decompose(s).$3).toList();
+  final jungs = syls.map((s) => decompose(s).$2).toList();
+
+  // 1. 수리 (35%)
+  final suri = _scoreSuri(strokes);
+  // 2. 음양 (10%)
+  final yy = _scoreYinYang(strokes);
+  // 3. 발음 (20%) — 부정 연상·불용문자 경고도 함께 모은다.
+  final sound = _scoreSound(surname, picks, jongs, jungs, warnings);
+  // 4. 사주 보완 (25%) — 용신 극 경고도 함께 모은다.
+  final resource = _scoreResource(saju, picks, isPureKorean, warnings);
+  // 5. 사용성 (10%)
+  final usa = _scoreUsability(picks, jongs, jungs);
+
+  // ══════════ 종합 ══════════
+  var total = suri.score * _weightSuri +
+      resource.score * _weightResource +
+      sound.score * _weightSound +
+      yy.score * _weightYinYang +
+      usa.score * _weightUsability;
+  if (sound.badHit != null) total *= 0.7; // 부정 연상은 큰 감점
+  total = _clamp(total / _theoreticalMaxTotal * 100);
+
+  return NameAnalysis(
+    surname: surname,
+    picks: picks,
+    total: total,
+    suri: DimensionScore(
+      key: 'suri', title: '수리', score: suri.score, grade: suri.grade,
+      summary: isPureKorean
+          ? '한글 자모 획수의 길흉 (원격·형격·이격·정격)'
+          : '한자 획수의 길흉 (원격·형격·이격·정격)',
+      details: [
+        if (isPureKorean)
+          '순우리말 이름은 한자 획수 대신 한글 자모 획수(통용 기준)로 계산한 간이 분석이에요.',
+        ...suri.details,
+      ],
+    ),
+    yinyang: DimensionScore(
+      key: 'yinyang', title: '음양', score: yy.score, grade: yy.grade,
+      summary: '획수 홀짝의 음양 조화',
+      details: yy.details,
+    ),
+    sound: DimensionScore(
+      key: 'sound', title: '발음', score: sound.score, grade: sound.grade,
+      summary: '소리의 오행 흐름과 부르기 쉬움',
+      details: sound.details,
+    ),
+    resource: DimensionScore(
+      key: 'resource', title: '사주 보완', score: resource.score,
+      grade: resource.grade,
+      summary: '사주에 부족한 오행을 한자로 보완',
+      details: resource.details,
+    ),
+    usability: DimensionScore(
+      key: 'usability', title: '사용성', score: usa.score, grade: usa.grade,
+      summary: '유행도·읽기 쉬움·부정 연상',
+      details: usa.details,
+    ),
+    saju: saju,
+    warnings: warnings,
+    rankBoy: usa.rankBoy,
+    rankGirl: usa.rankGirl,
+  );
+}
+
+/// 1. 수리 (35%) — 원격·형격·이격·정격 4격의 81수리.
+/// 반길반흉 안내는 warnings(상단 노란 배너)에 넣지 않고, 상세 화면의
+/// '수리 상세' 안에서 보여준다 (2026-11-15). 판정은 suri.grade.code == SuriGradeCode.mixed로 본다.
+({double score, DimensionGrade grade, List<String> details}) _scoreSuri(
+  List<int> strokes,
+) {
   final won = normalizeSuri(strokes[1] + strokes[2]);
   final hyung = normalizeSuri(strokes[0] + strokes[1]);
   final yi = normalizeSuri(strokes[0] + strokes[2]);
@@ -106,20 +189,31 @@ NameAnalysis analyzeName({
         : (generatesTo(a, b) || generatesTo(b, a) ? '상생' : '상극');
     suriDetails.add('${pair.$1}($a)→${pair.$2}($b): $rel');
   }
-  final suriGrade = hasHyung
-      ? const DimensionGrade(code: SuriGradeCode.hyung, label: '흉수 포함')
-      : hasMixed
-          ? const DimensionGrade(
-              code: SuriGradeCode.mixed, label: '반길반흉 포함')
-          : (suriScore >= 90
-              ? const DimensionGrade(
-                  code: SuriGradeCode.daegil, label: '사격 대길')
-              : const DimensionGrade(
-                  code: SuriGradeCode.gil, label: '사격 길'));
-  // 반길반흉 안내는 warnings(상단 노란 배너)에 넣지 않고, 상세 화면의
-  // '수리 상세' 안에서 보여준다 (2026-11-15). 판정은 suri.grade.code == SuriGradeCode.mixed로 본다.
+  final suriGrade = _suriGrade(hasHyung, hasMixed, suriScore);
+  return (score: suriScore, grade: suriGrade, details: suriDetails);
+}
 
-  // ══════════ 2. 음양 (10%) ══════════
+/// 수리 등급 판정 — 흉수 포함 > 반길반흉 포함 > 대길(90점 이상) > 길.
+/// (원래 4단 삼항 연산자였던 것을 읽히게 풀었다, 2026-11-17)
+DimensionGrade _suriGrade(bool hasHyung, bool hasMixed, double suriScore) {
+  if (hasHyung) {
+    return const DimensionGrade(code: SuriGradeCode.hyung, label: '흉수 포함');
+  }
+  if (hasMixed) {
+    return const DimensionGrade(
+        code: SuriGradeCode.mixed, label: '반길반흉 포함');
+  }
+  if (suriScore >= 90) {
+    return const DimensionGrade(
+        code: SuriGradeCode.daegil, label: '사격 대길');
+  }
+  return const DimensionGrade(code: SuriGradeCode.gil, label: '사격 길');
+}
+
+/// 2. 음양 (10%) — 획수 홀짝의 음양 조화.
+({double score, DimensionGrade grade, List<String> details}) _scoreYinYang(
+  List<int> strokes,
+) {
   final yy = strokes.map((s) => s.isOdd ? '양' : '음').toList();
   final pattern = yy.join('');
   final goodPatterns = {'양양음', '양음음', '음음양', '음양양', '양음양', '음양음'};
@@ -129,8 +223,28 @@ NameAnalysis analyzeName({
     '성(${strokes[0]}획)→${yy[0]}, 이름1(${strokes[1]}획)→${yy[1]}, 이름2(${strokes[2]}획)→${yy[2]}',
     yyGood ? '음과 양이 조화를 이루는 길한 배열이에요.' : '전부 음 또는 전부 양으로 치우친 배열은 전통적으로 흉하게 봐요.',
   ];
+  final yyGrade = yyGood
+      ? const DimensionGrade(code: 'harmony', label: '조화')
+      : const DimensionGrade(code: 'skewed', label: '치우침');
+  return (score: yyScore, grade: yyGrade, details: yyDetails);
+}
 
-  // ══════════ 3. 발음 (20%) ══════════
+/// 3. 발음 (20%) — 초성 오행 흐름(chain) + 부르기 쉬움(pron).
+/// 부정 연상·불용문자 경고는 `warnings`에 모아주고, 종합 감점에 쓰는
+/// `badHit`을 반환한다. 받침·중성(`jongs`·`jungs`)은 analyzeName에서
+/// 계산해 넘긴다 (사용성과 공유, 2026-11-17 오푸스 리뷰 반영).
+({
+  double score,
+  DimensionGrade grade,
+  List<String> details,
+  String? badHit,
+}) _scoreSound(
+  String surname,
+  List<HanjaPick> picks,
+  List<int> jongs,
+  List<int> jungs,
+  List<String> warnings,
+) {
   final syls = [surname, picks[0].syllable, picks[1].syllable];
   final choEls = syls.map((s) {
     final (c, _, _) = decompose(s);
@@ -155,8 +269,6 @@ NameAnalysis analyzeName({
 
   double pron = 75;
   final pronDetails = <String>[];
-  final jongs = syls.map((s) => decompose(s).$3).toList();
-  final jungs = syls.map((s) => decompose(s).$2).toList();
   final chos = syls.map((s) => decompose(s).$1).toList();
   if (jongs.any((j) => j == 0)) {
     pron += 5;
@@ -211,7 +323,22 @@ NameAnalysis analyzeName({
     }
   }
 
-  // ══════════ 4. 사주 보완 — 자원오행 (25%) ══════════
+  return (
+    score: soundScore,
+    grade: soundGrade,
+    details: [...chainDetails, ...pronDetails],
+    badHit: badHit,
+  );
+}
+
+/// 4. 사주 보완 — 자원오행 (25%).
+/// 용신을 극하는 오행 경고는 `warnings`에 모아준다.
+({double score, DimensionGrade grade, List<String> details}) _scoreResource(
+  SajuResult saju,
+  List<HanjaPick> picks,
+  bool isPureKorean,
+  List<String> warnings,
+) {
   final yongsin = saju.yongsin;
   final huishin = saju.huishin;
   double resourceScore;
@@ -250,8 +377,25 @@ NameAnalysis analyzeName({
       : (resourceScore >= 50
           ? const DimensionGrade(code: 'partial', label: '부분 보완')
           : const DimensionGrade(code: 'lacking', label: '보완 미흡'));
+  return (
+    score: resourceScore,
+    grade: resourceGrade,
+    details: resourceDetails,
+  );
+}
 
-  // ══════════ 5. 사용성 (10%) ══════════
+/// 5. 사용성 (10%) — 유행도·읽기 쉬움·부정 연상.
+({
+  double score,
+  DimensionGrade grade,
+  List<String> details,
+  int? rankBoy,
+  int? rankGirl,
+}) _scoreUsability(
+  List<HanjaPick> picks,
+  List<int> jongs,
+  List<int> jungs,
+) {
   double usa = 85;
   final usaDetails = <String>[];
   final givenName = '${picks[0].syllable}${picks[1].syllable}';
@@ -293,57 +437,10 @@ NameAnalysis analyzeName({
       : (usa >= 65
           ? const DimensionGrade(code: 'normal', label: '보통')
           : const DimensionGrade(code: 'caution', label: '주의'));
-
-  // ══════════ 종합 ══════════
-  var total = suriScore * 0.35 +
-      resourceScore * 0.25 +
-      soundScore * 0.20 +
-      yyScore * 0.10 +
-      usa * 0.10;
-  if (badHit != null) total *= 0.7; // 부정 연상은 큰 감점
-  total = _clamp(total / _theoreticalMaxTotal * 100);
-
-  return NameAnalysis(
-    surname: surname,
-    picks: picks,
-    total: total,
-    suri: DimensionScore(
-      key: 'suri', title: '수리', score: suriScore, grade: suriGrade,
-      summary: isPureKorean
-          ? '한글 자모 획수의 길흉 (원격·형격·이격·정격)'
-          : '한자 획수의 길흉 (원격·형격·이격·정격)',
-      details: [
-        if (isPureKorean)
-          '순우리말 이름은 한자 획수 대신 한글 자모 획수(통용 기준)로 계산한 간이 분석이에요.',
-        ...suriDetails,
-      ],
-    ),
-    yinyang: DimensionScore(
-      key: 'yinyang', title: '음양', score: yyScore,
-      grade: yyGood
-          ? const DimensionGrade(code: 'harmony', label: '조화')
-          : const DimensionGrade(code: 'skewed', label: '치우침'),
-      summary: '획수 홀짝의 음양 조화',
-      details: yyDetails,
-    ),
-    sound: DimensionScore(
-      key: 'sound', title: '발음', score: soundScore, grade: soundGrade,
-      summary: '소리의 오행 흐름과 부르기 쉬움',
-      details: [...chainDetails, ...pronDetails],
-    ),
-    resource: DimensionScore(
-      key: 'resource', title: '사주 보완', score: resourceScore,
-      grade: resourceGrade,
-      summary: '사주에 부족한 오행을 한자로 보완',
-      details: resourceDetails,
-    ),
-    usability: DimensionScore(
-      key: 'usability', title: '사용성', score: usa, grade: usaGrade,
-      summary: '유행도·읽기 쉬움·부정 연상',
-      details: usaDetails,
-    ),
-    saju: saju,
-    warnings: warnings,
+  return (
+    score: usa,
+    grade: usaGrade,
+    details: usaDetails,
     rankBoy: rankBoy,
     rankGirl: rankGirl,
   );

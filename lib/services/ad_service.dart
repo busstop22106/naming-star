@@ -28,8 +28,6 @@ class AdService {
   static bool bannerEnabledFor(AdPlacement placement) =>
       bannerEnabled[placement] ?? false;
 
-  static String get bannerAdUnitId => bannerAdUnitIdFor(AdPlacement.home);
-
   static String bannerAdUnitIdFor(AdPlacement placement) {
     // 디버그·프로필 빌드는 Google 공식 테스트 ID를 쓴다.
     // (프로필 빌드도 실제 광고 ID가 나가면 안 된다.)
@@ -78,9 +76,6 @@ class AdService {
 
   static InterstitialAd? _interstitialAd;
   static bool _interstitialLoading = false;
-
-  /// 미리 로드된 전면 광고가 있는지 여부.
-  static bool get isInterstitialReady => _interstitialAd != null;
 
   /// 전면 광고를 미리 로드한다. 이미 로드됐거나 로딩 중이면 바로 반환한다.
   /// 로드 실패 시 재시도 타이머를 두지 않는다. 다음 로드 기회
@@ -175,9 +170,6 @@ class AdService {
 
   static RewardedAd? _rewardedAd;
   static bool _rewardedLoading = false;
-
-  /// 미리 로드된 보상형 광고가 있는지 여부.
-  static bool get isRewardedReady => _rewardedAd != null;
 
   /// 보상형 광고를 미리 로드한다. 이미 로드됐거나 로딩 중이면 바로 반환한다.
   static Future<void> loadRewardedAd() async {

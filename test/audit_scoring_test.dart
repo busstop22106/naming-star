@@ -13,7 +13,6 @@ SajuResult fakeSaju({String? yongsin}) => SajuResult(
       strongBody: false,
       yongsin: yongsin,
       huishin: null,
-      johu: null,
       notes: const [],
     );
 
