@@ -7,6 +7,7 @@ import '../services/purchase_service.dart';
 import '../theme.dart';
 import '../widgets/adfree_price_label.dart';
 import '../widgets/common.dart';
+import '../widgets/easter_egg_letter_dialog.dart';
 import 'faq_screen.dart';
 import 'favorites_screen.dart';
 import 'terms_screen.dart';
@@ -22,6 +23,48 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
+  /// 이스터에그: 앱 버전 연속 탭 횟수 (안드로이드 개발자 메뉴 해제 방식).
+  /// 10회 연속 탭하면 우주 아빠의 편지를 보여준다 (2026-11-17).
+  int _versionTapCount = 0;
+  DateTime? _lastVersionTapTime;
+
+  Future<void> _onVersionTap() async {
+    final now = DateTime.now();
+    // 2초 넘게 쉬면 연속 탭이 끊긴 것으로 보고 처음부터 센다.
+    if (_lastVersionTapTime != null &&
+        now.difference(_lastVersionTapTime!).inMilliseconds > 2000) {
+      _versionTapCount = 0;
+    }
+    _lastVersionTapTime = now;
+    _versionTapCount++;
+    // 1~5회 탭은 조용히 센다.
+    if (_versionTapCount < 6) return;
+    if (_versionTapCount < 10) {
+      // 6회 탭부터 카운트다운 토스트 (5, 4, 3, 2번 남음).
+      final messenger = ScaffoldMessenger.of(context);
+      showSingleSnackBar(
+        messenger,
+        '${11 - _versionTapCount}번 남았습니다',
+        duration: const Duration(seconds: 1),
+        persist: false,
+      );
+      return;
+    }
+    // 10회 탭: '1번 남았습니다' 토스트를 보여주고 곧 편지를 띄운다.
+    _versionTapCount = 0;
+    _lastVersionTapTime = null;
+    final messenger = ScaffoldMessenger.of(context);
+    showSingleSnackBar(
+      messenger,
+      '1번 남았습니다',
+      duration: const Duration(milliseconds: 800),
+      persist: false,
+    );
+    await Future<void>.delayed(const Duration(milliseconds: 800));
+    if (!mounted) return;
+    await showEasterEggLetterDialog(context);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -114,7 +157,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               icon: Icons.info_outline,
               title: '앱 버전',
               subtitle: '1.0.0',
-              onTap: null,
+              onTap: _onVersionTap,
             ),
           ],
         ),
