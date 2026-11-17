@@ -54,18 +54,17 @@ class _EasterEggLetterDialog extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      // 상단 장식: 별 + 가는 선 (작명별 별 모티프).
-                      const Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.star, size: 18, color: _gold),
-                          SizedBox(width: 8),
-                          Icon(Icons.star, size: 12, color: _gold),
-                          SizedBox(width: 8),
-                          Icon(Icons.star, size: 18, color: _gold),
-                        ],
+                      // 상단 제목: '숨겨둔 편지'
+                      // (하단 '편지를 접어요'와 같은 손글씨·금색·크기).
+                      Text(
+                        '숨겨둔 편지',
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.nanumPenScript(
+                          fontSize: 20,
+                          color: _gold,
+                        ),
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 8),
                       Container(
                         height: 1,
                         margin: const EdgeInsets.symmetric(horizontal: 32),

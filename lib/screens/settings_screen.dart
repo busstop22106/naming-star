@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../services/adfree_service.dart';
 import '../services/app_links.dart';
 import '../services/purchase_service.dart';
@@ -28,6 +29,26 @@ class _SettingsScreenState extends State<SettingsScreen> {
   int _versionTapCount = 0;
   DateTime? _lastVersionTapTime;
 
+  @override
+  void initState() {
+    super.initState();
+    // 편지 손글씨(나눔펜)를 미리 내려받는다 — 팝업이 뜰 때 기본 폰트에서
+    // 손글씨로 바뀌는 깜빡임을 막는다 (2026-11-17).
+    // 호출 자체가 다운로드를 시작한다 (이미 받아져 있으면 아무 일도 안 한다).
+    GoogleFonts.nanumPenScript();
+  }
+
+  /// 편지 손글씨 폰트가 준비될 때까지 기다린다.
+  /// 이미 받아져 있으면 즉시 끝나고, 네트워크가 느리면 최대 2초만 기다린다.
+  /// 준비에 실패하면 기본 폰트로 팝업을 띄운다 (깜빡임 대신 기본 폰트 유지).
+  Future<void> _waitForLetterFont() async {
+    try {
+      await GoogleFonts.pendingFonts().timeout(const Duration(seconds: 2));
+    } catch (_) {
+      // 무시하고 기본 폰트로 진행한다.
+    }
+  }
+
   Future<void> _onVersionTap() async {
     final now = DateTime.now();
     // 2초 넘게 쉬면 연속 탭이 끊긴 것으로 보고 처음부터 센다.
@@ -37,6 +58,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
     _lastVersionTapTime = now;
     _versionTapCount++;
+    // 첫 탭에서 손글씨 다운로드를 한 번 더 시작한다 — initState 때
+    // 네트워크가 안 돼서 실패했다면 여기서 다시 시도한다 (2026-11-17).
+    if (_versionTapCount == 1) GoogleFonts.nanumPenScript();
     // 1~5회 탭은 조용히 센다.
     if (_versionTapCount < 6) return;
     if (_versionTapCount < 10) {
@@ -60,7 +84,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
       duration: const Duration(milliseconds: 800),
       persist: false,
     );
-    await Future<void>.delayed(const Duration(milliseconds: 800));
+    // 토스트를 볼 시간(800ms)과 손글씨 준비를 함께 기다린다 —
+    // 폰트가 안 된 채로 팝업을 띄우면 기본 폰트에서 손글씨로
+    // 바뀌는 깜빡임이 생긴다 (2026-11-17).
+    await Future.wait([
+      Future<void>.delayed(const Duration(milliseconds: 800)),
+      _waitForLetterFont(),
+    ]);
     if (!mounted) return;
     await showEasterEggLetterDialog(context);
   }

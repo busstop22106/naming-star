@@ -61,13 +61,17 @@ void main() {
     }
     await tapVersion(tester); // 10회
     expect(find.text('1번 남았습니다'), findsOneWidget);
-    // 800ms 뒤 편지 팝업이 뜬다.
-    await tester.pump(const Duration(milliseconds: 800));
+    // 800ms 뒤 편지 팝업이 뜬다. 폰트 대기(최대 2초)까지 고려해
+    // 3초를 흘려보낸 뒤 확인한다.
+    await tester.pump(const Duration(seconds: 3));
     await tester.pumpAndSettle();
     expect(find.textContaining('나에게 우주를 보여준 한우주야'),
         findsOneWidget);
     expect(find.textContaining('2026.11.17 우주 아빠가'), findsOneWidget);
     expect(find.textContaining('사랑하는 윤경아'), findsOneWidget);
+    // 상단에는 별 3개 대신 '숨겨둔 편지' 제목이 있다.
+    expect(find.text('숨겨둔 편지'), findsOneWidget);
+    expect(find.byIcon(Icons.star), findsNothing);
     // 편지 접기 버튼으로 팝업을 닫는다.
     await tester.tap(find.text('편지를 접어요'));
     await tester.pumpAndSettle();
