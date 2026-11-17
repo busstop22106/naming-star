@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
 
 import 'adfree_service.dart';
@@ -16,7 +16,7 @@ import 'adfree_service.dart';
 /// - 구매 복원 결과: [RestoreResult]로 성공·없음·실패를 구분한다.
 enum RestoreResult { restored, none, failed }
 
-class PurchaseService {
+class PurchaseService with WidgetsBindingObserver {
   static final PurchaseService instance = PurchaseService._internal();
   PurchaseService._internal();
 
@@ -106,6 +106,10 @@ class PurchaseService {
   Future<void> init() async {
     if (_initialized) return;
     _initialized = true;
+    // Play 결제 시트가 닫혀 앱이 돌아오면 busy를 푸는 감시자.
+    // 시트를 닫고 구매를 안 했는데도 스트림 이벤트가 안 오면 버튼이
+    // 30초 타임아웃까지 뺑뺑이 돈다 (2026-11-17 실기기 재현).
+    WidgetsBinding.instance.addObserver(this);
     try {
       await AdFreeService.instance.ensureLoaded();
       _subscription ??= InAppPurchase.instance.purchaseStream.listen(
@@ -277,7 +281,50 @@ class PurchaseService {
     _buyTimeoutTimer = null;
   }
 
+  /// Play 결제 시트가 닫혀 앱이 다시 보일 때의 유예 타이머.
+  /// 시트가 닫히면 앱이 resumed가 되는데, 구매·취소 스트림 이벤트가
+  /// 오기까지 짧은 간격이 있다. 그 간격 안에 이벤트가 오면
+  /// _onPurchaseUpdate가 이 타이머를 취소하고 직접 busy를 푼다.
+  /// 이벤트가 안 오면(시트만 닫고 구매 안 함) 유예 뒤 busy를 풀어
+  /// 버튼이 뺑뺑이 도는 것을 막는다 (2026-11-17).
+  Timer? _resumeTimer;
+
+  void _cancelResumeTimer() {
+    _resumeTimer?.cancel();
+    _resumeTimer = null;
+  }
+
+  /// Play 결제 시트가 뜨면 앱은 paused가 되고, 시트가 닫히면
+  /// resumed가 된다. 구매 중(busy)인데 resumed가 됐다는 건 결제
+  /// 시트가 닫혔다는 뜻 — 스트림 이벤트가 곧 오면 그쪽에서 busy를
+  /// 풀고, 안 오면 유예 뒤 여기서 푼다. 결제 완료(구매)일 때는
+  /// 스트림 이벤트가 먼저 와서 광고 제거를 켜고 busy를 풀므로
+  /// 이 타이머가 구매를 막지 않는다.
+  /// (주의: pending 구매는 스트림에서 busy를 안 풀지만, pending
+  /// 이벤트 자체가 오면 _onPurchaseUpdate가 이 타이머를 취소해
+  /// busy가 유지된다.)
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state != AppLifecycleState.resumed) return;
+    if (!isBusy) return;
+    // 이미 유예 중이면 다시 시작하지 않는다.
+    if (_resumeTimer != null) return;
+    _resumeTimer = Timer(const Duration(milliseconds: 800), () {
+      _resumeTimer = null;
+      if (!isBusy) return;
+      // 유예 안에 스트림 이벤트가 안 왔다 — 시트만 닫고 끝난 것이다.
+      // 구매를 한 게 아니니 busy만 풀고, 오류 스낵바는 띄우지 않는다
+      // (취소는 오류가 아니다).
+      _cancelBuyTimeout();
+      busyNotifier.value = false;
+    });
+  }
+
   void _onPurchaseUpdate(List<PurchaseDetails> purchases) {
+    // 스트림 이벤트가 왔다는 건 결제 결과가 흐르고 있다는 뜻 —
+    // 앱 복귀 유예 타이머는 더 필요 없으니 취소한다.
+    // (pending은 busy를 안 풀지만, 타이머를 취소해 busy가 유지된다.)
+    _cancelResumeTimer();
     for (final purchase in purchases) {
       // Play가 결제 실패·취소를 알릴 때 구매 목록이 비어 있으면 플러그인이
       // productID ''인 합성 이벤트를 만든다
@@ -397,6 +444,7 @@ class PurchaseService {
     _subscription?.cancel();
     _subscription = null;
     _cancelBuyTimeout();
+    _cancelResumeTimer();
     _product = null;
     _rawPrice = null;
     _currencyCode = null;

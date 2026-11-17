@@ -76,6 +76,10 @@ class AdFreePriceLabel extends StatelessWidget {
         // 정가는 살짝 흐리게 + 취소선 두 줄, 화살표 뒤에 할인가.
         // 할인율은 표시하지 않는다. '(기간 할인 중)'은 버튼이
         // 2줄로 줄바꿈돼서 뺐다 (2026-11-17).
+        // 가격 부분(정가 취소선 + 화살표 + 할인가)은 Row 한 덩어리로
+        // 묶어 줄바꿈이 prefix 뒤에서만 일어나게 한다 — 2줄이 되면
+        // 1줄 '평생 광고 없이 사용', 2줄 '₩4,900 → ₩1,900'이 된다.
+        // (2026-11-17 실기기 피드백: '₩1,900'만 2줄로 떨어지던 문제)
         // 스크린 리더에는 화살표를 풀어서 한 문장으로 읽어준다.
         return Semantics(
           label:
@@ -88,16 +92,29 @@ class AdFreePriceLabel extends StatelessWidget {
             runSpacing: 4.0,
             children: [
               Text(prefix),
-              const DoubleStrikeText(PurchaseService.regularPriceText),
-              // 화살표는 Icon으로 — 텍스트 '→'는 폴백 폰트 탓에
-              // 줄 상자가 커져서 아래로 처진다. (2026-11-17)
-              // Icon은 고정 크기라 Wrap 정중앙 정렬이 맞는다.
-              Icon(
-                Icons.arrow_forward,
-                size: scaledFontSize,
-                color: textColor,
+              // 가격 덩어리 — Row 기준선 정렬은 쓰지 않는다
+              // (AlertDialog IntrinsicWidth에서 RenderLimitedBox
+              // computeDryBaseline 미구현으로 깨진다. 2026-11-17).
+              // center 정렬만으로 아이콘·텍스트 높이가 맞는다.
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  const DoubleStrikeText(
+                      PurchaseService.regularPriceText),
+                  const SizedBox(width: 4),
+                  // 화살표는 Icon으로 — 텍스트 '→'는 폴백 폰트 탓에
+                  // 줄 상자가 커져서 아래로 처진다. (2026-11-17)
+                  // Icon은 고정 크기라 Wrap 정중앙 정렬이 맞는다.
+                  Icon(
+                    Icons.arrow_forward,
+                    size: scaledFontSize,
+                    color: textColor,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(service.price),
+                ],
               ),
-              Text(service.price),
             ],
           ),
         );

@@ -6,7 +6,8 @@ import '../widgets/night_sky.dart';
 /// 이름 공개 전 기대감 연출 화면 (이름 짓기 → 결과 사이)
 ///
 /// 별 캐릭터가 뾰로롱 튀어 오르고 반짝이가 퍼진 뒤 결과 화면으로 넘어가요.
-/// 화면을 탭하면 바로 결과로 이동합니다.
+/// 화면을 탭해도 넘어가지 않는다 — 연출(2초)을 끝까지 봐야 결과로 간다
+/// (2026-11-17).
 ///
 /// ※ 출시 후 전면 광고를 넣을 자리가 바로 이곳이에요.
 ///   광고를 붙일 때는 이 화면에서 광고를 표시한 뒤 _go()를 호출하도록
@@ -79,11 +80,8 @@ class _RevealScreenState extends State<RevealScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: _go,
-        child: Stack(
-          children: [
+      body: Stack(
+        children: [
             // 밤하늘 별빛 배경
             const Starfield(),
             Center(
@@ -174,15 +172,6 @@ class _RevealScreenState extends State<RevealScreen>
                           style: const TextStyle(
                               fontSize: 13, color: AppTheme.sub),
                         ),
-                        // 화면을 탭하면 바로 결과로 넘어간다는 안내.
-                        // 연출을 기다리지 않고 넘어갈 수 있다는 걸 모르는
-                        // 사용자가 있다 (2026-11-16).
-                        const SizedBox(height: 16),
-                        const Text(
-                          '탭하면 바로 볼 수 있어요',
-                          style: TextStyle(
-                              fontSize: 12, color: AppTheme.sub),
-                        ),
                       ],
                     ),
                   ),
@@ -190,9 +179,8 @@ class _RevealScreenState extends State<RevealScreen>
               );
             },
           ),
-            ),
-          ],
         ),
+        ],
       ),
     );
   }
