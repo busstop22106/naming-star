@@ -1,11 +1,13 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+
+import 'safe_prefs.dart';
 
 /// 가족 궁합 구성원 입력 상태.
 /// 이름 분석 탭의 가족 궁합 모드에서 쓰는 값으로, 앱을 껐다 켜도
 /// 다시 입력하지 않도록 SharedPreferences에 JSON으로 저장한다.
-/// (favorites.dart의 보관함 저장과 같은 패턴.)
+/// 저장소 실패가 화면 초기화를 깨뜨리지 않게 SafePrefs를 쓴다
+/// (2026-11-20 저장소 전수 점검).
 class FamilyMemberInput {
   String role;
   DateTime birth;
@@ -68,9 +70,9 @@ const _maxMembers = 6;
 
 /// 저장된 구성원을 불러온다. 저장된 게 없거나 전부 깨졌으면 빈 리스트를
 /// 돌려준다 — 호출하는 쪽에서 기본값을 쓰면 된다.
+/// 저장소를 못 읽어도 빈 리스트를 돌려주고 던지지 않는다.
 Future<List<FamilyMemberInput>> loadFamilyMembers() async {
-  final prefs = await SharedPreferences.getInstance();
-  final raw = prefs.getString(_key);
+  final raw = await SafePrefs.getString(_key);
   if (raw == null) return [];
   try {
     final list = jsonDecode(raw) as List;
@@ -88,9 +90,8 @@ Future<List<FamilyMemberInput>> loadFamilyMembers() async {
 }
 
 /// 구성원 목록을 통째로 저장한다. 빈 리스트를 저장하면 다음 실행 때
-/// 기본값으로 돌아간다.
-Future<void> saveFamilyMembers(List<FamilyMemberInput> members) async {
-  final prefs = await SharedPreferences.getInstance();
-  await prefs.setString(
+/// 기본값으로 돌아간다. 저장 성공 여부를 반환하고 던지지 않는다.
+Future<bool> saveFamilyMembers(List<FamilyMemberInput> members) async {
+  return SafePrefs.setString(
       _key, jsonEncode(members.map((m) => m.toJson()).toList()));
 }

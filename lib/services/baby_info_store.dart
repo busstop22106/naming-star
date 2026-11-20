@@ -1,12 +1,13 @@
 import 'dart:convert';
 
-import 'package:shared_preferences/shared_preferences.dart';
-
 import '../models.dart';
+import 'safe_prefs.dart';
 
 /// 탭 간 공유하는 아기 기본 정보(성씨·성별·생년월일시) 저장/복원.
 /// 앱 재시작 뒤에도 마지막에 입력한 값이 유지된다.
 /// 파싱에 실패하면 null을 돌려주고, 호출하는 쪽은 기본값을 쓴다.
+/// 저장소 실패가 앱 시작·화면 전환을 깨뜨리지 않게 SafePrefs를 쓴다
+/// (2026-11-20 저장소 전수 점검).
 class BabyInfoStore {
   static const _key = 'jakmyeongbyeol_baby_info';
   static const _schemaVersion = 1;
@@ -70,9 +71,9 @@ class BabyInfoStore {
   }
 
   /// 저장된 아기 정보가 없거나 깨졌으면 null.
+  /// 저장소를 못 읽어도 null을 돌려주고 던지지 않는다.
   static Future<SharedBaby?> load() async {
-    final prefs = await SharedPreferences.getInstance();
-    final raw = prefs.getString(_key);
+    final raw = await SafePrefs.getString(_key);
     if (raw == null) return null;
     try {
       final decoded = jsonDecode(raw);
@@ -83,8 +84,8 @@ class BabyInfoStore {
     }
   }
 
-  static Future<void> save(SharedBaby baby) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_key, jsonEncode(_toJson(baby)));
+  /// 저장 성공 여부를 반환한다. 실패해도 던지지 않는다.
+  static Future<bool> save(SharedBaby baby) async {
+    return SafePrefs.setString(_key, jsonEncode(_toJson(baby)));
   }
 }

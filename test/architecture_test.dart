@@ -293,4 +293,31 @@ void main() {
     expect(foundAction, isTrue,
         reason: '액션 있는 SnackBar 검사 대상이 없다 — 전례가 사라진 것인지 확인할 것');
   });
+
+  test('아키텍처: SharedPreferences 직접 접근은 허용 파일만 한다', () {
+    // 저장소 전수 점검 (2026-11-20): getInstance()·setString() 등이
+    // 던지면 보관함 저장 실패·광고 카운터 멈춤·구매 플래그 미반영 같은
+    // 실기기 버그가 났다. 신규 저장소 접근은 SafePrefs를 통한다.
+    // 직접 접근이 허용되는 것은 SafePrefs 자체와, 이미 try/catch와
+    // 재시도·복구 로직을 갖추고 테스트된 favorites·interstitial_gate뿐이다.
+    // pro_service는 미사용 코드라 직접 접근이 남아 있다 — 맥북 git에서
+    // 파일 자체를 삭제하는 게 정식 정리 (스냅샷 푸시는 삭제 불가).
+    const allowed = {
+      'lib/services/safe_prefs.dart',
+      'lib/favorites.dart',
+      'lib/services/interstitial_gate.dart',
+      'lib/services/pro_service.dart',
+    };
+    final direct = <String>{};
+    for (final file in _libDartFiles()) {
+      final body = _stripCommentsAndImports(file.readAsStringSync());
+      if (body.contains('SharedPreferences.getInstance()')) {
+        direct.add(file.path);
+      }
+    }
+    expect(direct, allowed,
+        reason: 'SharedPreferences 직접 접근 파일이 허용 목록과 다르다. '
+            '신규 저장소 코드는 SafePrefs를 쓸 것. '
+            '허용 목록 변경 시 이 테스트와 safe_prefs.dart 주석을 함께 고칠 것');
+  });
 }
