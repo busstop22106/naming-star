@@ -196,29 +196,6 @@ Future<bool> _writeStored(
   }
 }
 
-/// 쓰기가 실패하면 키를 지우고 새로 쓴다 — 기존 저장값이
-/// 쓰기를 막는 상태일 때의 복구 경로다 (2026-11-20).
-/// 그래도 실패하면 false.
-Future<bool> _writeStoredFresh(
-    List<FavoriteItem> items, List<dynamic> unparseable) async {
-  try {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_key);
-    return await prefs.setString(
-      _key,
-      jsonEncode({
-        'version': _schemaVersion,
-        'items': [
-          ...items.map((e) => e.toJson()),
-          ...unparseable,
-        ],
-      }),
-    );
-  } catch (_) {
-    return false;
-  }
-}
-
 Future<List<FavoriteItem>> loadFavorites() async {
   // _loadStored는 예외를 던지지 않으니 빈 목록이면 빈 화면이 뜬다.
   return (await _loadStored()).items;
@@ -243,10 +220,10 @@ Future<bool> saveFavorite(FavoriteItem item) async {
     items.removeLast();
   }
   items.insert(0, item);
-  // 1차 쓰기가 실패하면 키를 지우고 새로 쓴다 — 기존 저장값이
-  // 쓰기를 막는 상태일 때의 복구 경로다 (2026-11-20 실기기 재현).
   if (await _writeStored(items, unparseable)) return true;
-  return _writeStoredFresh(items, const []);
+  // 1차 쓰기가 실패하면 한 번 더 시도한다 (일시적 오류 복구).
+  // unparseable은 그대로 넘겨 버리지 않는다 (오푸스 리뷰, 2026-11-20).
+  return _writeStored(items, unparseable);
 }
 
 Future<bool> removeFavorite(FavoriteItem item) async {
@@ -258,7 +235,9 @@ Future<bool> removeFavorite(FavoriteItem item) async {
   items.removeWhere((e) =>
       e.fullName == item.fullName && e.hanjaName == item.hanjaName);
   if (await _writeStored(items, unparseable)) return true;
-  return _writeStoredFresh(items, const []);
+  // 1차 쓰기가 실패하면 한 번 더 시도한다 (일시적 오류 복구).
+  // unparseable은 그대로 넘겨 버리지 않는다 (오푸스 리뷰, 2026-11-20).
+  return _writeStored(items, unparseable);
 }
 
 Future<bool> isFavorite(String fullName, String hanjaName) async {
@@ -276,5 +255,7 @@ Future<bool> replaceFavorites(List<FavoriteItem> items) async {
   if (stored.corrupt) await _backupCorruptRaw(stored.raw);
   final unparseable = stored.corrupt ? <dynamic>[] : stored.unparseable;
   if (await _writeStored(items, unparseable)) return true;
-  return _writeStoredFresh(items, const []);
+  // 1차 쓰기가 실패하면 한 번 더 시도한다 (일시적 오류 복구).
+  // unparseable은 그대로 넘겨 버리지 않는다 (오푸스 리뷰, 2026-11-20).
+  return _writeStored(items, unparseable);
 }
