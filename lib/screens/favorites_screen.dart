@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../engine/saju.dart';
 import '../engine/scoring.dart';
-import '../favorites.dart';
+import '../services/favorites.dart';
 import '../models.dart';
 import '../theme.dart';
 import '../widgets/common.dart';

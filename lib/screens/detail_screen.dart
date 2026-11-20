@@ -4,7 +4,7 @@ import '../engine/hanja_order.dart';
 import '../engine/life_story.dart';
 import '../engine/saju.dart';
 import '../engine/scoring.dart';
-import '../favorites.dart';
+import '../services/favorites.dart';
 import '../models.dart';
 import '../services/share_link.dart';
 import '../theme.dart';

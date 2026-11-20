@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:jakmyeongbyeol/engine/hanja_order.dart';
-import 'package:jakmyeongbyeol/favorites.dart';
+import 'package:jakmyeongbyeol/services/favorites.dart';
 import 'package:jakmyeongbyeol/models.dart';
 import 'package:jakmyeongbyeol/screens/favorites_screen.dart';
 

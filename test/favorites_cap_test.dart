@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:jakmyeongbyeol/favorites.dart';
+import 'package:jakmyeongbyeol/services/favorites.dart';
 import 'package:jakmyeongbyeol/models.dart';
 
 /// 보관함 상한(100개)과 쓰기 결과 확인:

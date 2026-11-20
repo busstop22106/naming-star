@@ -6,7 +6,7 @@ import '../engine/hanja_order.dart';
 import '../engine/pure_korean.dart';
 import '../engine/saju.dart';
 import '../engine/scoring.dart';
-import '../favorites.dart';
+import '../services/favorites.dart';
 import '../models.dart';
 import '../services/ad_service.dart';
 import '../services/interstitial_gate.dart';

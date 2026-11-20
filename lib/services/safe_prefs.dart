@@ -7,7 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 /// - 쓰기는 성공 여부를 bool로 돌려준다 (실패 시 false, 예외 없음).
 /// - 쓰기 실패 시 1회 재시도한다.
 ///
-/// 예외: favorites.dart는 이미 try/catch와 재시도·복구 로직을 갖추고
+/// 예외: services/favorites.dart는 이미 try/catch와 재시도·복구 로직을 갖추고
 /// 테스트돼 있어 직접 접근을 유지한다. interstitial_gate.dart는
 /// 읽기(readAttemptCount)만 직접 접근하고, 쓰기(recordAttempt)는
 /// SafePrefs를 쓴다 (2026-11-20 리뷰 반영).

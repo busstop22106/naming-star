@@ -300,13 +300,10 @@ void main() {
     // 실기기 버그가 났다. 신규 저장소 접근은 SafePrefs를 통한다.
     // 직접 접근이 허용되는 것은 SafePrefs 자체와, 이미 try/catch와
     // 재시도·복구 로직을 갖추고 테스트된 favorites·interstitial_gate뿐이다.
-    // pro_service는 미사용 코드라 직접 접근이 남아 있다 — 맥북 git에서
-    // 파일 자체를 삭제하는 게 정식 정리 (스냅샷 푸시는 삭제 불가).
     const allowed = {
       'lib/services/safe_prefs.dart',
-      'lib/favorites.dart',
+      'lib/services/favorites.dart',
       'lib/services/interstitial_gate.dart',
-      'lib/services/pro_service.dart',
     };
     final direct = <String>{};
     // 줄바꿈·공백이 섞인 호출도 잡히게 정규식으로 검사한다

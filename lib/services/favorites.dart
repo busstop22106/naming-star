@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'models.dart';
+import '../models.dart';
 
 /// 보관함 저장소
 class FavoriteItem {

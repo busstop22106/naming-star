@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:jakmyeongbyeol/favorites.dart';
+import 'package:jakmyeongbyeol/services/favorites.dart';
 import 'package:jakmyeongbyeol/screens/reveal_screen.dart';
 import 'package:jakmyeongbyeol/services/adfree_service.dart';
 import 'package:jakmyeongbyeol/services/purchase_service.dart';

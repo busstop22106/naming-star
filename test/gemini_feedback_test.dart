@@ -7,7 +7,7 @@ import 'package:jakmyeongbyeol/engine/best_hanja.dart';
 import 'package:jakmyeongbyeol/engine/hanja_order.dart';
 import 'package:jakmyeongbyeol/engine/saju.dart';
 import 'package:jakmyeongbyeol/engine/scoring.dart';
-import 'package:jakmyeongbyeol/favorites.dart';
+import 'package:jakmyeongbyeol/services/favorites.dart';
 import 'package:jakmyeongbyeol/main.dart';
 import 'package:jakmyeongbyeol/models.dart';
 import 'package:jakmyeongbyeol/screens/faq_screen.dart';
