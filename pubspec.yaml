@@ -24,6 +24,8 @@ dev_dependencies:
   flutter_lints: ^3.0.0
   flutter_launcher_icons: ^0.14.1
   flutter_native_splash: ^2.4.8
+  # SafePrefs 재시도 회귀 테스트용 (저장소 실패 흉내, 2026-11-20).
+  shared_preferences_platform_interface: ^2.4.2
 
 # 앱 아이콘 생성 설정: dart run flutter_launcher_icons
 flutter_launcher_icons:

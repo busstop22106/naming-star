@@ -38,6 +38,7 @@ class _RevealScreenState extends State<RevealScreen>
     with SingleTickerProviderStateMixin {
   late final AnimationController _ctrl;
   Timer? _timer;
+  Timer? _safetyTimer;
   bool _moved = false;
   bool _timerDone = false;
   bool _animDone = false;
@@ -82,11 +83,18 @@ class _RevealScreenState extends State<RevealScreen>
       _timerDone = true;
       _checkGo();
     });
+    // 안전 타임아웃: 애니메이션 배율이 5배·10배면 연출이 10~20초까지
+    // 늘어나고, 백그라운드 전환 등으로 완료 이벤트가 유실되면
+    // 스플래시에 영원히 멈출 수 있다. 최대 4초면 무조건 넘어간다
+    // (제미나이 리뷰, 2026-11-20). _go()의 _moved 가드가 중복
+    // 이동을 막는다.
+    _safetyTimer = Timer(const Duration(milliseconds: 4000), _go);
   }
 
   @override
   void dispose() {
     _timer?.cancel();
+    _safetyTimer?.cancel();
     _ctrl.dispose();
     super.dispose();
   }

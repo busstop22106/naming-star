@@ -28,18 +28,26 @@ class AdFreeService {
   /// 저장소를 못 읽으면 false 그대로 두고 던지지 않는다.
   Future<void> ensureLoaded() async {
     if (_loaded) return;
-    isAdFreeNotifier.value = await SafePrefs.getBool(prefsKey) ?? false;
+    final value = await SafePrefs.getBool(prefsKey) ?? false;
+    // await 사이에 setAdFree()가 먼저 들어왔으면 그 값을 덮지 않는다
+    // (경합으로 구매 직후 광고가 다시 보이는 문제, 제미나이 리뷰,
+    // 2026-11-20).
+    if (_loaded) return;
+    isAdFreeNotifier.value = value;
     _loaded = true;
   }
 
   /// 권한을 저장하고 화면들에 알린다.
   /// 저장이 실패해도 메모리 플래그는 바로 바꿔 구매 직후 화면에
   /// 바로 반영되게 하고, 다음 시작 때 스토어 내역으로 다시 맞춘다.
-  /// 예외는 던지지 않는다.
+  /// 예외는 던지지 않는다. 저장 실패는 로그로 남긴다
+  /// (오푸스 리뷰, 2026-11-20).
   Future<void> setAdFree(bool value) async {
     isAdFreeNotifier.value = value;
     _loaded = true;
-    await SafePrefs.setBool(prefsKey, value);
+    if (!await SafePrefs.setBool(prefsKey, value)) {
+      debugPrint('AdFreeService: 광고 제거 플래그 저장 실패 (value=$value)');
+    }
   }
 
   @visibleForTesting

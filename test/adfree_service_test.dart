@@ -36,4 +36,16 @@ void main() {
     final prefs = await SharedPreferences.getInstance();
     expect(prefs.getBool(AdFreeService.prefsKey), isTrue);
   });
+
+  test('ensureLoaded 대기 중 setAdFree(true)가 오면 그 값을 덮지 않는다 (경합 회귀)', () async {
+    // 저장소에 플래그가 없는 상태에서 ensureLoaded()를 시작하고,
+    // 읽기가 끝나기 전에 setAdFree(true)가 들어오면, 뒤늦게 완료된
+    // ensureLoaded()가 옛날 값(false)으로 덮어서는 안 된다
+    // (제미나이 리뷰, 2026-11-20).
+    SharedPreferences.setMockInitialValues({});
+    final loading = AdFreeService.instance.ensureLoaded();
+    await AdFreeService.instance.setAdFree(true);
+    await loading;
+    expect(AdFreeService.instance.isAdFree, isTrue);
+  });
 }

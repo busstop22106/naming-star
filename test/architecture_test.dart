@@ -309,9 +309,13 @@ void main() {
       'lib/services/pro_service.dart',
     };
     final direct = <String>{};
+    // 줄바꿈·공백이 섞인 호출도 잡히게 정규식으로 검사한다
+    // (오푸스·제미나이 리뷰, 2026-11-20).
+    final directAccess =
+        RegExp(r'SharedPreferences\s*\.\s*getInstance\s*\(');
     for (final file in _libDartFiles()) {
       final body = _stripCommentsAndImports(file.readAsStringSync());
-      if (body.contains('SharedPreferences.getInstance()')) {
+      if (directAccess.hasMatch(body)) {
         direct.add(file.path);
       }
     }

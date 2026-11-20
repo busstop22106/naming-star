@@ -196,6 +196,16 @@ Future<bool> _writeStored(
   }
 }
 
+/// 1차 쓰기가 실패하면 한 번 더 시도한다 (일시적 오류 복구).
+/// unparseable은 그대로 넘겨 버리지 않는다 (오푸스 리뷰, 2026-11-20).
+/// 같은 데이터를 같은 키에 덮어쓰므로 중복 저장 위험은 없다
+/// (오푸스 리뷰, 2026-11-20).
+Future<bool> _writeWithRetry(
+    List<FavoriteItem> items, List<dynamic> unparseable) async {
+  if (await _writeStored(items, unparseable)) return true;
+  return await _writeStored(items, unparseable);
+}
+
 Future<List<FavoriteItem>> loadFavorites() async {
   // _loadStored는 예외를 던지지 않으니 빈 목록이면 빈 화면이 뜬다.
   return (await _loadStored()).items;
@@ -220,10 +230,7 @@ Future<bool> saveFavorite(FavoriteItem item) async {
     items.removeLast();
   }
   items.insert(0, item);
-  if (await _writeStored(items, unparseable)) return true;
-  // 1차 쓰기가 실패하면 한 번 더 시도한다 (일시적 오류 복구).
-  // unparseable은 그대로 넘겨 버리지 않는다 (오푸스 리뷰, 2026-11-20).
-  return _writeStored(items, unparseable);
+  return _writeWithRetry(items, unparseable);
 }
 
 Future<bool> removeFavorite(FavoriteItem item) async {
@@ -234,10 +241,7 @@ Future<bool> removeFavorite(FavoriteItem item) async {
   final unparseable = stored.corrupt ? <dynamic>[] : stored.unparseable;
   items.removeWhere((e) =>
       e.fullName == item.fullName && e.hanjaName == item.hanjaName);
-  if (await _writeStored(items, unparseable)) return true;
-  // 1차 쓰기가 실패하면 한 번 더 시도한다 (일시적 오류 복구).
-  // unparseable은 그대로 넘겨 버리지 않는다 (오푸스 리뷰, 2026-11-20).
-  return _writeStored(items, unparseable);
+  return _writeWithRetry(items, unparseable);
 }
 
 Future<bool> isFavorite(String fullName, String hanjaName) async {
@@ -254,8 +258,5 @@ Future<bool> replaceFavorites(List<FavoriteItem> items) async {
   if (stored.readFailed) return false;
   if (stored.corrupt) await _backupCorruptRaw(stored.raw);
   final unparseable = stored.corrupt ? <dynamic>[] : stored.unparseable;
-  if (await _writeStored(items, unparseable)) return true;
-  // 1차 쓰기가 실패하면 한 번 더 시도한다 (일시적 오류 복구).
-  // unparseable은 그대로 넘겨 버리지 않는다 (오푸스 리뷰, 2026-11-20).
-  return _writeStored(items, unparseable);
+  return _writeWithRetry(items, unparseable);
 }

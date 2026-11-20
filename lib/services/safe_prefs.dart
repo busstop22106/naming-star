@@ -7,8 +7,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 /// - 쓰기는 성공 여부를 bool로 돌려준다 (실패 시 false, 예외 없음).
 /// - 쓰기 실패 시 1회 재시도한다.
 ///
-/// 예외: favorites.dart와 interstitial_gate.dart는 이미 try/catch와
-/// 재시도·복구 로직을 갖추고 테스트돼 있어 직접 접근을 유지한다.
+/// 예외: favorites.dart는 이미 try/catch와 재시도·복구 로직을 갖추고
+/// 테스트돼 있어 직접 접근을 유지한다. interstitial_gate.dart는
+/// 읽기(readAttemptCount)만 직접 접근하고, 쓰기(recordAttempt)는
+/// SafePrefs를 쓴다 (2026-11-20 리뷰 반영).
 /// architecture_test.dart가 직접 접근 허용 파일을 강제한다.
 class SafePrefs {
   static Future<SharedPreferences?> _instance() async {
@@ -63,13 +65,18 @@ class SafePrefs {
 
   static Future<bool> _set(
       Future<bool> Function(SharedPreferences p) write) async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      if (await write(prefs)) return true;
-      // 1차 쓰기 실패 시 한 번 더 시도한다.
-      return await write(prefs);
-    } catch (_) {
-      return false;
+    // 쓰기 실패 시 1회 재시도한다. getInstance()가 던지거나
+    // write()가 던지는 경우도 다시 시도한다 — 이전에는 false를
+    // 반환하는 경우만 재시도돼 예외 경로가 그대로 실패했다
+    // (오푸스·제미나이 리뷰, 2026-11-20).
+    for (var i = 0; i < 2; i++) {
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        if (await write(prefs)) return true;
+      } catch (_) {
+        // 다음 시도에서 getInstance()부터 다시 한다.
+      }
     }
+    return false;
   }
 }

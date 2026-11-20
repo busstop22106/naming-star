@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'ad_service.dart';
 import 'adfree_service.dart';
+import 'safe_prefs.dart';
 
 /// 결과 직전 전면 광고 게이트.
 /// 이름 분석·가족 궁합 두 흐름이 공유하는 단일 카운터로,
@@ -42,14 +43,11 @@ class InterstitialGate {
   static Future<int> recordAttempt({SharedPreferences? prefs}) async {
     final next = await readAttemptCount(prefs: prefs) + 1;
     _memoryCount = next;
-    try {
-      final p = prefs ?? await SharedPreferences.getInstance();
-      if (!await p.setInt(countKey, next)) {
-        await p.setInt(countKey, next);
-      }
-    } catch (_) {
-      // 저장 실패 — 세션 카운터로 광고 차례는 유지된다.
-    }
+    // 저장은 SafePrefs로 통일한다 — getInstance() 예외나 setInt
+    // 예외도 1회 재시도한다 (이전에는 setInt가 던지면 재시도를
+    // 건너뛰었다. 제미나이 리뷰, 2026-11-20).
+    // 저장 실패해도 세션 카운터로 광고 차례는 유지된다.
+    await SafePrefs.setInt(countKey, next);
     return next;
   }
 
