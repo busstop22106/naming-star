@@ -12,18 +12,44 @@ class InterstitialGate {
   static const String countKey = 'jakmyeongbyeol_result_attempt_count';
   static const int adEvery = 4;
 
+  /// 세션 내 카운터. SharedPreferences 저장이 실패해도
+  /// 세션 안에서는 4번째마다 광고가 뜨게 한다 (2026-11-20).
+  /// 실기기에서 저장소 쓰기가 실패해 카운터가 안 올라가면
+  /// 광고가 영원히 안 뜨는 문제가 재현됐다.
+  static int? _memoryCount;
+
+  @visibleForTesting
+  static void resetForTest() {
+    _memoryCount = null;
+  }
+
   static bool isAdTurn(int attemptCount) => attemptCount % adEvery == 0;
 
   static Future<int> readAttemptCount({SharedPreferences? prefs}) async {
-    final p = prefs ?? await SharedPreferences.getInstance();
-    return p.getInt(countKey) ?? 0;
+    if (_memoryCount != null) return _memoryCount!;
+    try {
+      final p = prefs ?? await SharedPreferences.getInstance();
+      _memoryCount = p.getInt(countKey) ?? 0;
+    } catch (_) {
+      _memoryCount = 0;
+    }
+    return _memoryCount!;
   }
 
   /// 시도 횟수를 1 올리고, 올린 뒤의 횟수를 반환한다.
+  /// 저장은 최선을 다하고, 실패해도 세션 카운터는 유지한다 —
+  /// 저장 실패가 광고 차례 자체를 막지 않게 한다 (2026-11-20).
   static Future<int> recordAttempt({SharedPreferences? prefs}) async {
-    final p = prefs ?? await SharedPreferences.getInstance();
-    final next = (p.getInt(countKey) ?? 0) + 1;
-    await p.setInt(countKey, next);
+    final next = await readAttemptCount(prefs: prefs) + 1;
+    _memoryCount = next;
+    try {
+      final p = prefs ?? await SharedPreferences.getInstance();
+      if (!await p.setInt(countKey, next)) {
+        await p.setInt(countKey, next);
+      }
+    } catch (_) {
+      // 저장 실패 — 세션 카운터로 광고 차례는 유지된다.
+    }
     return next;
   }
 

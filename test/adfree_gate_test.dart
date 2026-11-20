@@ -7,6 +7,7 @@ import 'package:jakmyeongbyeol/services/interstitial_gate.dart';
 
 void main() {
   setUp(() {
+    InterstitialGate.resetForTest();
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(
       const MethodChannel('plugins.flutter.io/google_mobile_ads'),

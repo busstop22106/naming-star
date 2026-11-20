@@ -7,6 +7,7 @@ import 'package:jakmyeongbyeol/services/interstitial_gate.dart';
 
 void main() {
   setUp(() {
+    InterstitialGate.resetForTest();
     // 실제 광고 SDK 호출을 테스트용 채널 응답으로 대신한다.
     // (광고 차례에서 AdService가 다음 광고 로드를 fire-and-forget으로 걸 때
     // MissingPluginException이 나지 않게 한다.)
@@ -53,6 +54,18 @@ void main() {
       SharedPreferences.setMockInitialValues(
           {InterstitialGate.countKey: 3});
       expect(await InterstitialGate.recordAttempt(), 4);
+    });
+
+    test('저장소가 초기화돼도 세션 카운터는 이어진다 (실기기 광고 미노출 회귀)',
+        () async {
+      SharedPreferences.setMockInitialValues({});
+      expect(await InterstitialGate.recordAttempt(), 1);
+      expect(await InterstitialGate.recordAttempt(), 2);
+      expect(await InterstitialGate.recordAttempt(), 3);
+      // 저장소가 날아가도(초기값 리셋) 세션 카운터는 3에서 이어진다.
+      SharedPreferences.setMockInitialValues({});
+      expect(await InterstitialGate.recordAttempt(), 4);
+      expect(InterstitialGate.isAdTurn(4), isTrue);
     });
   });
 
