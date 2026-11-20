@@ -65,6 +65,11 @@ class _RevealScreenState extends State<RevealScreen>
     _ctrl = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 2000),
+      // 시스템에서 애니메이션을 꺼도('애니메이션 제거' 접근성 설정 등)
+      // 이 연출은 끝까지 재생한다. 기본 동작(normal)이면 컨트롤러
+      // 지속 시간이 0.05배(100ms)로 줄어 별이 정지된 이미지처럼
+      // 보이는 문제가 갤럭시 S25+ 실기기에서 재현됐다 (2026-11-20).
+      animationBehavior: AnimationBehavior.preserve,
     )..addStatusListener((s) {
         if (s == AnimationStatus.completed) {
           _animDone = true;

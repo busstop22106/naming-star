@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:jakmyeongbyeol/screens/analyze_screen.dart';
@@ -40,6 +41,58 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byType(RevealScreen), findsNothing);
     expect(find.byType(RecommendScreen), findsOneWidget);
+  });
+
+  testWidgets('시스템 애니메이션 끔 상태에서도 별 연출이 끝까지 재생된다 (회귀)',
+      (tester) async {
+    // 기기에서 '애니메이션 제거'가 켜져 있으면 AnimationController가
+    // 기본 동작(normal)으로는 0.05배속(100ms)으로 끝나 별이 정지된
+    // 이미지처럼 보인다 (갤럭시 S25+ 실기기 재현, 2026-11-20).
+    // RevealScreen은 preserve로 시스템 설정을 무시하고 2초 연출을
+    // 끝까지 재생해야 한다.
+    final originalDisableAnimations = debugSemanticsDisableAnimations;
+    debugSemanticsDisableAnimations = true;
+    addTearDown(
+      () => debugSemanticsDisableAnimations = originalDisableAnimations,
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: RevealScreen(
+          nextBuilder: (_) => const Scaffold(body: Text('결과 화면')),
+        ),
+      ),
+    );
+    // 500ms: 아직 문구 페이드인 구간(0.35~0.65) 전이라 문구는 안 보인다.
+    // (기본 동작이었으면 100ms 만에 끝나 문구가 다 보였을 것이다.)
+    await tester.pump(const Duration(milliseconds: 500));
+    final textOpacity = tester.widget<Opacity>(
+      find.ancestor(
+        of: find.text('작명별이 이름을 고르고 있어요'),
+        matching: find.byType(Opacity),
+      ),
+    );
+    expect(textOpacity.opacity, 0.0);
+    expect(find.byType(RevealScreen), findsOneWidget);
+    expect(find.text('결과 화면'), findsNothing);
+
+    // 1000ms: 페이드인 중간 — 문구가 실제로 나타나고 있어야 한다.
+    // 500ms 검사만으로는 애니메이션이 0.0에 멈춰 있어도 통과하므로,
+    // opacity가 커졌는지(재생 중인지)까지 확인한다 (제미나이 리뷰).
+    await tester.pump(const Duration(milliseconds: 500));
+    final midOpacity = tester.widget<Opacity>(
+      find.ancestor(
+        of: find.text('작명별이 이름을 고르고 있어요'),
+        matching: find.byType(Opacity),
+      ),
+    );
+    expect(midOpacity.opacity, greaterThan(0.0));
+
+    // 2100ms: 2초 연출이 끝나 결과 화면으로 넘어간다.
+    await tester.pump(const Duration(milliseconds: 1100));
+    await tester.pumpAndSettle();
+    expect(find.byType(RevealScreen), findsNothing);
+    expect(find.text('결과 화면'), findsOneWidget);
   });
 
   testWidgets('이름 분석을 누르면 RevealScreen을 거쳐 상세 화면으로 간다',

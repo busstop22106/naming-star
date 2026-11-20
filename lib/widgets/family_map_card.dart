@@ -29,7 +29,30 @@ class _FamilyMapCardState extends State<FamilyMapCard>
     _pulse = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1150),
-    )..repeat();
+      // preserve: 시스템 애니메이션 배율과 무관하게 1150ms 주기를 유지한다.
+      // 기본 동작(normal)이면 '애니메이션 제거' 설정에서 0.05배(~57ms)로
+      // 줄어 빠르게 깜빡이는 문제가 생긴다 (2026-11-20).
+      animationBehavior: AnimationBehavior.preserve,
+    );
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // 시스템에서 애니메이션을 껐으면('애니메이션 제거') 박동을 돌리지 않고
+    // 정적 하트를 보여준다. 무한 반복 애니메이션에 preserve를 쓰면
+    // 모션 줄이기 사용자도 끌 수 없기 때문이다 (오푸스·제미나이 리뷰,
+    // 2026-11-20). 멈추면 _pulse.value를 0.0으로 되돌려 하트는
+    // 기본 크기(1.0)로 정지해 보인다.
+    // (initState에서는 MediaQuery를 읽을 수 없어 여기서 확인한다.)
+    final animationsDisabled =
+        MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+    if (animationsDisabled) {
+      _pulse.stop();
+      _pulse.value = 0.0;
+    } else if (!_pulse.isAnimating) {
+      _pulse.repeat();
+    }
   }
 
   @override
