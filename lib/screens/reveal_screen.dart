@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../theme.dart';
@@ -36,6 +37,7 @@ class RevealScreen extends StatefulWidget {
 class _RevealScreenState extends State<RevealScreen>
     with SingleTickerProviderStateMixin {
   late final AnimationController _ctrl;
+  late final Timer _timer;
   bool _moved = false;
 
   // 반짝이 파티클 배치 (각도·거리·크기 고정값)
@@ -56,14 +58,19 @@ class _RevealScreenState extends State<RevealScreen>
     _ctrl = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 2000),
-    )..addStatusListener((s) {
-        if (s == AnimationStatus.completed) _go();
-      });
+    );
     _ctrl.forward();
+    // 애니메이션 완료와 무관하게 2초 뒤에 이동한다.
+    // 시스템 애니메이션 배율이 줄었거나 꺼져 있으면
+    // AnimationController가 일찍 끝나 스플래시가 짧게 보이는 문제가
+    // 갤럭시 S25+(OS 15) 실기기에서 재현됐다 (2026-11-20).
+    // 이동 시점은 Timer로 고정하고, 애니메이션은 연출만 담당한다.
+    _timer = Timer(const Duration(milliseconds: 2000), _go);
   }
 
   @override
   void dispose() {
+    _timer.cancel();
     _ctrl.dispose();
     super.dispose();
   }

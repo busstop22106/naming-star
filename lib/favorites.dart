@@ -175,19 +175,48 @@ Future<_StoredFavorites> _loadStored() async {
 
 /// 정상 항목 + 파싱 실패한 원본 조각을 스키마 버전과 함께 저장한다.
 /// 저장 성공 여부를 반환한다 — 호출처가 실패를 사용자에게 알려야 한다.
+/// getInstance()나 setString()이 던져도 false를 돌려준다
+/// (호출처의 timeout/catch가 실패 토스트를 띄우게 한다, 2026-11-20).
 Future<bool> _writeStored(
     List<FavoriteItem> items, List<dynamic> unparseable) async {
-  final prefs = await SharedPreferences.getInstance();
-  return prefs.setString(
-    _key,
-    jsonEncode({
-      'version': _schemaVersion,
-      'items': [
-        ...items.map((e) => e.toJson()),
-        ...unparseable,
-      ],
-    }),
-  );
+  try {
+    final prefs = await SharedPreferences.getInstance();
+    return await prefs.setString(
+      _key,
+      jsonEncode({
+        'version': _schemaVersion,
+        'items': [
+          ...items.map((e) => e.toJson()),
+          ...unparseable,
+        ],
+      }),
+    );
+  } catch (_) {
+    return false;
+  }
+}
+
+/// 쓰기가 실패하면 키를 지우고 새로 쓴다 — 기존 저장값이
+/// 쓰기를 막는 상태일 때의 복구 경로다 (2026-11-20).
+/// 그래도 실패하면 false.
+Future<bool> _writeStoredFresh(
+    List<FavoriteItem> items, List<dynamic> unparseable) async {
+  try {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_key);
+    return await prefs.setString(
+      _key,
+      jsonEncode({
+        'version': _schemaVersion,
+        'items': [
+          ...items.map((e) => e.toJson()),
+          ...unparseable,
+        ],
+      }),
+    );
+  } catch (_) {
+    return false;
+  }
 }
 
 Future<List<FavoriteItem>> loadFavorites() async {
@@ -214,7 +243,10 @@ Future<bool> saveFavorite(FavoriteItem item) async {
     items.removeLast();
   }
   items.insert(0, item);
-  return _writeStored(items, unparseable);
+  // 1차 쓰기가 실패하면 키를 지우고 새로 쓴다 — 기존 저장값이
+  // 쓰기를 막는 상태일 때의 복구 경로다 (2026-11-20 실기기 재현).
+  if (await _writeStored(items, unparseable)) return true;
+  return _writeStoredFresh(items, const []);
 }
 
 Future<bool> removeFavorite(FavoriteItem item) async {
@@ -225,7 +257,8 @@ Future<bool> removeFavorite(FavoriteItem item) async {
   final unparseable = stored.corrupt ? <dynamic>[] : stored.unparseable;
   items.removeWhere((e) =>
       e.fullName == item.fullName && e.hanjaName == item.hanjaName);
-  return _writeStored(items, unparseable);
+  if (await _writeStored(items, unparseable)) return true;
+  return _writeStoredFresh(items, const []);
 }
 
 Future<bool> isFavorite(String fullName, String hanjaName) async {
@@ -242,5 +275,6 @@ Future<bool> replaceFavorites(List<FavoriteItem> items) async {
   if (stored.readFailed) return false;
   if (stored.corrupt) await _backupCorruptRaw(stored.raw);
   final unparseable = stored.corrupt ? <dynamic>[] : stored.unparseable;
-  return _writeStored(items, unparseable);
+  if (await _writeStored(items, unparseable)) return true;
+  return _writeStoredFresh(items, const []);
 }
